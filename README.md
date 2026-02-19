@@ -1,2 +1,1 @@
 # SIGAM-backend
-estrtucture backend
