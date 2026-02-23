@@ -6,17 +6,11 @@
  * =====================================================
  */
 
-require('dotenv').config(); // Loads environment variables from .env file
+require('dotenv').config(); // Carga el archivo .env
+const app = require('./app'); // Trae la configuración de arriba
 
-const app = require('./app'); // Import Express app instance
+const PORT = process.env.PORT || 4000;
 
-// Environment port or default
-const PORT = process.env.PORT || 3000;
-
-/*
- * Start server
- * This is the only responsibility of this file.
- */
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`🚀 Servidor corriendo en: http://localhost:${PORT}`);
 });
