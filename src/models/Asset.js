@@ -1,4 +1,4 @@
-const db = require('../config/db');
+import db from '../config/db.js';
 
 class AssetModel {
     async findAll() {
@@ -43,4 +43,4 @@ class AssetModel {
     }
 }
 
-module.exports = AssetModel;
+export default AssetModel;

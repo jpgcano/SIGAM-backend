@@ -24,4 +24,4 @@ class MaintenanceController {
     }
 }
 
-module.exports = MaintenanceController;
+export default MaintenanceController;

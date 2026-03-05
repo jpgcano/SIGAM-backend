@@ -10,4 +10,4 @@ const roleMiddleware = (rolesPermitidos) => {
     };
 };
 
-module.exports = roleMiddleware;
+export default roleMiddleware;

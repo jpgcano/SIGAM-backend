@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
 
 class HashUtil {
     static async hashPassword(password) {
@@ -11,4 +11,4 @@ class HashUtil {
     }
 }
 
-module.exports = HashUtil;
+export default HashUtil;

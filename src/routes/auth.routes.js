@@ -1,10 +1,10 @@
-const express = require('express');
-const AuthController = require('../controllers/auth.controller');
-const AuthService = require('../services/auth.service');
-const UserModel = require('../models/User');
-const authMiddleware = require('../middlewares/auth.middleware');
-const roleMiddleware = require('../middlewares/role.middleware');
-const { validateRequired } = require('../middlewares/validate.middleware');
+import express from 'express';
+import AuthController from '../controllers/auth.controller.js';
+import AuthService from '../services/auth.service.js';
+import UserModel from '../models/User.js';
+import authMiddleware from '../middlewares/auth.middleware.js';
+import roleMiddleware from '../middlewares/role.middleware.js';
+import { validateRequired } from '../middlewares/validate.middleware.js';
 
 const router = express.Router();
 
@@ -24,4 +24,4 @@ router.get('/perfil', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'G
     res.json({ msg: 'Tu perfil de usuario' });
 });
 
-module.exports = router;
+export default router;

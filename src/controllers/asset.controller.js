@@ -24,4 +24,4 @@ class AssetController {
     }
 }
 
-module.exports = AssetController;
+export default AssetController;

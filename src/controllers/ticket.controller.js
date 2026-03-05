@@ -24,4 +24,4 @@ class TicketController {
     }
 }
 
-module.exports = TicketController;
+export default TicketController;
