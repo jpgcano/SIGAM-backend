@@ -1,16 +1,24 @@
-/*
- * =====================================================
- * DESCRIPTION:
- * Entry point of the application.
- * Responsible only for starting the server.
- * =====================================================
- */
+require('dotenv').config();
 
-require('dotenv').config(); // Carga el archivo .env
-const app = require('./app'); // Trae la configuración de arriba
+const app = require('./app');
+const EnvConfig = require('./config/env');
+const db = require('./config/db');
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en: http://localhost:${PORT}`);
-});
+async function start() {
+    try {
+        EnvConfig.validate();
+        const ping = await db.testConnection();
+        console.log(`✅ DB conectada: ${ping.now}`);
+
+        app.listen(PORT, () => {
+            console.log(`🚀 Servidor corriendo en: http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error('❌ No fue posible iniciar el servidor:', error.message);
+        process.exit(1);
+    }
+}
+
+start();
