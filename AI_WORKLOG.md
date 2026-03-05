@@ -173,3 +173,34 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - plantilla `.env.example` creada y README actualizado.
 - Commit(s):
   - N/A - pendiente de commit por el equipo.
+
+### 2026-03-05 - IA: Codex GPT-5
+- Issue: Limpieza de logs y manejo de errores fantasma
+- Rama: feature/database
+- Objetivo: eliminar emojis de consola y asegurar errores siempre descriptivos.
+- Cambios:
+  - `src/utils/error.util.js` - utilitario para normalizar codigo y mensaje de errores.
+  - `src/server.js` - logs sin emojis + uso de normalizador de errores en arranque.
+  - `src/middlewares/error.middleware.js` - respuesta y log de errores estandarizada (`code`, `message`).
+  - `SKILL.md` - regla obligatoria: prohibidos emojis en codigo/logs/respuestas.
+- Decisiones tecnicas: unificar salida de errores para evitar mensajes vacios y facilitar trazabilidad.
+- Pendiente: definir diseño final de log de eventos.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - `node --check` OK en `server.js`, `error.middleware.js` y `error.util.js`.
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.
+
+### 2026-03-05 - IA: Codex GPT-5
+- Issue: Clasificacion de errores esperados vs reales
+- Rama: feature/database
+- Objetivo: reducir ruido en consola para 4xx esperados (ej. login invalido).
+- Cambios:
+  - `src/middlewares/error.middleware.js` - `4xx` ahora se loguea como `Solicitud rechazada`; `5xx` como `Error API`.
+- Decisiones tecnicas: no tratar errores de negocio/control de acceso como fallos del sistema.
+- Pendiente: validacion final del flujo en Postman con login valido/invalido.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - ajuste aplicado al middleware global de errores.
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.

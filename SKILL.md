@@ -30,6 +30,7 @@ Estandarizar como el equipo implementa tareas del backend con ayuda de IA, mante
 14. Si hay ambiguedad funcional, documentar supuestos en el PR/commit.
 15. Mantener enfoque POO en backend: clases separadas por capas (`Controller`, `Service`, `Model`) con responsabilidades claras.
 16. Registrar obligatoriamente cada tarea/issue en `AI_WORKLOG.md` para evitar trabajo duplicado entre IAs.
+17. Prohibido usar emojis en el codigo, logs, mensajes de error o respuestas de API.
 
 ## Flujo de trabajo recomendado
 1. Seleccionar 1 issue backend.
