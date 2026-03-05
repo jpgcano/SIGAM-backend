@@ -158,3 +158,18 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - log local reporto `PGRST205` para tabla inexistente.
 - Commit(s):
   - N/A - pendiente de commit por el equipo.
+
+### 2026-03-05 - IA: Codex GPT-5
+- Issue: Hardening de documentacion de entorno
+- Rama: feature/database
+- Objetivo: dejar claro como debe ir `.env` para evitar configuraciones incorrectas y filtrado de secretos.
+- Cambios:
+  - `README.md` - reglas explicitas de variables permitidas y prohibidas para Supabase SDK.
+  - `.env.example` - plantilla oficial para que el equipo copie.
+- Decisiones tecnicas: unificar en `SUPABASE_URL` + `SUPABASE_ANON_KEY` y eliminar ambiguedad de variables `DB_*`.
+- Pendiente: commit/push de este ajuste de documentacion.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - plantilla `.env.example` creada y README actualizado.
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.

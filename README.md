@@ -5,21 +5,27 @@ Backend de J-AXON (SIGAM), un sistema para gestion de activos TI, tickets de sop
 Tecnologias principales:
 - Node.js
 - Express
-- PostgreSQL
+- Supabase (PostgreSQL + API)
 
 ## Requisitos
 - Node.js 20+
-- PostgreSQL 14+
+- pnpm 10+
 
 ## Variables de entorno
-Crea un archivo `.env` en la raiz:
+Crea un archivo `.env` en la raiz usando esta plantilla exacta:
 
 ```env
 PORT=4000
-JWT_SECRET=tu_secreto_jwt
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_ANON_KEY=tu_anon_key
+JWT_SECRET=coloca_un_secreto_largo
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_...
 ```
+
+Reglas importantes:
+- Usa solo `SUPABASE_URL` y `SUPABASE_ANON_KEY` para la conexion de datos del backend.
+- No uses `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_KEY` en este proyecto.
+- No subir `.env` al repositorio (ya esta ignorado en `.gitignore`).
+- No pegar claves en commits, issues o pull requests.
 
 ## Instalacion
 ```bash
@@ -27,7 +33,7 @@ pnpm install
 ```
 
 ## Base de datos
-Para una base nueva, ejecuta en PostgreSQL:
+Para una base nueva (en SQL editor/psql):
 
 ```sql
 \i sql/01_schema.sql
@@ -36,7 +42,7 @@ Para una base nueva, ejecuta en PostgreSQL:
 \i sql/02_seed_data.sql
 ```
 
-Si ya tienes una base existente, aplica migraciones antes de vistas/triggers:
+Si la base ya existe, aplica migraciones antes de vistas/triggers:
 
 ```sql
 \i sql/00_migration_add_password.sql
@@ -51,4 +57,4 @@ pnpm dev
 ```
 
 ## Healthcheck
-- `GET /health`
+- `GET /health` debe responder `200`.
