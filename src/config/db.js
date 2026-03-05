@@ -18,7 +18,7 @@ class Database {
     }
 
     async testConnection() {
-        const result = await this.query('SELECT NOW() as now');
+        const result = await this.query('SELECT 1 AS ok, NOW() AS now');
         return result.rows[0];
     }
 }

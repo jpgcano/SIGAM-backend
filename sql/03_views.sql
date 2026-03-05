@@ -6,9 +6,11 @@ CREATE OR REPLACE VIEW vw_activos_detalle AS
 SELECT
     a.id_activo,
     a.serial,
+    a.codigo_qr,
     a.modelo,
     a.fecha_compra,
     a.vida_util,
+    a.estado_activo,
     a.nivel_criticidad,
     c.nombre_categoria,
     u.sede,

@@ -1,10 +1,18 @@
-# SIGAM-backend
+# SIGAM Backend
 
-Backend SIGAM con **Express + PostgreSQL**, estructura en capas y enfoque de **programación orientada a objetos** (Models, Services, Controllers).
+Backend de J-AXON (SIGAM), un sistema para gestion de activos TI, tickets de soporte y mantenimiento.
+
+Tecnologias principales:
+- Node.js
+- Express
+- PostgreSQL
+
+## Requisitos
+- Node.js 20+
+- PostgreSQL 14+
 
 ## Variables de entorno
-
-Configura un archivo `.env` con:
+Crea un archivo `.env` en la raiz:
 
 ```env
 PORT=4000
@@ -17,15 +25,13 @@ DB_NAME=sigam
 DB_SSL=false
 ```
 
-## Scripts SQL separados
+## Instalacion
+```bash
+npm install
+```
 
-1. `sql/00_migration_add_password.sql` → agrega `password_hash` en tablas existentes.
-2. `sql/01_schema.sql` → crea el esquema completo.
-3. `sql/02_seed_data.sql` → carga datos de prueba.
-4. `sql/03_views.sql` → crea vistas de operación.
-5. `sql/04_triggers.sql` → crea funciones y disparadores.
-
-### Orden recomendado (ambiente nuevo)
+## Base de datos
+Para una base nueva, ejecuta en PostgreSQL:
 
 ```sql
 \i sql/01_schema.sql
@@ -34,33 +40,19 @@ DB_SSL=false
 \i sql/02_seed_data.sql
 ```
 
-### Orden recomendado (ambiente existente)
+Si ya tienes una base existente, aplica migraciones antes de vistas/triggers:
 
 ```sql
 \i sql/00_migration_add_password.sql
+\i sql/05_migration_db_foundations.sql
 \i sql/03_views.sql
 \i sql/04_triggers.sql
 ```
 
-## Endpoints base
-
-- `GET /health`
-- `POST /api/auth/login`
-- `GET /api/auth/admin-panel`
-- `GET /api/auth/configuracion`
-- `GET /api/auth/perfil`
-- `GET /api/users`
-- `POST /api/users`
-- `GET /api/assets`
-- `POST /api/assets`
-- `GET /api/tickets`
-- `POST /api/tickets`
-- `GET /api/maintenance`
-- `POST /api/maintenance`
-
 ## Ejecutar
-
 ```bash
-npm install
 npm run dev
 ```
+
+## Healthcheck
+- `GET /health`

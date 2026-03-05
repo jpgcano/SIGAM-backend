@@ -59,15 +59,18 @@ CREATE TABLE IF NOT EXISTS REPUESTOS (
 CREATE TABLE IF NOT EXISTS ACTIVOS (
     id_activo SERIAL PRIMARY KEY,
     serial VARCHAR(100) UNIQUE NOT NULL,
+    codigo_qr VARCHAR(150) UNIQUE,
     modelo VARCHAR(150),
     fecha_compra DATE NOT NULL,
     vida_util INT NOT NULL,
+    estado_activo BOOLEAN NOT NULL DEFAULT TRUE,
     nivel_criticidad VARCHAR(50) DEFAULT 'Media',
     especificaciones_electricas VARCHAR(255),
     id_ubicacion INT REFERENCES UBICACIONES(id_ubicacion),
     id_categoria INT REFERENCES CATEGORIAS(id_categoria),
     id_proveedor INT REFERENCES PROVEEDORES(id_proveedor),
-    CONSTRAINT chk_activos_vida_util CHECK (vida_util > 0)
+    CONSTRAINT chk_activos_vida_util CHECK (vida_util > 0 AND vida_util <= 240),
+    CONSTRAINT chk_activos_criticidad CHECK (nivel_criticidad IN ('Baja', 'Media', 'Alta', 'Crítica'))
 );
 
 CREATE TABLE IF NOT EXISTS LICENCIAS (
@@ -88,6 +91,10 @@ CREATE TABLE IF NOT EXISTS TICKETS (
     clasificacion_nlp VARCHAR(100),
     estado VARCHAR(50) DEFAULT 'Abierto',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ,
+    CONSTRAINT chk_tickets_prioridad CHECK (prioridad_ia IS NULL OR prioridad_ia IN ('Baja', 'Media', 'Alta', 'Crítica')),
+    CONSTRAINT chk_tickets_clasificacion CHECK (clasificacion_nlp IS NULL OR clasificacion_nlp IN ('Hardware', 'Software', 'Red', 'Eléctrico')),
+    CONSTRAINT chk_tickets_estado CHECK (estado IN ('Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado'))
 );
 
 -- =========================================================================
@@ -115,7 +122,11 @@ CREATE TABLE IF NOT EXISTS ASIGNACION_LICENCIAS (
     id_licencia INT REFERENCES LICENCIAS(id_licencia),
     id_usuario INT REFERENCES USUARIOS(id_usuario),
     id_activo INT REFERENCES ACTIVOS(id_activo),
-    fecha_asignacion DATE DEFAULT CURRENT_DATE
+    fecha_asignacion DATE DEFAULT CURRENT_DATE,
+    CONSTRAINT chk_asignacion_licencias_destino CHECK (
+        (id_usuario IS NOT NULL AND id_activo IS NULL)
+        OR (id_usuario IS NULL AND id_activo IS NOT NULL)
+    )
 );
 
 CREATE TABLE IF NOT EXISTS CATALOGO_PRECIOS_PROVEEDORES (
@@ -155,5 +166,23 @@ CREATE TABLE IF NOT EXISTS ALERTAS (
     estado VARCHAR(50) DEFAULT 'Pendiente',
     fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- =========================================================================
+-- ÍNDICES DE OPERACIÓN
+-- =========================================================================
+
+-- Búsqueda rápida de serial exacto e insensible a mayúsculas/minúsculas.
+CREATE INDEX IF NOT EXISTS idx_activos_serial_lower ON ACTIVOS (lower(serial));
+CREATE INDEX IF NOT EXISTS idx_activos_codigo_qr ON ACTIVOS (codigo_qr);
+
+-- Accesos frecuentes por FKs y estado/fecha en operación.
+CREATE INDEX IF NOT EXISTS idx_tickets_id_activo ON TICKETS (id_activo);
+CREATE INDEX IF NOT EXISTS idx_tickets_id_usuario_reporta ON TICKETS (id_usuario_reporta);
+CREATE INDEX IF NOT EXISTS idx_tickets_estado_fecha ON TICKETS (estado, fecha_creacion DESC);
+CREATE INDEX IF NOT EXISTS idx_ordenes_id_usuario_tecnico ON ORDENES_MANTENIMIENTO (id_usuario_tecnico);
+CREATE INDEX IF NOT EXISTS idx_ordenes_id_ticket ON ORDENES_MANTENIMIENTO (id_ticket);
+CREATE INDEX IF NOT EXISTS idx_consumo_id_orden ON CONSUMO_REPUESTOS (id_orden);
+CREATE INDEX IF NOT EXISTS idx_consumo_id_repuesto ON CONSUMO_REPUESTOS (id_repuesto);
+CREATE INDEX IF NOT EXISTS idx_historial_id_activo_fecha ON HISTORIAL_ACTIVOS (id_activo, fecha_evento DESC);
 
 COMMIT;
