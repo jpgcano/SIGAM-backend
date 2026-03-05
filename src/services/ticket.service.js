@@ -12,4 +12,4 @@ class TicketService {
     }
 }
 
-module.exports = TicketService;
+export default TicketService;

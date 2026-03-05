@@ -12,4 +12,4 @@ class MaintenanceService {
     }
 }
 
-module.exports = MaintenanceService;
+export default MaintenanceService;

@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 const authMiddleware = (req, res, next) => {
     // 1. Obtener el token del header 'Authorization'
@@ -23,4 +23,4 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-module.exports = authMiddleware;
+export default authMiddleware;

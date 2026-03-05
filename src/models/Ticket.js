@@ -1,4 +1,4 @@
-const db = require('../config/db');
+import db from '../config/db.js';
 
 class TicketModel {
     async findAll() {
@@ -18,4 +18,4 @@ class TicketModel {
     }
 }
 
-module.exports = TicketModel;
+export default TicketModel;

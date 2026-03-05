@@ -1,13 +1,13 @@
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
 
-const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes');
-const assetRoutes = require('./routes/asset.routes');
-const ticketRoutes = require('./routes/ticket.routes');
-const maintenanceRoutes = require('./routes/maintenance.routes');
-const errorMiddleware = require('./middlewares/error.middleware');
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
+import assetRoutes from './routes/asset.routes.js';
+import ticketRoutes from './routes/ticket.routes.js';
+import maintenanceRoutes from './routes/maintenance.routes.js';
+import errorMiddleware from './middlewares/error.middleware.js';
 
 const app = express();
 
@@ -27,4 +27,4 @@ app.use('/api/maintenance', maintenanceRoutes);
 
 app.use(errorMiddleware);
 
-module.exports = app;
+export default app;

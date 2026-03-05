@@ -1,10 +1,10 @@
-const express = require('express');
-const AssetController = require('../controllers/asset.controller');
-const AssetService = require('../services/asset.service');
-const AssetModel = require('../models/Asset');
-const authMiddleware = require('../middlewares/auth.middleware');
-const roleMiddleware = require('../middlewares/role.middleware');
-const { validateRequired } = require('../middlewares/validate.middleware');
+import express from 'express';
+import AssetController from '../controllers/asset.controller.js';
+import AssetService from '../services/asset.service.js';
+import AssetModel from '../models/Asset.js';
+import authMiddleware from '../middlewares/auth.middleware.js';
+import roleMiddleware from '../middlewares/role.middleware.js';
+import { validateRequired } from '../middlewares/validate.middleware.js';
 
 const router = express.Router();
 
@@ -19,4 +19,4 @@ router.post(
     assetController.create
 );
 
-module.exports = router;
+export default router;

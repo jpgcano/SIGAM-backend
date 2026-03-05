@@ -1,4 +1,4 @@
-const HashUtil = require('../utils/hash');
+import HashUtil from '../utils/hash.js';
 
 class UserService {
     constructor(userModel) {
@@ -16,4 +16,4 @@ class UserService {
     }
 }
 
-module.exports = UserService;
+export default UserService;

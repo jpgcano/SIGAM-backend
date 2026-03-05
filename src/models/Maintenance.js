@@ -1,4 +1,4 @@
-const db = require('../config/db');
+import db from '../config/db.js';
 
 class MaintenanceModel {
     async findAll() {
@@ -27,4 +27,4 @@ class MaintenanceModel {
     }
 }
 
-module.exports = MaintenanceModel;
+export default MaintenanceModel;

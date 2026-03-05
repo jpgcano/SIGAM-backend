@@ -12,4 +12,4 @@ class AssetService {
     }
 }
 
-module.exports = AssetService;
+export default AssetService;

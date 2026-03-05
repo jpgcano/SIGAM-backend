@@ -11,4 +11,4 @@ class EnvConfig {
     }
 }
 
-module.exports = EnvConfig;
+export default EnvConfig;

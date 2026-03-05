@@ -1,4 +1,4 @@
-const db = require('../config/db');
+import db from '../config/db.js';
 
 class UserModel {
     async findByEmail(email) {
@@ -24,4 +24,4 @@ class UserModel {
     }
 }
 
-module.exports = UserModel;
+export default UserModel;
