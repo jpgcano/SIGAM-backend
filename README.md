@@ -17,17 +17,13 @@ Crea un archivo `.env` en la raiz:
 ```env
 PORT=4000
 JWT_SECRET=tu_secreto_jwt
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=sigam
-DB_SSL=false
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_ANON_KEY=tu_anon_key
 ```
 
 ## Instalacion
 ```bash
-npm install
+pnpm install
 ```
 
 ## Base de datos
@@ -51,7 +47,7 @@ Si ya tienes una base existente, aplica migraciones antes de vistas/triggers:
 
 ## Ejecutar
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ## Healthcheck

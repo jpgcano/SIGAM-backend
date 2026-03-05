@@ -79,3 +79,82 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - revision de `SKILL.md` actualizado.
 - Commit(s):
   - N/A - pendiente de commit por el equipo.
+
+### 2026-03-05 - IA: Codex GPT-5
+- Issue: Estandar de comandos del proyecto
+- Rama: feature/database
+- Objetivo: unificar el flujo de trabajo en `pnpm`.
+- Cambios:
+  - `README.md` - comandos actualizados de `npm` a `pnpm` (`pnpm install`, `pnpm dev`).
+- Decisiones tecnicas: se adopta `pnpm` como gestor por preferencia del equipo.
+- Pendiente: aplicar el mismo criterio en futuras guias/scripts internos.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - busqueda de referencias `npm` en archivos de documentacion.
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.
+
+### 2026-03-05 - IA: Codex GPT-5
+- Issue: Diagnostico de arranque backend
+- Rama: feature/database
+- Objetivo: identificar por que `pnpm dev` cae al iniciar.
+- Cambios:
+  - `src/server.js` - logs de error mejorados para mostrar causas internas de conexion (codigo, host, puerto).
+- Decisiones tecnicas: exponer error interno de `pg` en arranque para reducir tiempo de diagnostico.
+- Pendiente: ejecutar `pnpm dev` local y validar causa exacta mostrada en consola.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision de `DB_HOST/DB_PORT/DB_USER/DB_NAME` en `.env` (apuntan a `localhost:5432` / `sigam`).
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.
+
+### 2026-03-05 - IA: Codex GPT-5
+- Issue: Limpieza de configuracion Supabase
+- Rama: feature/database
+- Objetivo: quitar variables que estorban y dejar `.env` enfocado en conexion PostgreSQL de Supabase.
+- Cambios:
+  - `.env` - eliminadas variables `SUPABASE_*`; configurado solo `PORT`, `JWT_SECRET`, `DB_*` con enfoque Supabase.
+- Decisiones tecnicas: backend usa `pg`, por lo que solo deben existir variables `DB_*` para evitar confusiones.
+- Pendiente: validar host oficial de conexion de Supabase desde el panel del proyecto.
+- Riesgos/Bloqueos: en este entorno la resolucion DNS de host externo puede fallar (`EAI_AGAIN`).
+- Evidencia:
+  - `pnpm dev` -> error `getaddrinfo EAI_AGAIN db.xhbbmtemnvimgreetycd.supabase.co`.
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.
+
+### 2026-03-05 - IA: Codex GPT-5
+- Issue: Migracion de conexion a Supabase SDK
+- Rama: feature/database
+- Objetivo: pasar de conexion `pg` (`DB_*`) a estandar `supabase-js` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`).
+- Cambios:
+  - `src/lib/supabase.js` - cliente supabase y prueba de conexion minima.
+  - `src/server.js` - arranque validando API de Supabase.
+  - `src/config/env.js` - variables requeridas actualizadas a `SUPABASE_*`.
+  - `src/models/User.js` - queries migradas a supabase-js.
+  - `src/models/Asset.js` - queries migradas a supabase-js.
+  - `src/models/Ticket.js` - queries migradas a supabase-js.
+  - `src/models/Maintenance.js` - queries migradas a supabase-js.
+  - `README.md` - `.env` documentado con `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+  - `package.json` - dependencia `@supabase/supabase-js`.
+- Decisiones tecnicas: seguir el camino SDK de Supabase para evitar configuracion directa de host/puerto en backend.
+- Pendiente: instalar dependencias con red habilitada (`pnpm install`) y revalidar `pnpm dev`.
+- Riesgos/Bloqueos: el entorno actual no resuelve `registry.npmjs.org` (`EAI_AGAIN`), por lo que no se pudo instalar `@supabase/supabase-js`.
+- Evidencia:
+  - `pnpm dev` falla con `ERR_MODULE_NOT_FOUND` para `@supabase/supabase-js`.
+  - `CI=true pnpm install --no-frozen-lockfile` falla por red (`EAI_AGAIN`).
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.
+
+### 2026-03-05 - IA: Codex GPT-5
+- Issue: Ajuste de healthcheck de Supabase
+- Rama: feature/database
+- Objetivo: evitar falso negativo en test de conexion por diferencia de codigo PostgREST.
+- Cambios:
+  - `src/lib/supabase.js` - `testSupabaseConnection()` ahora acepta `PGRST116` y `PGRST205` como conexion valida.
+- Decisiones tecnicas: considerar variaciones de codigo de error entre versiones de Supabase/PostgREST.
+- Pendiente: reintentar `pnpm dev` y validar `GET /health`.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - log local reporto `PGRST205` para tabla inexistente.
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.
