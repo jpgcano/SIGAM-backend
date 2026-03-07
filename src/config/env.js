@@ -1,6 +1,6 @@
 class EnvConfig {
     static requiredVars() {
-        return ['JWT_SECRET', 'DB_HOST', 'DB_PORT', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+        return ['JWT_SECRET', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
     }
 
     static validate() {

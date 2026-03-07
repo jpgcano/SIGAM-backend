@@ -1,4 +1,4 @@
-import db from '../config/db.js';
+import { supabase } from '../lib/supabase.js';
 
 class AssetModel {
     async findAll() {

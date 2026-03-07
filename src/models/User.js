@@ -1,26 +1,50 @@
-import db from '../config/db.js';
+import { supabase } from '../lib/supabase.js';
 
 class UserModel {
     async findByEmail(email) {
-        const sql = 'SELECT id_usuario, nombre, email, password_hash, rol FROM usuarios WHERE email = $1';
-        const { rows } = await db.query(sql, [email]);
-        return rows[0] || null;
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('id_usuario, nombre, email, password_hash, rol')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        return data || null;
     }
 
     async findAll() {
-        const sql = 'SELECT id_usuario, nombre, email, rol, fecha_creacion FROM usuarios ORDER BY id_usuario';
-        const { rows } = await db.query(sql);
-        return rows;
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('id_usuario, nombre, email, rol, fecha_creacion')
+            .order('id_usuario', { ascending: true });
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
     }
 
     async create({ nombre, email, passwordHash, rol }) {
-        const sql = `
-            INSERT INTO usuarios (nombre, email, password_hash, rol)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id_usuario, nombre, email, rol, fecha_creacion
-        `;
-        const { rows } = await db.query(sql, [nombre, email, passwordHash, rol]);
-        return rows[0];
+        const { data, error } = await supabase
+            .from('usuarios')
+            .insert({
+                nombre,
+                email,
+                password_hash: passwordHash,
+                rol
+            })
+            .select('id_usuario, nombre, email, rol, fecha_creacion')
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
     }
 }
 
