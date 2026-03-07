@@ -1,5 +1,5 @@
 -- =========================================================================
--- SIGAM BACKEND - DATOS DE PRUEBA
+-- SIGAM BACKEND - DATOS DE PRUEBA (CORREGIDO)
 -- =========================================================================
 
 BEGIN;
@@ -106,19 +106,31 @@ INSERT INTO CATALOGO_PRECIOS_PROVEEDORES (id_proveedor, id_repuesto, precio)
 SELECT
     floor(random() * 5 + 1)::int,
     floor(random() * 10 + 1)::int,
-    (floor(random() * 500000 + 50000)::numeric)
+    (floor(random() * 500000 + 50000))::numeric
 FROM generate_series(1, 30) s(i)
 ON CONFLICT (id_proveedor, id_repuesto) DO NOTHING;
 
-INSERT INTO ORDENES_MANTENIMIENTO (id_ticket, id_usuario_tecnico, diagnostico, fecha_inicio, fecha_fin, checklist_seguridad)
+INSERT INTO ORDENES_MANTENIMIENTO (
+    id_ticket,
+    id_usuario_tecnico,
+    diagnostico,
+    fecha_inicio,
+    fecha_fin,
+    checklist_seguridad
+)
 SELECT
     i,
     floor(random() * 3 + 2)::int,
     'Diagnóstico técnico y reparación completada.',
-    CURRENT_TIMESTAMP - (random() * interval '10 days'),
-    CURRENT_TIMESTAMP - (random() * interval '5 days'),
+    fecha_inicio,
+    fecha_inicio + (random() * interval '5 days'),
     TRUE
-FROM generate_series(1, 20) s(i);
+FROM (
+    SELECT
+        i,
+        CURRENT_TIMESTAMP - (random() * interval '10 days') AS fecha_inicio
+    FROM generate_series(1,20) s(i)
+) t;
 
 INSERT INTO CONSUMO_REPUESTOS (id_orden, id_repuesto, cantidad_usada)
 SELECT
