@@ -1,9 +1,12 @@
-import db from '../config/db.js';
+import { supabase } from '../lib/supabase.js';
 
 class AssetModel {
     async findAll() {
-        const { rows } = await db.query('SELECT * FROM activos ORDER BY id_activo');
-        return rows;
+        const { data, error } = await supabase.from('activos').select('*').order('id_activo', { ascending: true });
+        if (error) {
+            throw error;
+        }
+        return data;
     }
 
     async create(payload) {
@@ -19,27 +22,27 @@ class AssetModel {
             id_proveedor
         } = payload;
 
-        const sql = `
-            INSERT INTO activos (
-                serial, modelo, fecha_compra, vida_util, nivel_criticidad,
-                especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-            RETURNING *
-        `;
+        const { data, error } = await supabase
+            .from('activos')
+            .insert({
+                serial,
+                modelo,
+                fecha_compra,
+                vida_util,
+                nivel_criticidad: nivel_criticidad || 'Media',
+                especificaciones_electricas,
+                id_ubicacion,
+                id_categoria,
+                id_proveedor
+            })
+            .select('*')
+            .single();
 
-        const { rows } = await db.query(sql, [
-            serial,
-            modelo,
-            fecha_compra,
-            vida_util,
-            nivel_criticidad || 'Media',
-            especificaciones_electricas,
-            id_ubicacion,
-            id_categoria,
-            id_proveedor
-        ]);
+        if (error) {
+            throw error;
+        }
 
-        return rows[0];
+        return data;
     }
 }
 

@@ -1,31 +1,39 @@
-# SIGAM-backend
+# SIGAM Backend
 
-Backend SIGAM con **Express + PostgreSQL**, estructura en capas y enfoque de **programación orientada a objetos** (Models, Services, Controllers).
+Backend de J-AXON (SIGAM), un sistema para gestion de activos TI, tickets de soporte y mantenimiento.
+
+Tecnologias principales:
+- Node.js
+- Express
+- Supabase (PostgreSQL + API)
+
+## Requisitos
+- Node.js 20+
+- pnpm 10+
 
 ## Variables de entorno
-
-Configura un archivo `.env` con:
+Crea un archivo `.env` en la raiz usando esta plantilla exacta:
 
 ```env
 PORT=4000
-JWT_SECRET=tu_secreto_jwt
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=sigam
-DB_SSL=false
+JWT_SECRET=coloca_un_secreto_largo
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_...
 ```
 
-## Scripts SQL separados
+Reglas importantes:
+- Usa solo `SUPABASE_URL` y `SUPABASE_ANON_KEY` para la conexion de datos del backend.
+- No uses `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_KEY` en este proyecto.
+- No subir `.env` al repositorio (ya esta ignorado en `.gitignore`).
+- No pegar claves en commits, issues o pull requests.
 
-1. `sql/00_migration_add_password.sql` → agrega `password_hash` en tablas existentes.
-2. `sql/01_schema.sql` → crea el esquema completo.
-3. `sql/02_seed_data.sql` → carga datos de prueba.
-4. `sql/03_views.sql` → crea vistas de operación.
-5. `sql/04_triggers.sql` → crea funciones y disparadores.
+## Instalacion
+```bash
+pnpm install
+```
 
-### Orden recomendado (ambiente nuevo)
+## Base de datos
+Para una base nueva (en SQL editor/psql):
 
 ```sql
 \i sql/01_schema.sql
@@ -34,33 +42,19 @@ DB_SSL=false
 \i sql/02_seed_data.sql
 ```
 
-### Orden recomendado (ambiente existente)
+Si la base ya existe, aplica migraciones antes de vistas/triggers:
 
 ```sql
 \i sql/00_migration_add_password.sql
+\i sql/05_migration_db_foundations.sql
 \i sql/03_views.sql
 \i sql/04_triggers.sql
 ```
 
-## Endpoints base
-
-- `GET /health`
-- `POST /api/auth/login`
-- `GET /api/auth/admin-panel`
-- `GET /api/auth/configuracion`
-- `GET /api/auth/perfil`
-- `GET /api/users`
-- `POST /api/users`
-- `GET /api/assets`
-- `POST /api/assets`
-- `GET /api/tickets`
-- `POST /api/tickets`
-- `GET /api/maintenance`
-- `POST /api/maintenance`
-
 ## Ejecutar
-
 ```bash
-npm install
-npm run dev
+pnpm dev
 ```
+
+## Healthcheck
+- `GET /health` debe responder `200`.

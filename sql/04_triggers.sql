@@ -20,7 +20,52 @@ BEFORE INSERT OR UPDATE OF password_hash ON USUARIOS
 FOR EACH ROW
 EXECUTE FUNCTION fn_validar_password_hash();
 
--- 2) Controlar regla de asignación de licencias
+-- 2) Generar código QR de activo automáticamente
+CREATE OR REPLACE FUNCTION fn_generar_codigo_qr_activo()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.codigo_qr IS NULL OR length(trim(NEW.codigo_qr)) = 0 THEN
+        NEW.codigo_qr := 'QR-' || NEW.serial;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_generar_codigo_qr_activo ON ACTIVOS;
+CREATE TRIGGER trg_generar_codigo_qr_activo
+BEFORE INSERT OR UPDATE OF serial, codigo_qr ON ACTIVOS
+FOR EACH ROW
+EXECUTE FUNCTION fn_generar_codigo_qr_activo();
+
+-- 3) Registrar historial automático al cambiar estado de activo
+CREATE OR REPLACE FUNCTION fn_historial_cambio_estado_activo()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.estado_activo IS DISTINCT FROM OLD.estado_activo THEN
+        INSERT INTO HISTORIAL_ACTIVOS (id_activo, tipo_evento, detalle)
+        VALUES (
+            NEW.id_activo,
+            'Cambio de estado',
+            'Estado actualizado de "' ||
+            CASE WHEN OLD.estado_activo THEN 'Activo' ELSE 'Inactivo' END ||
+            '" a "' ||
+            CASE WHEN NEW.estado_activo THEN 'Activo' ELSE 'Inactivo' END ||
+            '"'
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_historial_cambio_estado_activo ON ACTIVOS;
+CREATE TRIGGER trg_historial_cambio_estado_activo
+AFTER UPDATE OF estado_activo ON ACTIVOS
+FOR EACH ROW
+EXECUTE FUNCTION fn_historial_cambio_estado_activo();
+
+-- 4) Controlar regla de asignación de licencias
 CREATE OR REPLACE FUNCTION fn_validar_asignacion_licencias()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -58,7 +103,7 @@ BEFORE INSERT OR UPDATE ON ASIGNACION_LICENCIAS
 FOR EACH ROW
 EXECUTE FUNCTION fn_validar_asignacion_licencias();
 
--- 3) Descontar stock al registrar consumo y crear alerta por stock bajo
+-- 5) Descontar stock al registrar consumo y crear alerta por stock bajo
 CREATE OR REPLACE FUNCTION fn_consumo_repuesto_descontar_stock()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -103,7 +148,7 @@ AFTER INSERT ON CONSUMO_REPUESTOS
 FOR EACH ROW
 EXECUTE FUNCTION fn_consumo_repuesto_descontar_stock();
 
--- 4) Registrar baja de activo en historial y generar alerta
+-- 6) Registrar baja de activo en historial y generar alerta
 CREATE OR REPLACE FUNCTION fn_registrar_baja_activo()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -123,7 +168,7 @@ AFTER INSERT ON BAJAS_ACTIVOS
 FOR EACH ROW
 EXECUTE FUNCTION fn_registrar_baja_activo();
 
--- 5) Sincronizar estado del ticket según el avance de la orden
+-- 7) Sincronizar estado del ticket según el avance de la orden
 CREATE OR REPLACE FUNCTION fn_sincronizar_estado_ticket()
 RETURNS TRIGGER AS $$
 BEGIN

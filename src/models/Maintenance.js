@@ -1,29 +1,36 @@
-import db from '../config/db.js';
+import { supabase } from '../lib/supabase.js';
 
 class MaintenanceModel {
     async findAll() {
-        const { rows } = await db.query('SELECT * FROM ordenes_mantenimiento ORDER BY id_orden DESC');
-        return rows;
+        const { data, error } = await supabase
+            .from('ordenes_mantenimiento')
+            .select('*')
+            .order('id_orden', { ascending: false });
+        if (error) {
+            throw error;
+        }
+        return data;
     }
 
     async create({ id_ticket, id_usuario_tecnico, diagnostico, fecha_inicio, fecha_fin, checklist_seguridad }) {
-        const sql = `
-            INSERT INTO ordenes_mantenimiento (
-                id_ticket, id_usuario_tecnico, diagnostico, fecha_inicio, fecha_fin, checklist_seguridad
-            ) VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
-        `;
+        const { data, error } = await supabase
+            .from('ordenes_mantenimiento')
+            .insert({
+                id_ticket,
+                id_usuario_tecnico,
+                diagnostico,
+                fecha_inicio: fecha_inicio || null,
+                fecha_fin: fecha_fin || null,
+                checklist_seguridad: checklist_seguridad ?? false
+            })
+            .select('*')
+            .single();
 
-        const { rows } = await db.query(sql, [
-            id_ticket,
-            id_usuario_tecnico,
-            diagnostico,
-            fecha_inicio || null,
-            fecha_fin || null,
-            checklist_seguridad ?? false
-        ]);
+        if (error) {
+            throw error;
+        }
 
-        return rows[0];
+        return data;
     }
 }
 
