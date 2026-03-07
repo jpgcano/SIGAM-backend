@@ -7,39 +7,50 @@ import roleMiddleware from '../middlewares/role.middleware.js';
 import { validateRequired } from '../middlewares/validate.middleware.js';
 
 const router = express.Router();
+const assetController = new AssetController(new AssetService(new AssetModel()));
 
-const assetController = new AssetController(
-    new AssetService(new AssetModel())
-);
-
-// Obtener todos los activos
-router.get(
-    '/',
+// GET /activos — listar todos (con detalle de vista)
+router.get('/',
     authMiddleware,
     roleMiddleware(['Analista', 'Técnico', 'Gerente']),
     assetController.getAll
 );
 
-// Crear activo
-router.post(
-    '/',
+// GET /activos/:id — obtener uno
+router.get('/:id',
+    authMiddleware,
+    roleMiddleware(['Analista', 'Técnico', 'Gerente']),
+    assetController.getById
+);
+
+// GET /activos/:id/historial — hoja de vida del activo
+router.get('/:id/historial',
+    authMiddleware,
+    roleMiddleware(['Analista', 'Técnico', 'Gerente', 'Auditor']),
+    assetController.getHistory
+);
+
+// POST /activos — crear activo
+router.post('/',
     authMiddleware,
     roleMiddleware(['Analista', 'Gerente']),
     validateRequired(['serial', 'fecha_compra', 'vida_util']),
     assetController.create
 );
 
-// Rutas adicionales por rol
-router.get('/admin-panel', authMiddleware, roleMiddleware(['Gerente']), (req, res) => {
-    res.json({ msg: 'Bienvenido, Gerente' });
-});
+// PUT /activos/:id — actualizar activo
+router.put('/:id',
+    authMiddleware,
+    roleMiddleware(['Analista', 'Gerente']),
+    assetController.update
+);
 
-router.get('/configuracion', authMiddleware, roleMiddleware(['Técnico', 'Gerente']), (req, res) => {
-    res.json({ msg: 'Acceso a configuración técnica' });
-});
-
-router.get('/perfil', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'Gerente', 'Usuario']), (req, res) => {
-    res.json({ msg: 'Tu perfil de usuario' });
-});
+// DELETE /activos/:id — baja segura (ISO 27001)
+router.delete('/:id',
+    authMiddleware,
+    roleMiddleware(['Gerente']),
+    validateRequired(['motivo_baja', 'certificado_borrado']),
+    assetController.remove
+);
 
 export default router;
