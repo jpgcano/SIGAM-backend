@@ -4,13 +4,26 @@ import TicketService from '../services/ticket.service.js';
 import TicketModel from '../models/Ticket.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
 import roleMiddleware from '../middlewares/role.middleware.js';
-import { validateRequired } from '../middlewares/validate.middleware.js';
 
 const router = express.Router();
+const ctrl = new TicketController(new TicketService(new TicketModel()));
 
-const ticketController = new TicketController(new TicketService(new TicketModel()));
+// GET /tickets
+router.get('/', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'Gerente']), ctrl.getAll);
 
-router.get('/', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'Gerente']), ticketController.getAll);
-router.post('/', authMiddleware, validateRequired(['id_activo', 'id_usuario_reporta', 'descripcion']), ticketController.create);
+// GET /tickets/:id
+router.get('/:id', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'Gerente']), ctrl.getById);
+
+// GET /tickets/activo/:id_activo — tickets de un activo específico
+router.get('/activo/:id_activo', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'Gerente']), ctrl.getByActivo);
+
+// POST /tickets — crear ticket (HU-05)
+router.post('/', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'Gerente', 'Usuario']), ctrl.create);
+
+// PUT /tickets/:id — actualizar estado/prioridad (HU-06)
+router.put('/:id', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'Gerente']), ctrl.update);
+
+// DELETE /tickets/:id
+router.delete('/:id', authMiddleware, roleMiddleware(['Gerente']), ctrl.remove);
 
 export default router;
