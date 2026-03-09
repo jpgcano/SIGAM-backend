@@ -234,3 +234,24 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `node --check` OK en `src/models/Ticket.js`, `src/services/ticket.service.js`, `src/controllers/ticket.controller.js`, `src/routes/ticket.routes.js`.
 - Commit(s):
   - N/A - pendiente de commit por el equipo.
+
+### 2026-03-09 - IA: Codex GPT-5
+- Issue: Middleware `verifyToken` + `checkRole` y proteccion de rutas criticas
+- Rama: feature/jainer
+- Objetivo: estandarizar middlewares de autenticacion/autorizacion y asegurar rechazo por rol inadecuado.
+- Resultado de revision:
+  - Las rutas criticas ya estaban protegidas con autenticacion + rol (excepto `POST /api/auth/login`, que es publica por diseño).
+- Cambios:
+  - `src/middlewares/verifyToken.middleware.js`
+    - middleware dedicado para validar JWT y poblar `req.user`.
+  - `src/middlewares/checkRole.middleware.js`
+    - middleware dedicado para autorizacion por roles permitidos.
+  - `src/middlewares/auth.middleware.js`
+    - refactor a alias de compatibilidad que exporta `verifyToken`.
+  - `src/middlewares/role.middleware.js`
+    - refactor a alias de compatibilidad que exporta `checkRole`.
+- Evidencia:
+  - `node --check` OK en `verifyToken.middleware.js`, `checkRole.middleware.js`, `auth.middleware.js`, `role.middleware.js`.
+  - prueba rapida de autorizacion: `checkRole(['Gerente'])` con usuario rol `Usuario` retorna `403` y no ejecuta `next()`.
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.
