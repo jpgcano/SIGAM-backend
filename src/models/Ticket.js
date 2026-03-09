@@ -1,6 +1,16 @@
 import db from '../config/db.js';
 
 const useSupabase = (process.env.DB_MODE || 'postgres').toLowerCase() === 'supabase';
+const OPEN_TICKET_STATES = ['Abierto', 'Asignado', 'En Proceso'];
+const SUPPORT_ROLES = new Set(['tecnico', 'soporte']);
+
+function normalizeRole(rol) {
+    return String(rol || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
 
 class TicketModel {
     async findAll() {
@@ -51,22 +61,118 @@ class TicketModel {
         return rows;
     }
 
+    async findSupportTechnicianWithLeastLoad() {
+        if (useSupabase) {
+            const { data: users, error: usersError } = await db.supabase
+                .from('usuarios')
+                .select('id_usuario, nombre, rol');
+            if (usersError) throw usersError;
+
+            const technicians = (users || []).filter((u) => SUPPORT_ROLES.has(normalizeRole(u.rol)));
+            if (!technicians.length) return null;
+
+            const techIds = technicians.map((t) => t.id_usuario);
+            const { data: maintRows, error: maintError } = await db.supabase
+                .from('ordenes_mantenimiento')
+                .select('id_usuario_tecnico, tickets(estado)')
+                .in('id_usuario_tecnico', techIds);
+            if (maintError) throw maintError;
+
+            const loadByTech = new Map(techIds.map((id) => [id, 0]));
+            for (const row of maintRows || []) {
+                const state = row?.tickets?.estado;
+                if (OPEN_TICKET_STATES.includes(state)) {
+                    const current = loadByTech.get(row.id_usuario_tecnico) || 0;
+                    loadByTech.set(row.id_usuario_tecnico, current + 1);
+                }
+            }
+
+            const selected = [...technicians].sort((a, b) => {
+                const loadDiff = (loadByTech.get(a.id_usuario) || 0) - (loadByTech.get(b.id_usuario) || 0);
+                if (loadDiff !== 0) return loadDiff;
+                return a.id_usuario - b.id_usuario;
+            })[0];
+
+            return {
+                id_usuario: selected.id_usuario,
+                nombre: selected.nombre,
+                carga_abierta: loadByTech.get(selected.id_usuario) || 0
+            };
+        }
+
+        const { rows } = await db.query(
+            `SELECT
+                u.id_usuario,
+                u.nombre,
+                COUNT(t.id_ticket) AS carga_abierta
+             FROM usuarios u
+             LEFT JOIN ordenes_mantenimiento om ON om.id_usuario_tecnico = u.id_usuario
+             LEFT JOIN tickets t
+                ON t.id_ticket = om.id_ticket
+               AND t.estado IN ('Abierto', 'Asignado', 'En Proceso')
+             WHERE lower(translate(u.rol, 'ÁÉÍÓÚáéíóú', 'AEIOUaeiou')) IN ('tecnico', 'soporte')
+             GROUP BY u.id_usuario, u.nombre
+             ORDER BY COUNT(t.id_ticket) ASC, u.id_usuario ASC
+             LIMIT 1`
+        );
+
+        if (!rows.length) return null;
+        return rows[0];
+    }
+
     async create({ id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp }) {
+        const tecnico = await this.findSupportTechnicianWithLeastLoad();
+        if (!tecnico) {
+            throw { status: 409, message: 'No hay técnicos de soporte disponibles para asignar el ticket' };
+        }
+
         if (useSupabase) {
             const { data, error } = await db.supabase
                 .from('tickets')
-                .insert({ id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp })
+                .insert({
+                    id_activo,
+                    id_usuario_reporta,
+                    descripcion,
+                    prioridad_ia,
+                    clasificacion_nlp,
+                    estado: 'Asignado'
+                })
                 .select('*')
                 .single();
             if (error) throw error;
-            return data;
+
+            const { error: assignError } = await db.supabase
+                .from('ordenes_mantenimiento')
+                .insert({
+                    id_ticket: data.id_ticket,
+                    id_usuario_tecnico: tecnico.id_usuario
+                });
+            if (assignError) throw assignError;
+
+            return {
+                ...data,
+                id_usuario_tecnico: tecnico.id_usuario,
+                tecnico_asignado: tecnico.nombre
+            };
         }
         const { rows } = await db.query(
-            `INSERT INTO tickets (id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp)
-             VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+            `INSERT INTO tickets (id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp, estado)
+             VALUES ($1,$2,$3,$4,$5,'Asignado') RETURNING *`,
             [id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp]
         );
-        return rows[0];
+        const ticket = rows[0];
+
+        await db.query(
+            `INSERT INTO ordenes_mantenimiento (id_ticket, id_usuario_tecnico)
+             VALUES ($1, $2)`,
+            [ticket.id_ticket, tecnico.id_usuario]
+        );
+
+        return {
+            ...ticket,
+            id_usuario_tecnico: tecnico.id_usuario,
+            tecnico_asignado: tecnico.nombre
+        };
     }
 
     async update(id, { prioridad_ia, clasificacion_nlp, estado }) {
