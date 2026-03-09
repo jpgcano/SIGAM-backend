@@ -1,0 +1,941 @@
+{
+  "info": {
+    "_postman_id": "29615e5c-b060-4d1a-a34c-7c360494b070",
+    "name": "SIGAM - J-AXON API",
+    "description": "Colección completa de endpoints para el sistema SIGAM. Base URL: [http://localhost:4000/api](http://localhost:4000/api)\n\nFlujo recomendado:\n\n1. POST /auth/login → copiar token\n    \n2. Usar token en Authorization: Bearer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52588757",
+    "_collection_link": "https://go.postman.co/collection/52588757-29615e5c-b060-4d1a-a34c-7c360494b070?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@sigam.com\",\n  \"password\": \"Admin1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Analista\",\n  \"email\": \"analista@sigam.com\",\n  \"password\": \"Password1\",\n  \"rol\": \"Analista\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📍 Ubicaciones",
+      "item": [
+        {
+          "name": "GET Todas las ubicaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ubicaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Ubicacion por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ubicaciones/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicaciones",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Ubicacion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sede\": \"Sede Principal Riwi\",\n  \"piso\": \"Piso 2\",\n  \"sala\": \"Sala de Desarrollo\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ubicaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Ubicacion",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sala\": \"Sala de QA\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ubicaciones/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicaciones",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Eliminar Ubicacion",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ubicaciones/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ubicaciones",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🏢 Proveedores",
+      "item": [
+        {
+          "name": "GET Todos los proveedores",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Proveedor por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Proveedor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"TechSupply SAS\",\n  \"contacto\": \"ventas@techsupply.co\",\n  \"identificacion_legal\": \"900123456-1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/proveedores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Proveedor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contacto\": \"soporte@techsupply.co\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/proveedores/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Eliminar Proveedor",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/proveedores/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "proveedores",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💻 Activos (HU-01)",
+      "item": [
+        {
+          "name": "GET Todos los activos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "activos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Activo por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "activos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Historial (Hoja de vida) - HU-10",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activos/1/historial",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "activos",
+                "1",
+                "historial"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Activo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serial\": \"MON-2024-001\",\n  \"modelo\": \"Dell UltraSharp 24\",\n  \"fecha_compra\": \"2024-01-15\",\n  \"vida_util\": 48,\n  \"nivel_criticidad\": \"Alta\",\n  \"especificaciones_electricas\": \"110V / 60Hz / 1.5A (NTC 2050)\",\n  \"id_ubicacion\": 1,\n  \"id_categoria\": 1,\n  \"id_proveedor\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/activos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "activos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Activo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nivel_criticidad\": \"Crítica\",\n  \"id_ubicacion\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/activos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "activos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Baja Segura Activo (ISO 27001) - HU-10",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo_baja\": \"Equipo obsoleto - superó vida útil de 48 meses\",\n  \"certificado_borrado\": \"CERT-ISO27001-2024-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/activos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "activos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔩 Repuestos (HU-08 / HU-09)",
+      "item": [
+        {
+          "name": "GET Todos los repuestos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/repuestos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "repuestos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Repuestos bajo stock ⚠️",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/repuestos/bajo-stock",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "repuestos",
+                "bajo-stock"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Repuesto por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/repuestos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "repuestos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Repuesto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Fuente de Poder 12V\",\n  \"stock\": 10,\n  \"stock_minimo\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/repuestos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "repuestos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Repuesto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 15,\n  \"stock_minimo\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/repuestos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "repuestos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Eliminar Repuesto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/repuestos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "repuestos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📦 Licencias (HU-03)",
+      "item": [
+        {
+          "name": "GET Todas las licencias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/licencias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Licencia por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/licencias/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Asignaciones de licencia",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/licencias/1/asignaciones",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias",
+                "1",
+                "asignaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Licencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_software\": 1,\n  \"clave_producto\": \"XXXX-YYYY-ZZZZ-WWWW\",\n  \"fecha_expiracion\": \"2025-12-31\",\n  \"asientos_totales\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/licencias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Asignar Licencia a Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_licencia\": 1,\n  \"id_usuario\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/licencias/asignar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias",
+                "asignar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Asignar Licencia a Activo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_licencia\": 1,\n  \"id_activo\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/licencias/asignar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias",
+                "asignar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Licencia",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha_expiracion\": \"2026-12-31\",\n  \"asientos_totales\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/licencias/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Revocar Asignacion",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/licencias/asignacion/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias",
+                "asignacion",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Eliminar Licencia",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/licencias/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "licencias",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000/api"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
