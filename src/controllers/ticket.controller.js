@@ -1,7 +1,7 @@
 class TicketController {
     constructor(service) {
         this.service = service;
-        ['getAll','getById','getByActivo','create','update','remove']
+        ['getAll','getById','getByActivo','getAssigned','create','update','changeEstado','remove']
             .forEach(m => this[m] = this[m].bind(this));
     }
     async getAll(req, res, next) {
@@ -13,11 +13,17 @@ class TicketController {
     async getByActivo(req, res, next) {
         try { res.json(await this.service.findByActivo(req.params.id_activo)); } catch (e) { next(e); }
     }
+    async getAssigned(req, res, next) {
+        try { res.json(await this.service.findAssignedByTecnico(req.user.id)); } catch (e) { next(e); }
+    }
     async create(req, res, next) {
         try { res.status(201).json(await this.service.create(req.body)); } catch (e) { next(e); }
     }
     async update(req, res, next) {
-        try { res.json(await this.service.update(req.params.id, req.body)); } catch (e) { next(e); }
+        try { res.json(await this.service.update(req.params.id, req.body, req.user)); } catch (e) { next(e); }
+    }
+    async changeEstado(req, res, next) {
+        try { res.json(await this.service.changeEstado(req.params.id, req.body?.estado, req.user)); } catch (e) { next(e); }
     }
     async remove(req, res, next) {
         try {

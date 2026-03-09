@@ -204,3 +204,33 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - ajuste aplicado al middleware global de errores.
 - Commit(s):
   - N/A - pendiente de commit por el equipo.
+
+### 2026-03-09 - IA: Codex GPT-5
+- Issue: Listado tickets asignados + cambio de estado + vista detalle
+- Rama: developer
+- Objetivo: validar implementacion de la HU y completar faltantes con regla de negocio para técnicos.
+- Resultado de revision:
+  - `Vista detalle`: implementada en `GET /api/tickets/:id`.
+  - `Cambio de estado`: existia via `PUT /api/tickets/:id`, pero sin validacion especifica para cierre por técnico asignado.
+  - `Listado tickets asignados`: no existia endpoint para técnico autenticado.
+- Cambios:
+  - `src/routes/ticket.routes.js`
+    - agregado `GET /api/tickets/asignados/mis` (rol `Técnico`).
+    - agregado `PATCH /api/tickets/:id/estado` para cambio de estado validado.
+    - reordenadas rutas para evitar colision de rutas dinamicas con rutas especificas.
+  - `src/controllers/ticket.controller.js`
+    - agregados `getAssigned` y `changeEstado`.
+    - `update` ahora propaga `req.user` al service para validar reglas de estado.
+  - `src/services/ticket.service.js`
+    - validacion de estados permitidos (`Abierto`, `Asignado`, `En Proceso`, `Resuelto`, `Cerrado`).
+    - regla: si un `Técnico` cambia a `Cerrado`, el ticket debe estar asignado al técnico autenticado.
+    - endurecimiento de `update` para que no se evada la regla de cierre.
+  - `src/models/Ticket.js`
+    - agregado `findAssignedByTecnico(id_tecnico)`.
+    - agregado `updateEstado(id, estado)`.
+    - agregado `isAssignedToTecnico(id_ticket, id_tecnico)`.
+- Decisiones tecnicas: mantener `PUT /tickets/:id` por compatibilidad y añadir `PATCH /tickets/:id/estado` como contrato explicito para cambios de estado.
+- Evidencia:
+  - `node --check` OK en `src/models/Ticket.js`, `src/services/ticket.service.js`, `src/controllers/ticket.controller.js`, `src/routes/ticket.routes.js`.
+- Commit(s):
+  - N/A - pendiente de commit por el equipo.
