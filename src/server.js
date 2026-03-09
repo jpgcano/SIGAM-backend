@@ -2,16 +2,15 @@ import 'dotenv/config';
 
 import app from './app.js';
 import EnvConfig from './config/env.js';
-import { testSupabaseConnection } from './lib/supabase.js';
-import { getErrorCode, getErrorMessage } from './utils/error.util.js';
+import db from './config/db.js';
 
 const PORT = process.env.PORT || 4000;
 
 async function start() {
     try {
         EnvConfig.validate();
-        await testSupabaseConnection();
-        console.log('Backend conectado a la API de Supabase');
+        await db.testConnection();
+        console.log('Backend conectado a la base de datos');
 
         app.listen(PORT, () => {
             console.log(`Servidor corriendo en: http://localhost:${PORT}`);
