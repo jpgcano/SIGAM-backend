@@ -34,9 +34,10 @@ class TicketService {
 
     findAll() { return this.model.findAll(); }
 
-    async findById(id) {
+    async findById(id, user) {
         const t = await this.model.findById(id);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
+        await this.ensureAccess(id, user);
         return t;
     }
 
@@ -58,6 +59,7 @@ class TicketService {
     }
 
     async update(id, payload, user) {
+        await this.ensureAccess(id, user);
         if (payload?.estado !== undefined) {
             await this.changeEstado(id, payload.estado, user, payload?.consumos);
             const updateData = { ...payload };
@@ -82,6 +84,8 @@ class TicketService {
         if (!TicketService.ESTADOS_VALIDOS.has(estado)) {
             throw { status: 400, message: `estado inválido: ${estado}` };
         }
+
+        await this.ensureAccess(id, user);
 
         // Regla de negocio: un técnico solo puede cerrar tickets asignados a él.
         if (user?.role === 'Técnico' && estado === 'Cerrado') {
@@ -113,6 +117,24 @@ class TicketService {
         const t = await this.model.remove(id);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
         return t;
+    }
+
+    async ensureAccess(id, user) {
+        if (!user?.role) return;
+        if (user.role === 'Gerente' || user.role === 'Analista') return;
+        if (user.role === 'Técnico') {
+            const assigned = await this.model.isAssignedToTecnico(id, user.id);
+            if (!assigned) {
+                throw { status: 403, message: 'El ticket no está asignado a este técnico' };
+            }
+            return;
+        }
+        if (user.role === 'Usuario') {
+            const reported = await this.model.isReportedByUser(id, user.id);
+            if (!reported) {
+                throw { status: 403, message: 'El ticket no pertenece al usuario' };
+            }
+        }
     }
 
     async getMetrics({ id_activo } = {}) {

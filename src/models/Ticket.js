@@ -222,6 +222,28 @@ class TicketModel {
         return rows[0] || null;
     }
 
+    async isReportedByUser(id_ticket, id_usuario) {
+        if (useSupabase) {
+            const { data, error } = await db.supabase
+                .from('tickets')
+                .select('id_ticket')
+                .eq('id_ticket', id_ticket)
+                .eq('id_usuario_reporta', id_usuario)
+                .limit(1);
+            if (error) throw error;
+            return Array.isArray(data) && data.length > 0;
+        }
+        const { rows } = await db.query(
+            `SELECT 1
+             FROM tickets
+             WHERE id_ticket = $1
+               AND id_usuario_reporta = $2
+             LIMIT 1`,
+            [id_ticket, id_usuario]
+        );
+        return rows.length > 0;
+    }
+
     async closeWithConsumos(id_ticket, consumos) {
         if (!Array.isArray(consumos) || consumos.length === 0) {
             throw { status: 400, message: 'consumos es requerido' };
