@@ -5,12 +5,21 @@ import UserModel from '../models/User.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
 import roleMiddleware from '../middlewares/role.middleware.js';
 import { validateRequired } from '../middlewares/validate.middleware.js';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
 
 const authController = new AuthController(new AuthService(new UserModel()));
 
-router.post('/login', validateRequired(['email', 'password']), authController.login);
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+router.post('/register', validateRequired(['nombre', 'email', 'password', 'rol']), authController.register);
+router.post('/login', loginLimiter, validateRequired(['email', 'password']), authController.login);
 
 router.get('/admin-panel', authMiddleware, roleMiddleware(['Gerente']), (req, res) => {
     res.json({ msg: 'Bienvenido, Gerente' });

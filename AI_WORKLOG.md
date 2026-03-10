@@ -255,3 +255,68 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - prueba rapida de autorizacion: `checkRole(['Gerente'])` con usuario rol `Usuario` retorna `403` y no ejecuta `next()`.
 - Commit(s):
   - N/A - pendiente de commit por el equipo.
+
+### 2026-03-10 - IA: Codex GPT-5
+- Issue: Transaccion SQL consumo + estado ticket + stock
+- Rama: feature/jainer3
+- Objetivo: registrar consumo de repuesto con actualizacion de estado de ticket y control de stock en una sola operacion.
+- Cambios:
+  - `src/models/Maintenance.js` - consumo ahora usa funcion SQL transaccional.
+  - `src/services/maintenance.service.js` - valida estado_ticket y cantidad; default a En Proceso.
+  - `sql/06_migration_ticket_consumo_tx.sql` - funcion SQL para consumo/estado + validacion de constraints.
+  - `README.md` - orden de scripts actualizado para incluir la migracion nueva.
+- Decisiones tecnicas: encapsular la operacion critica en funcion SQL atomica y mantener el descuento por trigger para evitar stock negativo.
+- Pendiente: N/A
+- Riesgos/Bloqueos: si la funcion no se despliega en la BD, el endpoint fallara hasta aplicar la migracion.
+- Evidencia:
+  - revision manual de cambios.
+- Commit(s):
+  - N/A
+
+### 2026-03-10 - IA: Codex GPT-5
+- Issue: Configurar variables entorno para PostgreSQL produccion
+- Rama: feature/jainer3
+- Objetivo: dejar plantilla y ejemplo de entorno listos para conexion a Postgres en produccion.
+- Cambios:
+  - `.env` - variables actualizadas para Postgres de produccion con SSL.
+  - `.env.example` - plantilla limpia para Postgres de produccion.
+  - `README.md` - seccion de entorno actualizada a Postgres de produccion.
+- Decisiones tecnicas: priorizar `DB_MODE=postgres` y `DB_SSL=true` para compatibilidad con servicios gestionados.
+- Pendiente: reemplazar placeholders por credenciales reales en el entorno de despliegue.
+- Riesgos/Bloqueos: si no se cargan credenciales reales, la API no inicia por validacion de entorno.
+- Evidencia:
+  - revision manual de cambios.
+- Commit(s):
+  - N/A
+
+### 2026-03-10 - IA: Codex GPT-5
+- Issue: Auditoria OWASP / ESLint security scan
+- Rama: feature/security-eslint-audit
+- Objetivo: generar analisis automatizado con eslint-plugin-security y guardar reporte.
+- Cambios:
+  - `eslint.config.js` - configuracion base de ESLint con reglas de seguridad.
+  - `reports/eslint-security.json` - salida completa del lint.
+  - `reports/ESLINT_SECURITY_REPORT.md` - resumen y hallazgos.
+- Evidencia:
+  - comando: `pnpm exec eslint . -f json -o reports/eslint-security.json`.
+- Commit(s):
+  - N/A
+
+### 2026-03-10 - IA: Codex GPT-5
+- Issue: Hardening OWASP (A01, A05, A09) + re-scan ESLint
+- Rama: feature/security-eslint-audit
+- Objetivo: restringir superficie de ataque (ownership checks, sanitizacion 5xx, headers y rate limit).
+- Cambios:
+  - `src/services/ticket.service.js` - control de acceso por ownership para roles Tecnico/Usuario.
+  - `src/models/Ticket.js` - verificacion de ownership por usuario reporta.
+  - `src/controllers/ticket.controller.js` - pasa usuario al servicio en getById.
+  - `src/middlewares/error.middleware.js` - mensajes 5xx sanitizados.
+  - `src/app.js` - `helmet` agregado.
+  - `src/routes/auth.routes.js` - rate limit en login.
+  - `src/config/db.js` - restricciones DML y bloqueo multi-sentencia en SupabaseAdapter.
+  - `reports/eslint-security.json` y `reports/ESLINT_SECURITY_REPORT.md` actualizados.
+- Evidencia:
+  - `pnpm test` OK.
+  - `pnpm exec eslint . -f json -o reports/eslint-security.json`.
+- Commit(s):
+  - N/A

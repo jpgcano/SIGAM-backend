@@ -35,6 +35,21 @@ class PostgresAdapter {
         const result = await this.query('SELECT 1 AS ok, NOW() AS now');
         return result.rows[0];
     }
+
+    async transaction(callback) {
+        const client = await this.pool.connect();
+        try {
+            await client.query('BEGIN');
+            const result = await callback(client);
+            await client.query('COMMIT');
+            return result;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
 }
 
 // ─── Adaptador Supabase ─────────────────────────────────────────────────────
@@ -49,13 +64,19 @@ class SupabaseAdapter {
 
     async query(text, params = []) {
         let sql = text.trim();
+        if (!/^(SELECT|INSERT|UPDATE|DELETE|WITH)\b/i.test(sql)) {
+            throw new Error('Solo se permiten consultas SQL DML en modo Supabase');
+        }
+        if (sql.includes(';')) {
+            throw new Error('No se permite SQL multi-sentencia en modo Supabase');
+        }
         params.forEach((val, i) => {
             let escaped;
             if (val === null || val === undefined) escaped = 'NULL';
             else if (typeof val === 'string') escaped = `'${val.replace(/'/g, "''")}'`;
             else if (typeof val === 'boolean') escaped = val ? 'TRUE' : 'FALSE';
             else escaped = val;
-            sql = sql.replace(new RegExp(`\\$${i + 1}`, 'g'), String(escaped));
+            sql = sql.replace(new RegExp('\\$' + (i + 1), 'g'), String(escaped));
         });
 
         const { data, error } = await this.client.rpc('run_query', { query: sql });

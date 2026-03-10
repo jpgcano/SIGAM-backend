@@ -8,7 +8,7 @@ class TicketController {
         try { res.json(await this.service.findAll()); } catch (e) { next(e); }
     }
     async getById(req, res, next) {
-        try { res.json(await this.service.findById(req.params.id)); } catch (e) { next(e); }
+        try { res.json(await this.service.findById(req.params.id, req.user)); } catch (e) { next(e); }
     }
     async getByActivo(req, res, next) {
         try { res.json(await this.service.findByActivo(req.params.id_activo)); } catch (e) { next(e); }
@@ -37,7 +37,16 @@ class TicketController {
         try { res.json(await this.service.update(req.params.id, req.body, req.user)); } catch (e) { next(e); }
     }
     async changeEstado(req, res, next) {
-        try { res.json(await this.service.changeEstado(req.params.id, req.body?.estado, req.user)); } catch (e) { next(e); }
+        try {
+            res.json(
+                await this.service.changeEstado(
+                    req.params.id,
+                    req.body?.estado,
+                    req.user,
+                    req.body?.consumos
+                )
+            );
+        } catch (e) { next(e); }
     }
     async remove(req, res, next) {
         try {
