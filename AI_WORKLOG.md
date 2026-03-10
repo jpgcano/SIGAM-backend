@@ -272,3 +272,19 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - revision manual de cambios.
 - Commit(s):
   - N/A
+
+### 2026-03-10 - IA: Codex GPT-5
+- Issue: Configurar variables entorno para PostgreSQL produccion
+- Rama: feature/jainer3
+- Objetivo: dejar plantilla y ejemplo de entorno listos para conexion a Postgres en produccion.
+- Cambios:
+  - `.env` - variables actualizadas para Postgres de produccion con SSL.
+  - `.env.example` - plantilla limpia para Postgres de produccion.
+  - `README.md` - seccion de entorno actualizada a Postgres de produccion.
+- Decisiones tecnicas: priorizar `DB_MODE=postgres` y `DB_SSL=true` para compatibilidad con servicios gestionados.
+- Pendiente: reemplazar placeholders por credenciales reales en el entorno de despliegue.
+- Riesgos/Bloqueos: si no se cargan credenciales reales, la API no inicia por validacion de entorno.
+- Evidencia:
+  - revision manual de cambios.
+- Commit(s):
+  - N/A

@@ -30,9 +30,26 @@ class AssetModel {
         return rows[0] || null;
     }
 
+    async findBySerial(serial) {
+        if (useSupabase) {
+            const { data, error } = await db.supabase
+                .from('activos')
+                .select('id_activo, serial')
+                .eq('serial', serial)
+                .maybeSingle();
+            if (error) throw error;
+            return data || null;
+        }
+        const { rows } = await db.query(
+            'SELECT id_activo, serial FROM activos WHERE serial = $1',
+            [serial]
+        );
+        return rows[0] || null;
+    }
+
     async create(payload) {
         const {
-            serial, modelo, fecha_compra, vida_util,
+            serial, modelo, fecha_compra, vida_util, codigo_qr,
             nivel_criticidad, especificaciones_electricas,
             id_ubicacion, id_categoria, id_proveedor
         } = payload;
@@ -43,7 +60,7 @@ class AssetModel {
             const { data, error } = await db.supabase
                 .from('activos')
                 .insert({
-                    serial, modelo, fecha_compra, vida_util,
+                    serial, codigo_qr, modelo, fecha_compra, vida_util,
                     nivel_criticidad: nivel_criticidad || 'Media',
                     especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor
                 })
@@ -58,10 +75,10 @@ class AssetModel {
             });
         } else {
             const { rows } = await db.query(
-                `INSERT INTO activos (serial, modelo, fecha_compra, vida_util, nivel_criticidad,
+                `INSERT INTO activos (serial, codigo_qr, modelo, fecha_compra, vida_util, nivel_criticidad,
                     especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-                [serial, modelo, fecha_compra, vida_util, nivel_criticidad || 'Media',
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+                [serial, codigo_qr, modelo, fecha_compra, vida_util, nivel_criticidad || 'Media',
                 especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor]
             );
             activo = rows[0];
@@ -75,7 +92,7 @@ class AssetModel {
     }
 
     async update(id, payload) {
-        const { modelo, vida_util, nivel_criticidad, especificaciones_electricas,
+        const { modelo, vida_util, nivel_criticidad, especificaciones_electricas, estado_activo,
                 id_ubicacion, id_categoria, id_proveedor } = payload;
 
         if (useSupabase) {
@@ -84,6 +101,7 @@ class AssetModel {
             if (vida_util !== undefined) updateData.vida_util = vida_util;
             if (nivel_criticidad !== undefined) updateData.nivel_criticidad = nivel_criticidad;
             if (especificaciones_electricas !== undefined) updateData.especificaciones_electricas = especificaciones_electricas;
+            if (estado_activo !== undefined) updateData.estado_activo = estado_activo;
             if (id_ubicacion !== undefined) updateData.id_ubicacion = id_ubicacion;
             if (id_categoria !== undefined) updateData.id_categoria = id_categoria;
             if (id_proveedor !== undefined) updateData.id_proveedor = id_proveedor;
@@ -100,10 +118,11 @@ class AssetModel {
                 modelo = COALESCE($1, modelo), vida_util = COALESCE($2, vida_util),
                 nivel_criticidad = COALESCE($3, nivel_criticidad),
                 especificaciones_electricas = COALESCE($4, especificaciones_electricas),
-                id_ubicacion = COALESCE($5, id_ubicacion), id_categoria = COALESCE($6, id_categoria),
-                id_proveedor = COALESCE($7, id_proveedor)
-             WHERE id_activo = $8 RETURNING *`,
-            [modelo, vida_util, nivel_criticidad, especificaciones_electricas,
+                estado_activo = COALESCE($5, estado_activo),
+                id_ubicacion = COALESCE($6, id_ubicacion), id_categoria = COALESCE($7, id_categoria),
+                id_proveedor = COALESCE($8, id_proveedor)
+             WHERE id_activo = $9 RETURNING *`,
+            [modelo, vida_util, nivel_criticidad, especificaciones_electricas, estado_activo,
             id_ubicacion, id_categoria, id_proveedor, id]
         );
         return rows[0] || null;
@@ -142,6 +161,24 @@ class AssetModel {
             `SELECT * FROM historial_activos WHERE id_activo = $1 ORDER BY fecha_evento DESC`, [id]
         );
         return rows;
+    }
+
+    async addHistory(id_activo, tipo_evento, detalle) {
+        if (useSupabase) {
+            const { data, error } = await db.supabase
+                .from('historial_activos')
+                .insert({ id_activo, tipo_evento, detalle })
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        }
+        const { rows } = await db.query(
+            `INSERT INTO historial_activos (id_activo, tipo_evento, detalle)
+             VALUES ($1, $2, $3) RETURNING *`,
+            [id_activo, tipo_evento, detalle]
+        );
+        return rows[0];
     }
 }
 
