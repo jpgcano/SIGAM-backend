@@ -222,6 +222,86 @@ class TicketModel {
         return rows[0] || null;
     }
 
+    async closeWithConsumos(id_ticket, consumos) {
+        if (!Array.isArray(consumos) || consumos.length === 0) {
+            throw { status: 400, message: 'consumos es requerido' };
+        }
+
+        if (useSupabase) {
+            const values = [];
+            const params = [id_ticket];
+            consumos.forEach((item) => {
+                values.push(`($${params.length + 1}, $${params.length + 2})`);
+                params.push(item.id_repuesto, item.cantidad_usada);
+            });
+
+            const sql = `
+                WITH orden AS (
+                    SELECT id_orden FROM ordenes_mantenimiento WHERE id_ticket = $1
+                ),
+                ins AS (
+                    INSERT INTO consumo_repuestos (id_orden, id_repuesto, cantidad_usada)
+                    SELECT orden.id_orden, v.id_repuesto, v.cantidad_usada
+                    FROM orden
+                    JOIN (VALUES ${values.join(', ')}) AS v(id_repuesto, cantidad_usada) ON true
+                    RETURNING 1
+                ),
+                upd AS (
+                    UPDATE tickets
+                    SET estado = 'Cerrado'
+                    WHERE id_ticket = $1 AND EXISTS (SELECT 1 FROM orden)
+                    RETURNING *
+                )
+                SELECT
+                    (SELECT COUNT(*) FROM orden) AS orden_exists,
+                    (SELECT COUNT(*) FROM ins) AS inserted,
+                    (SELECT id_ticket FROM upd) AS id_ticket
+            `;
+
+            const { rows } = await db.query(sql, params);
+            const meta = rows?.[0];
+            if (!meta || Number(meta.orden_exists) === 0) {
+                throw { status: 404, message: `Orden no encontrada para ticket ${id_ticket}` };
+            }
+            if (!meta.id_ticket) {
+                throw { status: 404, message: `Ticket ${id_ticket} no encontrado` };
+            }
+            return this.findById(id_ticket);
+        }
+
+        if (typeof db.transaction !== 'function') {
+            throw { status: 500, message: 'Transacciones no soportadas en el adaptador actual' };
+        }
+
+        return db.transaction(async (client) => {
+            const order = await client.query(
+                'SELECT id_orden FROM ordenes_mantenimiento WHERE id_ticket = $1',
+                [id_ticket]
+            );
+            const id_orden = order.rows?.[0]?.id_orden;
+            if (!id_orden) {
+                throw { status: 404, message: `Orden no encontrada para ticket ${id_ticket}` };
+            }
+
+            for (const item of consumos) {
+                await client.query(
+                    `INSERT INTO consumo_repuestos (id_orden, id_repuesto, cantidad_usada)
+                     VALUES ($1,$2,$3)`,
+                    [id_orden, item.id_repuesto, item.cantidad_usada]
+                );
+            }
+
+            const updated = await client.query(
+                `UPDATE tickets SET estado = 'Cerrado' WHERE id_ticket = $1 RETURNING *`,
+                [id_ticket]
+            );
+            if (!updated.rows?.length) {
+                throw { status: 404, message: `Ticket ${id_ticket} no encontrado` };
+            }
+            return updated.rows[0];
+        });
+    }
+
     async isAssignedToTecnico(id_ticket, id_tecnico) {
         if (useSupabase) {
             const { data, error } = await db.supabase

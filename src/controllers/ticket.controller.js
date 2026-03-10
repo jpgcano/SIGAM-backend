@@ -23,7 +23,16 @@ class TicketController {
         try { res.json(await this.service.update(req.params.id, req.body, req.user)); } catch (e) { next(e); }
     }
     async changeEstado(req, res, next) {
-        try { res.json(await this.service.changeEstado(req.params.id, req.body?.estado, req.user)); } catch (e) { next(e); }
+        try {
+            res.json(
+                await this.service.changeEstado(
+                    req.params.id,
+                    req.body?.estado,
+                    req.user,
+                    req.body?.consumos
+                )
+            );
+        } catch (e) { next(e); }
     }
     async remove(req, res, next) {
         try {

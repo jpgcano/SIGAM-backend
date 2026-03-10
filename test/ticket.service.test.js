@@ -5,9 +5,19 @@ import TicketService from '../src/services/ticket.service.js';
 function createModelStub() {
     return {
         createCalls: [],
+        closeCalls: [],
+        updateEstadoCalls: [],
         async create(payload) {
             this.createCalls.push(payload);
             return { id_ticket: 1, ...payload };
+        },
+        async closeWithConsumos(id, consumos) {
+            this.closeCalls.push({ id, consumos });
+            return { id_ticket: id, estado: 'Cerrado' };
+        },
+        async updateEstado(id, estado) {
+            this.updateEstadoCalls.push({ id, estado });
+            return { id_ticket: id, estado };
         }
     };
 }
@@ -114,4 +124,35 @@ test('TicketService.create ignora prioridad_ia enviada por cliente y recalcula',
 
     assert.equal(ticket.prioridad_ia, 'Media');
     assert.equal(model.createCalls[0].prioridad_ia, 'Media');
+});
+
+test('TicketService.changeEstado usa cierre con consumos', async () => {
+    const model = createModelStub();
+    const service = new TicketService(model);
+
+    const result = await service.changeEstado(
+        10,
+        'Cerrado',
+        { role: 'Gerente' },
+        [{ id_repuesto: 1, cantidad_usada: 2 }]
+    );
+
+    assert.equal(result.estado, 'Cerrado');
+    assert.equal(model.closeCalls.length, 1);
+    assert.equal(model.updateEstadoCalls.length, 0);
+});
+
+test('TicketService.changeEstado valida consumos antes de cerrar', async () => {
+    const model = createModelStub();
+    const service = new TicketService(model);
+
+    await assert.rejects(
+        () => service.changeEstado(10, 'Cerrado', { role: 'Gerente' }, [{ cantidad_usada: 1 }]),
+        (error) => error?.status === 400 && /id_repuesto/i.test(error?.message)
+    );
+
+    await assert.rejects(
+        () => service.changeEstado(10, 'Cerrado', { role: 'Gerente' }, [{ id_repuesto: 1, cantidad_usada: 0 }]),
+        (error) => error?.status === 400 && /cantidad_usada/i.test(error?.message)
+    );
 });

@@ -10,6 +10,7 @@ const router = express.Router();
 
 const authController = new AuthController(new AuthService(new UserModel()));
 
+router.post('/register', validateRequired(['nombre', 'email', 'password', 'rol']), authController.register);
 router.post('/login', validateRequired(['email', 'password']), authController.login);
 
 router.get('/admin-panel', authMiddleware, roleMiddleware(['Gerente']), (req, res) => {

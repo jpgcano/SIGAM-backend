@@ -59,9 +59,10 @@ class TicketService {
 
     async update(id, payload, user) {
         if (payload?.estado !== undefined) {
-            await this.changeEstado(id, payload.estado, user);
+            await this.changeEstado(id, payload.estado, user, payload?.consumos);
             const updateData = { ...payload };
             delete updateData.estado;
+            delete updateData.consumos;
             if (Object.keys(updateData).length === 0) {
                 const current = await this.model.findById(id);
                 if (!current) throw { status: 404, message: `Ticket ${id} no encontrado` };
@@ -76,7 +77,7 @@ class TicketService {
         return t;
     }
 
-    async changeEstado(id, estado, user) {
+    async changeEstado(id, estado, user, consumos) {
         if (!estado) throw { status: 400, message: 'estado es requerido' };
         if (!TicketService.ESTADOS_VALIDOS.has(estado)) {
             throw { status: 400, message: `estado inválido: ${estado}` };
@@ -88,6 +89,19 @@ class TicketService {
             if (!assigned) {
                 throw { status: 403, message: 'El ticket no está asignado a este técnico' };
             }
+        }
+
+        if (estado === 'Cerrado' && Array.isArray(consumos) && consumos.length) {
+            for (const item of consumos) {
+                if (!item?.id_repuesto) {
+                    throw { status: 400, message: 'consumos.id_repuesto es requerido' };
+                }
+                const qty = Number(item.cantidad_usada);
+                if (!Number.isFinite(qty) || qty <= 0) {
+                    throw { status: 400, message: 'consumos.cantidad_usada debe ser > 0' };
+                }
+            }
+            return this.model.closeWithConsumos(id, consumos);
         }
 
         const t = await this.model.updateEstado(id, estado);
