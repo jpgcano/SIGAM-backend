@@ -1,4 +1,4 @@
-import db from '../config/db.js';
+﻿import db from '../config/db.js';
 
 const useSupabase = (process.env.DB_MODE || 'postgres').toLowerCase() === 'supabase';
 
@@ -6,9 +6,7 @@ class SoftwareModel {
     async findAll() {
         if (useSupabase) {
             const { data, error } = await db.supabase
-                .from('software')
-                .select('*')
-                .order('id_software', { ascending: true });
+                .from('software').select('*').order('id_software', { ascending: true });
             if (error) throw error;
             return data;
         }
@@ -19,10 +17,7 @@ class SoftwareModel {
     async findById(id) {
         if (useSupabase) {
             const { data, error } = await db.supabase
-                .from('software')
-                .select('*')
-                .eq('id_software', id)
-                .maybeSingle();
+                .from('software').select('*').eq('id_software', id).maybeSingle();
             if (error) throw error;
             return data || null;
         }
@@ -35,14 +30,13 @@ class SoftwareModel {
             const { data, error } = await db.supabase
                 .from('software')
                 .insert({ nombre, fabricante })
-                .select()
-                .single();
+                .select().single();
             if (error) throw error;
             return data;
         }
         const { rows } = await db.query(
-            'INSERT INTO software (nombre, fabricante) VALUES ($1,$2) RETURNING *',
-            [nombre, fabricante || null]
+            `INSERT INTO software (nombre, fabricante) VALUES ($1,$2) RETURNING *`,
+            [nombre, fabricante]
         );
         return rows[0];
     }
@@ -53,11 +47,8 @@ class SoftwareModel {
             if (nombre !== undefined) updateData.nombre = nombre;
             if (fabricante !== undefined) updateData.fabricante = fabricante;
             const { data, error } = await db.supabase
-                .from('software')
-                .update(updateData)
-                .eq('id_software', id)
-                .select()
-                .single();
+                .from('software').update(updateData)
+                .eq('id_software', id).select().single();
             if (error) throw error;
             return data || null;
         }
@@ -74,17 +65,12 @@ class SoftwareModel {
     async remove(id) {
         if (useSupabase) {
             const { data, error } = await db.supabase
-                .from('software')
-                .delete()
-                .eq('id_software', id)
-                .select()
-                .single();
+                .from('software').delete().eq('id_software', id).select().single();
             if (error) throw error;
             return data || null;
         }
         const { rows } = await db.query(
-            'DELETE FROM software WHERE id_software = $1 RETURNING *',
-            [id]
+            'DELETE FROM software WHERE id_software = $1 RETURNING *', [id]
         );
         return rows[0] || null;
     }

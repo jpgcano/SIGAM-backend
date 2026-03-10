@@ -1,11 +1,7 @@
-class SoftwareService {
-    constructor(model) {
-        this.model = model;
-    }
+﻿class SoftwareService {
+    constructor(model) { this.model = model; }
 
-    findAll() {
-        return this.model.findAll();
-    }
+    findAll() { return this.model.findAll(); }
 
     async findById(id) {
         const s = await this.model.findById(id);
@@ -14,7 +10,7 @@ class SoftwareService {
     }
 
     create(payload) {
-        if (!payload?.nombre) throw { status: 400, message: 'nombre es requerido' };
+        if (!payload.nombre) throw { status: 400, message: 'nombre es requerido' };
         return this.model.create(payload);
     }
 

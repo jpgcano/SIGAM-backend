@@ -1,8 +1,8 @@
-class SoftwareController {
+﻿class SoftwareController {
     constructor(service) {
         this.service = service;
-        ['getAll', 'getById', 'create', 'update', 'remove']
-            .forEach((m) => { this[m] = this[m].bind(this); });
+        ['getAll','getById','create','update','remove']
+            .forEach(m => this[m] = this[m].bind(this));
     }
 
     async getAll(req, res, next) {

@@ -13,7 +13,7 @@ import maintenanceRoutes from './routes/maintenance.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import categoriaRoutes from './routes/categoria.routes.js';
 
-// ✅ Nuevas rutas CRUD completos
+//  Nuevas rutas CRUD completos
 import repuestoRoutes from './routes/repuesto.routes.js';
 import proveedorRoutes from './routes/proveedor.routes.js';
 import ubicacionRoutes from './routes/ubicacion.routes.js';
