@@ -255,3 +255,20 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - prueba rapida de autorizacion: `checkRole(['Gerente'])` con usuario rol `Usuario` retorna `403` y no ejecuta `next()`.
 - Commit(s):
   - N/A - pendiente de commit por el equipo.
+
+### 2026-03-10 - IA: Codex GPT-5
+- Issue: Transaccion SQL consumo + estado ticket + stock
+- Rama: feature/jainer3
+- Objetivo: registrar consumo de repuesto con actualizacion de estado de ticket y control de stock en una sola operacion.
+- Cambios:
+  - `src/models/Maintenance.js` - consumo ahora usa funcion SQL transaccional.
+  - `src/services/maintenance.service.js` - valida estado_ticket y cantidad; default a En Proceso.
+  - `sql/06_migration_ticket_consumo_tx.sql` - funcion SQL para consumo/estado + validacion de constraints.
+  - `README.md` - orden de scripts actualizado para incluir la migracion nueva.
+- Decisiones tecnicas: encapsular la operacion critica en funcion SQL atomica y mantener el descuento por trigger para evitar stock negativo.
+- Pendiente: N/A
+- Riesgos/Bloqueos: si la funcion no se despliega en la BD, el endpoint fallara hasta aplicar la migracion.
+- Evidencia:
+  - revision manual de cambios.
+- Commit(s):
+  - N/A
