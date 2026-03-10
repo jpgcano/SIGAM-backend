@@ -7,6 +7,8 @@ function createModelStub() {
         createCalls: [],
         closeCalls: [],
         updateEstadoCalls: [],
+        isReportedByUserCalls: [],
+        isAssignedToTecnicoCalls: [],
         async create(payload) {
             this.createCalls.push(payload);
             return { id_ticket: 1, ...payload };
@@ -18,6 +20,14 @@ function createModelStub() {
         async updateEstado(id, estado) {
             this.updateEstadoCalls.push({ id, estado });
             return { id_ticket: id, estado };
+        },
+        async isReportedByUser(id, userId) {
+            this.isReportedByUserCalls.push({ id, userId });
+            return true;
+        },
+        async isAssignedToTecnico(id, userId) {
+            this.isAssignedToTecnicoCalls.push({ id, userId });
+            return true;
         }
     };
 }
@@ -142,6 +152,17 @@ test('TicketService.changeEstado usa cierre con consumos', async () => {
     assert.equal(model.updateEstadoCalls.length, 0);
 });
 
+test('TicketService.findById rechaza acceso si usuario no es owner', async () => {
+    const model = createModelStub();
+    model.findById = async () => ({ id_ticket: 1 });
+    model.isReportedByUser = async () => false;
+    const service = new TicketService(model);
+
+    await assert.rejects(
+        () => service.findById(1, { role: 'Usuario', id: 99 }),
+        (error) => error?.status === 403
+    );
+});
 test('TicketService.changeEstado valida consumos antes de cerrar', async () => {
     const model = createModelStub();
     const service = new TicketService(model);

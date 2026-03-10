@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import helmet from 'helmet';
 import errorMiddleware from './middlewares/error.middleware.js';
 
 // Rutas
@@ -12,14 +13,16 @@ import maintenanceRoutes from './routes/maintenance.routes.js';
 import metricsRoutes from './routes/metrics.routes.js';
 import categoriaRoutes from './routes/categoria.routes.js';
 
-// ✅ Nuevas rutas CRUD completos
+//  Nuevas rutas CRUD completos
 import repuestoRoutes from './routes/repuesto.routes.js';
 import proveedorRoutes from './routes/proveedor.routes.js';
 import ubicacionRoutes from './routes/ubicacion.routes.js';
 import licenciaRoutes from './routes/licencia.routes.js';
+import softwareRoutes from './routes/software.routes.js';
 
 const app = express();
 
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
@@ -42,6 +45,7 @@ app.use('/api/repuestos', repuestoRoutes);
 app.use('/api/proveedores', proveedorRoutes);
 app.use('/api/ubicaciones', ubicacionRoutes);
 app.use('/api/licencias', licenciaRoutes);
+app.use('/api/software', softwareRoutes);
 
 // Error handler
 app.use(errorMiddleware);

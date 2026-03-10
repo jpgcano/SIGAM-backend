@@ -25,7 +25,7 @@ test('errorMiddleware responde 500 por defecto cuando no hay status', () => {
 
     assert.equal(res.statusCode, 500);
     assert.equal(res.body.code, 'UNKNOWN_ERROR');
-    assert.match(res.body.message, /fallo inesperado/i);
+    assert.equal(res.body.message, 'Error interno');
 });
 
 test('errorMiddleware conserva status y code cuando vienen en el error', () => {

@@ -1,15 +1,15 @@
-{
+﻿{
   "info": {
     "_postman_id": "29615e5c-b060-4d1a-a34c-7c360494b070",
     "name": "SIGAM - J-AXON API",
-    "description": "Colección completa de endpoints para el sistema SIGAM. Base URL: [http://localhost:4000/api](http://localhost:4000/api)\n\nFlujo recomendado:\n\n1. POST /auth/login → copiar token\n    \n2. Usar token en Authorization: Bearer",
+    "description": "ColecciÃ³n completa de endpoints para el sistema SIGAM. Base URL: [http://localhost:4000/api](http://localhost:4000/api)\n\nFlujo recomendado:\n\n1. POST /auth/login â†’ copiar token\n    \n2. Usar token en Authorization: Bearer",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52588757",
     "_collection_link": "https://go.postman.co/collection/52588757-29615e5c-b060-4d1a-a34c-7c360494b070?source=collection_link"
   },
   "item": [
     {
-      "name": "🔐 Auth",
+      "name": "ðŸ” Auth",
       "item": [
         {
           "name": "Login",
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "name": "📍 Ubicaciones",
+      "name": "ðŸ“ Ubicaciones",
       "item": [
         {
           "name": "GET Todas las ubicaciones",
@@ -202,7 +202,7 @@
       ]
     },
     {
-      "name": "🏢 Proveedores",
+      "name": "ðŸ¢ Proveedores",
       "item": [
         {
           "name": "GET Todos los proveedores",
@@ -336,7 +336,7 @@
       ]
     },
     {
-      "name": "💻 Activos (HU-01)",
+      "name": "ðŸ’» Activos (HU-01)",
       "item": [
         {
           "name": "GET Todos los activos",
@@ -453,7 +453,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nivel_criticidad\": \"Crítica\",\n  \"id_ubicacion\": 2\n}"
+              "raw": "{\n  \"nivel_criticidad\": \"CrÃ­tica\",\n  \"id_ubicacion\": 2\n}"
             },
             "url": {
               "raw": "{{base_url}}/activos/1",
@@ -484,7 +484,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"motivo_baja\": \"Equipo obsoleto - superó vida útil de 48 meses\",\n  \"certificado_borrado\": \"CERT-ISO27001-2024-001\"\n}"
+              "raw": "{\n  \"motivo_baja\": \"Equipo obsoleto - superÃ³ vida Ãºtil de 48 meses\",\n  \"certificado_borrado\": \"CERT-ISO27001-2024-001\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/activos/1",
@@ -502,7 +502,7 @@
       ]
     },
     {
-      "name": "🔩 Repuestos (HU-08 / HU-09)",
+      "name": "ðŸ”© Repuestos (HU-08 / HU-09)",
       "item": [
         {
           "name": "GET Todos los repuestos",
@@ -527,7 +527,7 @@
           "response": []
         },
         {
-          "name": "GET Repuestos bajo stock ⚠️",
+          "name": "GET Repuestos bajo stock âš ï¸",
           "request": {
             "method": "GET",
             "header": [
@@ -659,7 +659,7 @@
       ]
     },
     {
-      "name": "📦 Licencias (HU-03)",
+      "name": "ðŸ“¦ Licencias (HU-03)",
       "item": [
         {
           "name": "GET Todas las licencias",
@@ -952,6 +952,371 @@
               "path": [
                 "tickets",
                 "metricas"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Software",
+      "item": [
+        {
+          "name": "GET Todos los software",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/software",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Software por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/software/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Software",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Windows 12 Pro\",\n  \"fabricante\": \"Microsoft\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/software",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Software",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricante\": \"Microsoft Corporation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/software/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Eliminar Software",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/software/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Flujo Ticket -> Repuesto",
+      "item": [
+        {
+          "name": "POST Crear Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data && data.id_ticket) pm.collectionVariables.set('ticket_id', data.id_ticket);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_activo\": 1,\n  \"id_usuario_reporta\": 6,\n  \"descripcion\": \"Falla en el equipo - flujo de prueba\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Asignar Tecnico (Orden de Mantenimiento)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data && data.id_orden) pm.collectionVariables.set('orden_id', data.id_orden);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_ticket\": {{ticket_id}},\n  \"id_usuario_tecnico\": 2,\n  \"diagnostico\": \"Asignacion inicial\",\n  \"fecha_inicio\": \"2026-03-10T10:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mantenimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Repuesto (Stock Antes)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data && data.stock !== undefined) pm.collectionVariables.set('stock_before', data.stock);",
+                  "pm.collectionVariables.set('repuesto_id', 1);",
+                  "pm.collectionVariables.set('cantidad_usada', 1);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/repuestos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "repuestos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Consumo Repuesto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_repuesto\": {{repuesto_id}},\n  \"cantidad_usada\": {{cantidad_usada}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mantenimientos/{{orden_id}}/consumos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos",
+                "{{orden_id}}",
+                "consumos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Repuesto (Stock Despues)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "const before = Number(pm.collectionVariables.get('stock_before'));",
+                  "const used = Number(pm.collectionVariables.get('cantidad_usada'));",
+                  "if (!Number.isNaN(before) && !Number.isNaN(used)) {",
+                  "  pm.test('Stock descontado', function () {",
+                  "    pm.expect(data.stock).to.eql(before - used);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/repuestos/{{repuesto_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "repuestos",
+                "{{repuesto_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Cerrar Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"Cerrado\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tickets/{{ticket_id}}/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "{{ticket_id}}",
+                "estado"
               ]
             }
           },

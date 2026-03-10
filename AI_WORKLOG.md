@@ -288,3 +288,35 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - revision manual de cambios.
 - Commit(s):
   - N/A
+
+### 2026-03-10 - IA: Codex GPT-5
+- Issue: Auditoria OWASP / ESLint security scan
+- Rama: feature/security-eslint-audit
+- Objetivo: generar analisis automatizado con eslint-plugin-security y guardar reporte.
+- Cambios:
+  - `eslint.config.js` - configuracion base de ESLint con reglas de seguridad.
+  - `reports/eslint-security.json` - salida completa del lint.
+  - `reports/ESLINT_SECURITY_REPORT.md` - resumen y hallazgos.
+- Evidencia:
+  - comando: `pnpm exec eslint . -f json -o reports/eslint-security.json`.
+- Commit(s):
+  - N/A
+
+### 2026-03-10 - IA: Codex GPT-5
+- Issue: Hardening OWASP (A01, A05, A09) + re-scan ESLint
+- Rama: feature/security-eslint-audit
+- Objetivo: restringir superficie de ataque (ownership checks, sanitizacion 5xx, headers y rate limit).
+- Cambios:
+  - `src/services/ticket.service.js` - control de acceso por ownership para roles Tecnico/Usuario.
+  - `src/models/Ticket.js` - verificacion de ownership por usuario reporta.
+  - `src/controllers/ticket.controller.js` - pasa usuario al servicio en getById.
+  - `src/middlewares/error.middleware.js` - mensajes 5xx sanitizados.
+  - `src/app.js` - `helmet` agregado.
+  - `src/routes/auth.routes.js` - rate limit en login.
+  - `src/config/db.js` - restricciones DML y bloqueo multi-sentencia en SupabaseAdapter.
+  - `reports/eslint-security.json` y `reports/ESLINT_SECURITY_REPORT.md` actualizados.
+- Evidencia:
+  - `pnpm test` OK.
+  - `pnpm exec eslint . -f json -o reports/eslint-security.json`.
+- Commit(s):
+  - N/A
