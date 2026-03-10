@@ -1,13 +1,3 @@
-const roleMiddleware = (rolesPermitidos) => {
-    return (req, res, next) => {
-        // req.user viene cargado desde el auth.middleware.js
-        if (!req.user || !rolesPermitidos.includes(req.user.role)) {
-            return res.status(403).json({ 
-                message: "Acceso denegado: No tienes el rol necesario" 
-            });
-        }
-        next();
-    };
-};
+import checkRole from './checkRole.middleware.js';
 
-export default roleMiddleware;
+export default checkRole;

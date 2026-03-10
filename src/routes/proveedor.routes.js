@@ -1,7 +1,7 @@
 import express from 'express';
 import ProveedorController from '../controllers/proveedor.controller.js';
 import ProveedorService from '../services/proveedor.service.js';
-import ProveedorModel from '../models/Proveedor.js';
+import ProveedorModel from '../models/proveedor.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
 import roleMiddleware from '../middlewares/role.middleware.js';
 import { validateRequired } from '../middlewares/validate.middleware.js';
