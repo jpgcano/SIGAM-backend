@@ -1,7 +1,7 @@
 class TicketController {
     constructor(service) {
         this.service = service;
-        ['getAll','getById','getByActivo','getAssigned','create','update','changeEstado','remove']
+        ['getAll','getById','getByActivo','getAssigned','getMetrics','create','update','changeEstado','remove']
             .forEach(m => this[m] = this[m].bind(this));
     }
     async getAll(req, res, next) {
@@ -15,6 +15,20 @@ class TicketController {
     }
     async getAssigned(req, res, next) {
         try { res.json(await this.service.findAssignedByTecnico(req.user.id)); } catch (e) { next(e); }
+    }
+    async getMetrics(req, res, next) {
+        try {
+            const raw = req.query?.id_activo;
+            let id_activo = undefined;
+            if (raw !== undefined) {
+                const parsed = Number(raw);
+                if (!Number.isInteger(parsed) || parsed <= 0) {
+                    throw { status: 400, message: 'id_activo debe ser un entero positivo' };
+                }
+                id_activo = parsed;
+            }
+            res.json(await this.service.getMetrics({ id_activo }));
+        } catch (e) { next(e); }
     }
     async create(req, res, next) {
         try { res.status(201).json(await this.service.create(req.body)); } catch (e) { next(e); }

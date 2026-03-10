@@ -1,5 +1,6 @@
 class MaintenanceService {
     constructor(model) { this.model = model; }
+    static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
     findAll() { return this.model.findAll(); }
 
@@ -33,7 +34,14 @@ class MaintenanceService {
     registrarConsumo(id_orden, payload) {
         if (!payload.id_repuesto) throw { status: 400, message: 'id_repuesto es requerido' };
         if (!payload.cantidad_usada) throw { status: 400, message: 'cantidad_usada es requerida' };
-        return this.model.registrarConsumo(id_orden, payload);
+        if (payload.cantidad_usada <= 0) throw { status: 400, message: 'cantidad_usada debe ser mayor que 0' };
+
+        const estado_ticket = payload.estado_ticket || 'En Proceso';
+        if (!MaintenanceService.ESTADOS_VALIDOS.has(estado_ticket)) {
+            throw { status: 400, message: `estado_ticket inválido: ${estado_ticket}` };
+        }
+
+        return this.model.registrarConsumo(id_orden, { ...payload, estado_ticket });
     }
 
     getConsumos(id_orden) { return this.model.getConsumos(id_orden); }

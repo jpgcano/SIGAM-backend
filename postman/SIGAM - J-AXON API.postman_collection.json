@@ -901,6 +901,63 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "GET Metricas MTTR/MTBF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/metricas?id_activo=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "metricas"
+              ],
+              "query": [
+                {
+                  "key": "id_activo",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Metricas MTTR/MTBF (sin filtro)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/metricas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "metricas"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "event": [

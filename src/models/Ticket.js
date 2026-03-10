@@ -256,6 +256,45 @@ class TicketModel {
         );
         return rows[0] || null;
     }
+
+    async getMetrics({ id_activo } = {}) {
+        const { rows } = await db.query(
+            `WITH mttr AS (
+                SELECT AVG(EXTRACT(EPOCH FROM (om.fecha_fin - om.fecha_inicio))) AS mttr_seconds,
+                       COUNT(*) AS reparaciones
+                FROM ordenes_mantenimiento om
+                JOIN tickets t ON t.id_ticket = om.id_ticket
+                WHERE om.fecha_inicio IS NOT NULL AND om.fecha_fin IS NOT NULL
+                  AND t.estado IN ('Resuelto', 'Cerrado')
+                  AND ($1::int IS NULL OR t.id_activo = $1::int)
+             ),
+             mtbf AS (
+                SELECT AVG(EXTRACT(EPOCH FROM (fecha_creacion - prev_fecha))) AS mtbf_seconds,
+                       COUNT(*) AS intervalos
+                FROM (
+                    SELECT id_activo, fecha_creacion,
+                           LAG(fecha_creacion) OVER (PARTITION BY id_activo ORDER BY fecha_creacion) AS prev_fecha
+                    FROM tickets
+                    WHERE estado IN ('Resuelto', 'Cerrado')
+                      AND ($1::int IS NULL OR id_activo = $1::int)
+                ) x
+                WHERE prev_fecha IS NOT NULL
+             )
+             SELECT
+                COALESCE(mttr.mttr_seconds, 0) AS mttr_seconds,
+                COALESCE(mtbf.mtbf_seconds, 0) AS mtbf_seconds,
+                COALESCE(mttr.reparaciones, 0) AS reparaciones,
+                COALESCE(mtbf.intervalos, 0) AS intervalos
+             FROM mttr, mtbf`,
+            [id_activo ?? null]
+        );
+        return rows[0] || {
+            mttr_seconds: 0,
+            mtbf_seconds: 0,
+            reparaciones: 0,
+            intervalos: 0
+        };
+    }
 }
 
 export default TicketModel;

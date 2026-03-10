@@ -144,21 +144,11 @@ class MaintenanceModel {
         return rows[0] || null;
     }
 
-    // HU-08: Registrar consumo de repuestos (el trigger descuenta stock automáticamente)
-    async registrarConsumo(id_orden, { id_repuesto, cantidad_usada }) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('consumo_repuestos')
-                .insert({ id_orden, id_repuesto, cantidad_usada })
-                .select('*')
-                .single();
-            if (error) throw error;
-            return data;
-        }
+    // HU-08: Registrar consumo + cambio de estado (funcion SQL transaccional)
+    async registrarConsumo(id_orden, { id_repuesto, cantidad_usada, estado_ticket }) {
         const { rows } = await db.query(
-            `INSERT INTO consumo_repuestos (id_orden, id_repuesto, cantidad_usada)
-             VALUES ($1,$2,$3) RETURNING *`,
-            [id_orden, id_repuesto, cantidad_usada]
+            `SELECT * FROM fn_registrar_consumo_ticket($1,$2,$3,$4)`,
+            [id_orden, id_repuesto, cantidad_usada, estado_ticket]
         );
         return rows[0];
     }

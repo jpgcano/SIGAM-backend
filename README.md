@@ -39,6 +39,7 @@ Para una base nueva (en SQL editor/psql):
 \i sql/01_schema.sql
 \i sql/03_views.sql
 \i sql/04_triggers.sql
+\i sql/06_migration_ticket_consumo_tx.sql
 \i sql/02_seed_data.sql
 ```
 
@@ -47,6 +48,7 @@ Si la base ya existe, aplica migraciones antes de vistas/triggers:
 ```sql
 \i sql/00_migration_add_password.sql
 \i sql/05_migration_db_foundations.sql
+\i sql/06_migration_ticket_consumo_tx.sql
 \i sql/03_views.sql
 \i sql/04_triggers.sql
 ```
