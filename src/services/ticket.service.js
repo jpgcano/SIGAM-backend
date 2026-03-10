@@ -100,6 +100,23 @@ class TicketService {
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
         return t;
     }
+
+    async getMetrics({ id_activo } = {}) {
+        const m = await this.model.getMetrics({ id_activo });
+        const mttrSeconds = Number(m.mttr_seconds) || 0;
+        const mtbfSeconds = Number(m.mtbf_seconds) || 0;
+        return {
+            mttr_seconds: mttrSeconds,
+            mttr_horas: mttrSeconds / 3600,
+            mttr_dias: mttrSeconds / 86400,
+            mtbf_seconds: mtbfSeconds,
+            mtbf_horas: mtbfSeconds / 3600,
+            mtbf_dias: mtbfSeconds / 86400,
+            reparaciones: Number(m.reparaciones) || 0,
+            intervalos: Number(m.intervalos) || 0,
+            filtro_id_activo: id_activo ?? null
+        };
+    }
 }
 
 export default TicketService;
