@@ -1,15 +1,15 @@
-{
+﻿{
   "info": {
     "_postman_id": "29615e5c-b060-4d1a-a34c-7c360494b070",
     "name": "SIGAM - J-AXON API",
-    "description": "Colección completa de endpoints para el sistema SIGAM. Base URL: [http://localhost:4000/api](http://localhost:4000/api)\n\nFlujo recomendado:\n\n1. POST /auth/login → copiar token\n    \n2. Usar token en Authorization: Bearer",
+    "description": "ColecciÃ³n completa de endpoints para el sistema SIGAM. Base URL: [http://localhost:4000/api](http://localhost:4000/api)\n\nFlujo recomendado:\n\n1. POST /auth/login â†’ copiar token\n    \n2. Usar token en Authorization: Bearer",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52588757",
     "_collection_link": "https://go.postman.co/collection/52588757-29615e5c-b060-4d1a-a34c-7c360494b070?source=collection_link"
   },
   "item": [
     {
-      "name": "🔐 Auth",
+      "name": "ðŸ” Auth",
       "item": [
         {
           "name": "Login",
@@ -68,7 +68,7 @@
       ]
     },
     {
-      "name": "📍 Ubicaciones",
+      "name": "ðŸ“ Ubicaciones",
       "item": [
         {
           "name": "GET Todas las ubicaciones",
@@ -202,7 +202,7 @@
       ]
     },
     {
-      "name": "🏢 Proveedores",
+      "name": "ðŸ¢ Proveedores",
       "item": [
         {
           "name": "GET Todos los proveedores",
@@ -336,7 +336,7 @@
       ]
     },
     {
-      "name": "💻 Activos (HU-01)",
+      "name": "ðŸ’» Activos (HU-01)",
       "item": [
         {
           "name": "GET Todos los activos",
@@ -453,7 +453,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nivel_criticidad\": \"Crítica\",\n  \"id_ubicacion\": 2\n}"
+              "raw": "{\n  \"nivel_criticidad\": \"CrÃ­tica\",\n  \"id_ubicacion\": 2\n}"
             },
             "url": {
               "raw": "{{base_url}}/activos/1",
@@ -484,7 +484,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"motivo_baja\": \"Equipo obsoleto - superó vida útil de 48 meses\",\n  \"certificado_borrado\": \"CERT-ISO27001-2024-001\"\n}"
+              "raw": "{\n  \"motivo_baja\": \"Equipo obsoleto - superÃ³ vida Ãºtil de 48 meses\",\n  \"certificado_borrado\": \"CERT-ISO27001-2024-001\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/activos/1",
@@ -502,7 +502,7 @@
       ]
     },
     {
-      "name": "🔩 Repuestos (HU-08 / HU-09)",
+      "name": "ðŸ”© Repuestos (HU-08 / HU-09)",
       "item": [
         {
           "name": "GET Todos los repuestos",
@@ -527,7 +527,7 @@
           "response": []
         },
         {
-          "name": "GET Repuestos bajo stock ⚠️",
+          "name": "GET Repuestos bajo stock âš ï¸",
           "request": {
             "method": "GET",
             "header": [
@@ -659,7 +659,7 @@
       ]
     },
     {
-      "name": "📦 Licencias (HU-03)",
+      "name": "ðŸ“¦ Licencias (HU-03)",
       "item": [
         {
           "name": "GET Todas las licencias",
@@ -952,6 +952,140 @@
               "path": [
                 "tickets",
                 "metricas"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Software",
+      "item": [
+        {
+          "name": "GET Todos los software",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/software",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Software por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/software/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Software",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Windows 12 Pro\",\n  \"fabricante\": \"Microsoft\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/software",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Software",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fabricante\": \"Microsoft Corporation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/software/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Eliminar Software",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/software/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "software",
+                "1"
               ]
             }
           },

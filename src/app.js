@@ -14,6 +14,7 @@ import repuestoRoutes from './routes/repuesto.routes.js';
 import proveedorRoutes from './routes/proveedor.routes.js';
 import ubicacionRoutes from './routes/ubicacion.routes.js';
 import licenciaRoutes from './routes/licencia.routes.js';
+import softwareRoutes from './routes/software.routes.js';
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/repuestos', repuestoRoutes);
 app.use('/api/proveedores', proveedorRoutes);
 app.use('/api/ubicaciones', ubicacionRoutes);
 app.use('/api/licencias', licenciaRoutes);
+app.use('/api/software', softwareRoutes);
 
 // Error handler
 app.use(errorMiddleware);
