@@ -20,5 +20,17 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
-  }
+  },
+  "description": "Backend de J-AXON (SIGAM), un sistema para gestion de activos TI, tickets de soporte y mantenimiento.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jpgcano/SIGAM-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jpgcano/SIGAM-backend/issues"
+  },
+  "homepage": "https://github.com/jpgcano/SIGAM-backend#readme"
 }

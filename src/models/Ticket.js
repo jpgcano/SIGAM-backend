@@ -51,6 +51,18 @@ class TicketModel {
         return rows;
     }
 
+    async findAssignedByTecnico(id_tecnico) {
+        const { rows } = await db.query(
+            `SELECT vto.*
+             FROM vw_tickets_operacion vto
+             LEFT JOIN ordenes_mantenimiento om ON om.id_ticket = vto.id_ticket
+             WHERE om.id_usuario_tecnico = $1
+             ORDER BY vto.id_ticket DESC`,
+            [id_tecnico]
+        );
+        return rows;
+    }
+
     async create({ id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp }) {
         if (useSupabase) {
             const { data, error } = await db.supabase
@@ -93,6 +105,49 @@ class TicketModel {
             [prioridad_ia, clasificacion_nlp, estado, id]
         );
         return rows[0] || null;
+    }
+
+    async updateEstado(id, estado) {
+        if (useSupabase) {
+            const { data, error } = await db.supabase
+                .from('tickets')
+                .update({ estado })
+                .eq('id_ticket', id)
+                .select('*')
+                .single();
+            if (error) throw error;
+            return data || null;
+        }
+        const { rows } = await db.query(
+            `UPDATE tickets
+             SET estado = $1
+             WHERE id_ticket = $2
+             RETURNING *`,
+            [estado, id]
+        );
+        return rows[0] || null;
+    }
+
+    async isAssignedToTecnico(id_ticket, id_tecnico) {
+        if (useSupabase) {
+            const { data, error } = await db.supabase
+                .from('ordenes_mantenimiento')
+                .select('id_orden')
+                .eq('id_ticket', id_ticket)
+                .eq('id_usuario_tecnico', id_tecnico)
+                .limit(1);
+            if (error) throw error;
+            return Array.isArray(data) && data.length > 0;
+        }
+        const { rows } = await db.query(
+            `SELECT 1
+             FROM ordenes_mantenimiento
+             WHERE id_ticket = $1
+               AND id_usuario_tecnico = $2
+             LIMIT 1`,
+            [id_ticket, id_tecnico]
+        );
+        return rows.length > 0;
     }
 
     async remove(id) {
