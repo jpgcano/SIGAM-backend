@@ -2,17 +2,17 @@
   "info": {
     "_postman_id": "29615e5c-b060-4d1a-a34c-7c360494b070",
     "name": "SIGAM - J-AXON API",
-    "description": "ColecciÃ³n completa de endpoints para el sistema SIGAM. Base URL: [http://localhost:4000/api](http://localhost:4000/api)\n\nFlujo recomendado:\n\n1. POST /auth/login â†’ copiar token\n    \n2. Usar token en Authorization: Bearer",
+    "description": "ColecciÃ³n completa de endpoints para el sistema SIGAM. Base URL: [https://sigam-backend.vercel.app/api](https://sigam-backend.vercel.app/api)\n\nFlujo recomendado:\n\n1. POST /auth/login â†’ copiar token\n    \n2. Usar token en Authorization: Bearer",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52588757",
     "_collection_link": "https://go.postman.co/collection/52588757-29615e5c-b060-4d1a-a34c-7c360494b070?source=collection_link"
   },
   "item": [
     {
-      "name": "ðŸ” Auth",
+      "name": "Auth",
       "item": [
         {
-          "name": "Login",
+          "name": "Register Gerente",
           "request": {
             "method": "POST",
             "header": [
@@ -21,10 +21,178 @@
                 "value": "application/json"
               }
             ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@sigam.com\",\n  \"password\": \"Admin1234\"\n}"
+              "raw": "{\n  \"nombre\": \"Gerente SIGAM\",\n  \"email\": \"{{email_gerente}}\",\n  \"password\": \"{{password_default}}\",\n  \"rol\": \"Gerente\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registro OK\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Respuesta JSON\", function () {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Analista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Analista SIGAM\",\n  \"email\": \"{{email_analista}}\",\n  \"password\": \"{{password_default}}\",\n  \"rol\": \"Analista\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registro OK\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Respuesta JSON\", function () {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Técnico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Tecnico SIGAM\",\n  \"email\": \"{{email_tecnico}}\",\n  \"password\": \"{{password_default}}\",\n  \"rol\": \"Técnico\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registro OK\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Respuesta JSON\", function () {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario SIGAM\",\n  \"email\": \"{{email_usuario}}\",\n  \"password\": \"{{password_default}}\",\n  \"rol\": \"Usuario\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registro OK\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Respuesta JSON\", function () {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Gerente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/auth/login",
               "host": [
@@ -34,12 +202,35 @@
                 "auth",
                 "login"
               ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_gerente}}\",\n  \"password\": \"{{password_default}}\"\n}"
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login OK\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test(\"Token presente\", function () {",
+                  "  pm.expect(data.token).to.be.a(\"string\");",
+                  "});",
+                  "pm.collectionVariables.set('token_gerente', data.token);",
+                  "pm.collectionVariables.set('token', data.token);"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "Register",
+          "name": "Login Analista",
           "request": {
             "method": "POST",
             "header": [
@@ -48,18 +239,198 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Juan Analista\",\n  \"email\": \"analista@sigam.com\",\n  \"password\": \"Password1\",\n  \"rol\": \"Analista\"\n}"
-            },
             "url": {
-              "raw": "{{base_url}}/auth/register",
+              "raw": "{{base_url}}/auth/login",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "auth",
-                "register"
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_analista}}\",\n  \"password\": \"{{password_default}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login OK\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test(\"Token presente\", function () {",
+                  "  pm.expect(data.token).to.be.a(\"string\");",
+                  "});",
+                  "pm.collectionVariables.set('token_analista', data.token);",
+                  "pm.collectionVariables.set('token', data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Tecnico",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_tecnico}}\",\n  \"password\": \"{{password_default}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login OK\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test(\"Token presente\", function () {",
+                  "  pm.expect(data.token).to.be.a(\"string\");",
+                  "});",
+                  "pm.collectionVariables.set('token_tecnico', data.token);",
+                  "pm.collectionVariables.set('token', data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_usuario}}\",\n  \"password\": \"{{password_default}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login OK\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test(\"Token presente\", function () {",
+                  "  pm.expect(data.token).to.be.a(\"string\");",
+                  "});",
+                  "pm.collectionVariables.set('token_usuario', data.token);",
+                  "pm.collectionVariables.set('token', data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Admin Panel",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_gerente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/admin-panel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "admin-panel"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Configuracion",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_tecnico}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/configuracion",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "configuracion"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_usuario}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/perfil",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "perfil"
               ]
             }
           },
@@ -906,13 +1277,83 @@
       "name": "Tickets",
       "item": [
         {
+          "name": "GET Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tickets por Activo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/activo/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "activo",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tickets Asignados (Mis)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_tecnico}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/asignados/mis",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "asignados",
+                "mis"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "GET Metricas MTTR/MTBF",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{token_analista}}"
               }
             ],
             "url": {
@@ -922,13 +1363,7 @@
               ],
               "path": [
                 "tickets",
-                "metricas"
-              ],
-              "query": [
-                {
-                  "key": "id_activo",
-                  "value": "1"
-                }
+                "metricas?id_activo=1"
               ]
             }
           },
@@ -941,7 +1376,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{token_analista}}"
               }
             ],
             "url": {
@@ -952,6 +1387,145 @@
               "path": [
                 "tickets",
                 "metricas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Ticket por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_usuario}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_activo\": 1,\n  \"id_usuario_reporta\": 1,\n  \"descripcion\": \"Falla reportada desde Postman\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Ticket",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"En Proceso\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Cambiar Estado Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_tecnico}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/1/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "1",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"Cerrado\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Ticket",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_gerente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tickets/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tickets",
+                "1"
               ]
             }
           },
@@ -1224,7 +1798,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token}}"
+                "value": "Bearer {{token_tecnico}}"
               },
               {
                 "key": "Content-Type",
@@ -1323,6 +1897,332 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "GET Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_gerente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_gerente}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/usuarios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario API\",\n  \"email\": \"usuario_api@sigam.test\",\n  \"password\": \"Password1\",\n  \"rol\": \"Usuario\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Categorias",
+      "item": [
+        {
+          "name": "GET Categorias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categorias",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categorias"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Metricas",
+      "item": [
+        {
+          "name": "GET Metricas Operacion",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/metricas/operacion",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "metricas",
+                "operacion"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Mantenimientos",
+      "item": [
+        {
+          "name": "GET Mantenimientos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mantenimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Mantenimiento por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mantenimientos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Mantenimientos por Tecnico",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mantenimientos/tecnico/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos",
+                "tecnico",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Consumos de Orden",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mantenimientos/1/consumos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos",
+                "1",
+                "consumos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Crear Mantenimiento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_analista}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mantenimientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_ticket\": 1,\n  \"id_usuario_tecnico\": 1,\n  \"diagnostico\": \"Asignacion inicial\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Consumo Repuesto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_tecnico}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mantenimientos/1/consumos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos",
+                "1",
+                "consumos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_repuesto\": 1,\n  \"cantidad_usada\": 1\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Actualizar Mantenimiento",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_tecnico}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mantenimientos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diagnostico\": \"Actualizacion por Postman\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Mantenimiento",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_gerente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mantenimientos/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "mantenimientos",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "event": [
@@ -1330,10 +2230,21 @@
       "listen": "prerequest",
       "script": {
         "type": "text/javascript",
-        "packages": {},
-        "requests": {},
         "exec": [
-          ""
+          "if (!pm.collectionVariables.get(\"run_id\")) {",
+          "  const runId = Date.now();",
+          "  pm.collectionVariables.set(\"run_id\", runId);",
+          "}",
+          "const domain = pm.collectionVariables.get(\"email_domain\") || \"sigam.test\";",
+          "pm.collectionVariables.set(\"email_domain\", domain);",
+          "const runId = pm.collectionVariables.get(\"run_id\");",
+          "pm.collectionVariables.set(\"email_gerente\", `gerente_${runId}@${domain}`);",
+          "pm.collectionVariables.set(\"email_analista\", `analista_${runId}@${domain}`);",
+          "pm.collectionVariables.set(\"email_tecnico\", `tecnico_${runId}@${domain}`);",
+          "pm.collectionVariables.set(\"email_usuario\", `usuario_${runId}@${domain}`);",
+          "if (!pm.collectionVariables.get(\"password_default\")) {",
+          "  pm.collectionVariables.set(\"password_default\", \"Password1\");",
+          "}"
         ]
       }
     },
@@ -1341,10 +2252,15 @@
       "listen": "test",
       "script": {
         "type": "text/javascript",
-        "packages": {},
-        "requests": {},
         "exec": [
-          ""
+          "pm.test(\"Status 2xx\", function () {",
+          "  pm.expect(pm.response.code).to.be.within(200, 299);",
+          "});",
+          "if (pm.response.text() && pm.response.text().trim().length > 0) {",
+          "  pm.test(\"Respuesta JSON\", function () {",
+          "    pm.response.to.be.json;",
+          "  });",
+          "}"
         ]
       }
     }
@@ -1352,12 +2268,56 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:4000/api"
+      "value": "https://sigam-backend.vercel.app/api"
     },
     {
       "key": "token",
       "value": "",
       "type": "default"
+    },
+    {
+      "key": "token_gerente",
+      "value": ""
+    },
+    {
+      "key": "token_analista",
+      "value": ""
+    },
+    {
+      "key": "token_tecnico",
+      "value": ""
+    },
+    {
+      "key": "token_usuario",
+      "value": ""
+    },
+    {
+      "key": "run_id",
+      "value": ""
+    },
+    {
+      "key": "email_domain",
+      "value": "sigam.test"
+    },
+    {
+      "key": "email_gerente",
+      "value": ""
+    },
+    {
+      "key": "email_analista",
+      "value": ""
+    },
+    {
+      "key": "email_tecnico",
+      "value": ""
+    },
+    {
+      "key": "email_usuario",
+      "value": ""
+    },
+    {
+      "key": "password_default",
+      "value": "Password1"
     }
   ]
 }
