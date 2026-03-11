@@ -62,5 +62,9 @@ Si la base ya existe, aplica migraciones antes de vistas/triggers:
 pnpm dev
 ```
 
+## Deploy en Vercel
+Vercel usa `src/app.js` como handler serverless. El archivo `src/server.js` se mantiene solo para ejecucion local.
+La configuracion esta en `vercel.json` en la raiz.
+
 ## Healthcheck
 - `GET /health` debe responder `200`.
