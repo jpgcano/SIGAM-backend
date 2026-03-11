@@ -271,7 +271,7 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
 - Evidencia:
   - revision manual de cambios.
 - Commit(s):
-  - N/A
+  - a53b46a - Add Vercel config using app.js handler
 
 ### 2026-03-10 - IA: Codex GPT-5
 - Issue: Configurar variables entorno para PostgreSQL produccion
