@@ -12,22 +12,16 @@ Tecnologias principales:
 - pnpm 10+
 
 ## Variables de entorno
-Crea un archivo `.env` en la raiz usando esta plantilla exacta para PostgreSQL de produccion:
+Crea un archivo `.env` en la raiz usando esta plantilla exacta para Supabase:
 
 ```env
 PORT=4000
 JWT_SECRET=coloca_un_secreto_largo
-DB_MODE=postgres
-DB_HOST=your-production-host
-DB_PORT=5432
-DB_USER=your-production-user
-DB_PASSWORD=your-production-password
-DB_NAME=sigam
-DB_SSL=true
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 Reglas importantes:
-- En produccion usa `DB_SSL=true`.
 - No subir `.env` al repositorio (ya esta ignorado en `.gitignore`).
 - No pegar claves en commits, issues o pull requests.
 

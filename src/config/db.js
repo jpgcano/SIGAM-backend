@@ -1,58 +1,9 @@
 /**
- * db.js — Adaptador universal de base de datos
- *
- * Controla con DB_MODE en tu .env:
- *   DB_MODE=postgres   → PostgreSQL local (default)
- *   DB_MODE=supabase   → Supabase
+ * db.js — Adaptador único Supabase
  */
 
-import pkg from 'pg';
-const { Pool } = pkg;
 import { createClient } from '@supabase/supabase-js';
 
-const mode = (process.env.DB_MODE || 'postgres').toLowerCase();
-
-// ─── Adaptador PostgreSQL ───────────────────────────────────────────────────
-class PostgresAdapter {
-    constructor() {
-        const normalizedHost = (process.env.DB_HOST || '').replace(/^https?:\/\//, '').split('/')[0];
-        this.pool = new Pool({
-            host: normalizedHost,
-            port: Number(process.env.DB_PORT || 5432),
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD || process.env.DB_KEY,
-            database: process.env.DB_NAME,
-            ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
-        });
-        console.log('🐘 Base de datos: PostgreSQL local');
-    }
-
-    async query(text, params = []) {
-        return this.pool.query(text, params);
-    }
-
-    async testConnection() {
-        const result = await this.query('SELECT 1 AS ok, NOW() AS now');
-        return result.rows[0];
-    }
-
-    async transaction(callback) {
-        const client = await this.pool.connect();
-        try {
-            await client.query('BEGIN');
-            const result = await callback(client);
-            await client.query('COMMIT');
-            return result;
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
-    }
-}
-
-// ─── Adaptador Supabase ─────────────────────────────────────────────────────
 class SupabaseAdapter {
     constructor() {
         if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
@@ -95,5 +46,5 @@ class SupabaseAdapter {
     }
 }
 
-const db = mode === 'supabase' ? new SupabaseAdapter() : new PostgresAdapter();
+const db = new SupabaseAdapter();
 export default db;

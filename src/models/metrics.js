@@ -1,7 +1,5 @@
 import db from '../config/db.js';
 
-const useSupabase = (process.env.DB_MODE || 'postgres').toLowerCase() === 'supabase';
-
 function toMillis(value) {
     if (!value) return null;
     const t = new Date(value).getTime();
@@ -53,31 +51,17 @@ function buildMetrics(rows) {
 
 class MetricsModel {
     async getOperationalMetrics() {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('tickets')
-                .select('id_activo, fecha_creacion, ordenes_mantenimiento(fecha_inicio, fecha_fin)');
-            if (error) throw error;
+        const { data, error } = await db.supabase
+            .from('tickets')
+            .select('id_activo, fecha_creacion, ordenes_mantenimiento(fecha_inicio, fecha_fin)');
+        if (error) throw error;
 
-            const rows = (data || []).map((row) => ({
-                id_activo: row.id_activo,
-                fecha_creacion: row.fecha_creacion,
-                fecha_inicio: row.ordenes_mantenimiento?.fecha_inicio || null,
-                fecha_fin: row.ordenes_mantenimiento?.fecha_fin || null
-            }));
-
-            return buildMetrics(rows);
-        }
-
-        const { rows } = await db.query(
-            `SELECT
-                t.id_activo,
-                t.fecha_creacion,
-                om.fecha_inicio,
-                om.fecha_fin
-             FROM tickets t
-             LEFT JOIN ordenes_mantenimiento om ON om.id_ticket = t.id_ticket`
-        );
+        const rows = (data || []).map((row) => ({
+            id_activo: row.id_activo,
+            fecha_creacion: row.fecha_creacion,
+            fecha_inicio: row.ordenes_mantenimiento?.fecha_inicio || null,
+            fecha_fin: row.ordenes_mantenimiento?.fecha_fin || null
+        }));
 
         return buildMetrics(rows);
     }
