@@ -84,7 +84,32 @@ test('AuthService.register hashea password y no expone texto plano', async () =>
     });
 
     assert.equal(user.email, 'luisa@acme.com');
-    assert.equal(user.role, 'Técnico');
+    assert.equal(user.role, 'Usuario');
     assert.ok(capturedPayload.passwordHash);
     assert.notEqual(capturedPayload.passwordHash, 'Secreta123');
+});
+
+test('AuthService.register permite crear roles privilegiados solo a Gerente', async () => {
+    let capturedPayload = null;
+    const model = {
+        async create(payload) {
+            capturedPayload = payload;
+            return {
+                id_usuario: 88,
+                nombre: payload.nombre,
+                email: payload.email,
+                rol: payload.rol,
+                fecha_creacion: '2026-03-10T00:00:00Z'
+            };
+        }
+    };
+
+    const service = new AuthService(model);
+    const user = await service.register(
+        { nombre: 'Tech', email: 'tech@acme.com', password: 'Secreta123', rol: 'Técnico' },
+        { id: 1, role: 'Gerente' }
+    );
+
+    assert.equal(user.role, 'Técnico');
+    assert.equal(capturedPayload.rol, 'Técnico');
 });

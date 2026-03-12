@@ -64,12 +64,14 @@ CREATE TABLE IF NOT EXISTS ACTIVOS (
     fecha_compra DATE NOT NULL,
     vida_util INT NOT NULL,
     estado_activo BOOLEAN NOT NULL DEFAULT TRUE,
+    costo_compra NUMERIC(12,2),
     nivel_criticidad VARCHAR(50) DEFAULT 'Media',
     especificaciones_electricas VARCHAR(255),
     id_ubicacion INT REFERENCES UBICACIONES(id_ubicacion),
     id_categoria INT REFERENCES CATEGORIAS(id_categoria),
     id_proveedor INT REFERENCES PROVEEDORES(id_proveedor),
     CONSTRAINT chk_activos_vida_util CHECK (vida_util > 0 AND vida_util <= 240),
+    CONSTRAINT chk_activos_costo_compra_non_negative CHECK (costo_compra IS NULL OR costo_compra >= 0),
     CONSTRAINT chk_activos_criticidad CHECK (nivel_criticidad IN ('Baja', 'Media', 'Alta', 'Crítica'))
 );
 
@@ -89,11 +91,17 @@ CREATE TABLE IF NOT EXISTS TICKETS (
     descripcion TEXT NOT NULL,
     prioridad_ia VARCHAR(50),
     clasificacion_nlp VARCHAR(100),
+    clasificacion_metodo VARCHAR(80),
+    clasificacion_confidence NUMERIC(4,3),
+    clasificacion_rationale TEXT,
+    prioridad_metodo VARCHAR(80),
+    prioridad_rationale TEXT,
     estado VARCHAR(50) DEFAULT 'Abierto',
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ,
     CONSTRAINT chk_tickets_prioridad CHECK (prioridad_ia IS NULL OR prioridad_ia IN ('Baja', 'Media', 'Alta', 'Crítica')),
     CONSTRAINT chk_tickets_clasificacion CHECK (clasificacion_nlp IS NULL OR clasificacion_nlp IN ('Hardware', 'Software', 'Red', 'Eléctrico')),
+    CONSTRAINT chk_tickets_clasificacion_confidence CHECK (clasificacion_confidence IS NULL OR (clasificacion_confidence >= 0 AND clasificacion_confidence <= 1)),
     CONSTRAINT chk_tickets_estado CHECK (estado IN ('Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado'))
 );
 
@@ -166,6 +174,41 @@ CREATE TABLE IF NOT EXISTS ALERTAS (
     estado VARCHAR(50) DEFAULT 'Pendiente',
     fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- =========================================================================
+-- AUDITORÍA
+-- =========================================================================
+
+CREATE TABLE IF NOT EXISTS AUDIT_LOG (
+    id_audit SERIAL PRIMARY KEY,
+    fecha_evento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_usuario_actor INT REFERENCES USUARIOS(id_usuario),
+    rol_actor VARCHAR(50),
+    actor_email VARCHAR(150),
+    source VARCHAR(30) DEFAULT 'api',
+    request_id UUID,
+    ruta TEXT,
+    metodo VARCHAR(10),
+    ip VARCHAR(80),
+    user_agent TEXT,
+    duration_ms INT,
+    entidad VARCHAR(80),
+    entidad_id VARCHAR(80),
+    accion VARCHAR(80),
+    status VARCHAR(10) DEFAULT 'OK',
+    http_status INT,
+    error_code VARCHAR(80),
+    error_message TEXT,
+    payload_before JSONB,
+    payload_after JSONB,
+    metadata JSONB
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_fecha ON AUDIT_LOG (fecha_evento DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_actor ON AUDIT_LOG (id_usuario_actor, fecha_evento DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_entidad ON AUDIT_LOG (entidad, entidad_id, fecha_evento DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_accion ON AUDIT_LOG (accion, fecha_evento DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_status ON AUDIT_LOG (status, fecha_evento DESC);
 
 -- =========================================================================
 -- ÍNDICES DE OPERACIÓN

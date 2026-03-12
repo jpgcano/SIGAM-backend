@@ -1,35 +1,16 @@
-function normalizeText(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-}
-
-function inferClassification(description) {
-    const text = normalizeText(description);
-    const rules = [
-        { label: 'Hardware', keywords: ['pantalla', 'disco', 'teclado', 'mouse', 'ram', 'bateria', 'fuente', 'ventilador'] },
-        { label: 'Software', keywords: ['sistema', 'programa', 'aplicacion', 'licencia', 'actualizacion', 'instalacion', 'office', 'windows'] },
-        { label: 'Red', keywords: ['red', 'internet', 'wifi', 'router', 'switch', 'latencia', 'conexion', 'dns'] },
-        { label: 'Eléctrico', keywords: ['voltaje', 'corriente', 'energia', 'tomacorriente', 'breaker', 'ups', 'corto', 'quemado'] }
-    ];
-
-    for (const rule of rules) {
-        if (rule.keywords.some((keyword) => text.includes(keyword))) {
-            return rule.label;
-        }
-    }
-    return null;
-}
-
-function inferPriority(description) {
-    const text = normalizeText(description);
-    if (text.includes('quemado')) return 'Alta';
-    return 'Media';
-}
+import AssetModel from '../models/Asset.js';
+import { getIaConfig } from '../config/ia.js';
+import DecisionEngine from './ia/DecisionEngine.js';
+import TicketSuggestionEngine from './ia/TicketSuggestionEngine.js';
 
 class TicketService {
-    constructor(model) { this.model = model; }
+    constructor(model, { assetModel, iaConfig, decisionEngine } = {}) {
+        this.model = model;
+        this.assetModel = assetModel || new AssetModel();
+        this.iaConfig = iaConfig || getIaConfig();
+        this.decisionEngine = decisionEngine || new DecisionEngine(this.iaConfig);
+        this.suggestionEngine = new TicketSuggestionEngine({ maxSuggestions: 3 });
+    }
     static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
     findAll() { return this.model.findAll(); }
@@ -45,17 +26,86 @@ class TicketService {
 
     findAssignedByTecnico(id_tecnico) { return this.model.findAssignedByTecnico(id_tecnico); }
 
-    create(payload) {
+    async getSuggestions(id_ticket, user) {
+        await this.ensureAccess(id_ticket, user);
+
+        const ticket = await this.model.findCoreById(id_ticket);
+        if (!ticket) throw { status: 404, message: `Ticket ${id_ticket} no encontrado` };
+
+        const candidates = await this.model.findResolvedCandidatesByActivo({
+            id_activo: ticket.id_activo,
+            exclude_id_ticket: id_ticket,
+            limit: 12
+        });
+
+        return {
+            id_ticket,
+            id_activo: ticket.id_activo,
+            suggestions: this.suggestionEngine.suggest({ ticket, candidates })
+        };
+    }
+
+    async create(payload, user) {
         if (!payload.descripcion) throw { status: 400, message: 'descripcion es requerida' };
         if (!payload.id_activo) throw { status: 400, message: 'id_activo es requerido' };
+        if (!user?.id) throw { status: 401, message: 'Usuario no autenticado' };
+
+        const activo = await this.assetModel.findById(payload.id_activo);
+        if (!activo) throw { status: 404, message: `Activo ${payload.id_activo} no encontrado` };
+
+        const criticidadActivo = activo.nivel_criticidad || activo.criticidad || 'Media';
+
+        const clasificacion = await this.decisionEngine.classifyTicket({
+            descripcion: payload.descripcion
+        });
+        const categoria = clasificacion?.categoria ?? null;
+
+        const triage = await this.decisionEngine.triageTicket({
+            descripcion: payload.descripcion,
+            categoria,
+            criticidadActivo
+        });
+
+        const prioridad = triage?.prioridad ?? 'Media';
 
         const normalizedPayload = {
             ...payload,
-            clasificacion_nlp: inferClassification(payload.descripcion),
-            prioridad_ia: inferPriority(payload.descripcion)
+            id_usuario_reporta: user.id,
+            clasificacion_nlp: categoria,
+            prioridad_ia: prioridad,
+            clasificacion_metodo: clasificacion?.metodo || null,
+            clasificacion_confidence: clasificacion?.confidence ?? null,
+            clasificacion_rationale: clasificacion?.rationale || null,
+            prioridad_metodo: triage?.metodo || null,
+            prioridad_rationale: triage?.rationale || null,
+            estado: 'Abierto'
         };
 
-        return this.model.create(normalizedPayload);
+        const created = await this.model.create(normalizedPayload);
+
+        if (!created?.id_ticket) return created;
+
+        if (!this.iaConfig.enabled || !this.iaConfig.assignmentEnabled) {
+            return created;
+        }
+
+        if (typeof this.model.findSupportTechnicianWithLeastLoad !== 'function' || typeof this.model.assignToTechnician !== 'function') {
+            return created;
+        }
+
+        const tecnico = await this.model.findSupportTechnicianWithLeastLoad();
+        if (!tecnico) {
+            return created;
+        }
+
+        await this.model.assignToTechnician(created.id_ticket, tecnico.id_usuario);
+        const hydrated = await this.model.findById(created.id_ticket);
+        if (!hydrated) return created;
+        return {
+            ...hydrated,
+            id_usuario_tecnico: tecnico.id_usuario,
+            tecnico_asignado: tecnico.nombre
+        };
     }
 
     async update(id, payload, user) {

@@ -3,16 +3,10 @@ import assert from 'node:assert/strict';
 import TicketModel from '../src/models/Ticket.js';
 import db from '../src/config/db.js';
 
-test('TicketModel.create asigna estado Asignado y crea orden de mantenimiento', async () => {
+test('TicketModel.create crea ticket en estado Abierto', async () => {
     const model = new TicketModel();
     const originalQuery = db.query.bind(db);
     const calls = [];
-
-    model.findSupportTechnicianWithLeastLoad = async () => ({
-        id_usuario: 3,
-        nombre: 'Soporte Uno',
-        carga_abierta: 0
-    });
 
     db.query = async (text, params) => {
         calls.push({ text, params });
@@ -26,13 +20,9 @@ test('TicketModel.create asigna estado Asignado y crea orden de mantenimiento', 
                     descripcion: params[2],
                     prioridad_ia: params[3],
                     clasificacion_nlp: params[4],
-                    estado: 'Asignado'
+                    estado: params[10] || 'Abierto'
                 }]
             };
-        }
-
-        if (/INSERT INTO ordenes_mantenimiento/i.test(text)) {
-            return { rows: [{ id_orden: 1 }] };
         }
 
         return { rows: [] };
@@ -44,16 +34,14 @@ test('TicketModel.create asigna estado Asignado y crea orden de mantenimiento', 
             id_usuario_reporta: 9,
             descripcion: 'Prueba asignacion',
             prioridad_ia: 'Media',
-            clasificacion_nlp: 'Hardware'
+            clasificacion_nlp: 'Hardware',
+            estado: 'Abierto'
         });
 
-        assert.equal(ticket.estado, 'Asignado');
-        assert.equal(ticket.id_usuario_tecnico, 3);
-        assert.equal(ticket.tecnico_asignado, 'Soporte Uno');
+        assert.equal(ticket.estado, 'Abierto');
 
-        assert.equal(calls.length, 2);
+        assert.equal(calls.length, 1);
         assert.match(calls[0].text, /INSERT INTO tickets/i);
-        assert.match(calls[1].text, /INSERT INTO ordenes_mantenimiento/i);
     } finally {
         db.query = originalQuery;
     }

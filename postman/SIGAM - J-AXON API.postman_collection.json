@@ -184,6 +184,49 @@
           ]
         },
         {
+          "name": "Register Auditor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Auditor SIGAM\",\n  \"email\": \"{{email_auditor}}\",\n  \"password\": \"{{password_default}}\",\n  \"rol\": \"Auditor\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registro OK\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Respuesta JSON\", function () {",
+                  "  pm.response.to.be.json;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Login Gerente",
           "request": {
             "method": "POST",
@@ -368,13 +411,59 @@
           ]
         },
         {
+          "name": "Login Auditor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_auditor}}\",\n  \"password\": \"{{password_default}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login OK\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test(\"Token presente\", function () {",
+                  "  pm.expect(data.token).to.be.a(\"string\");",
+                  "});",
+                  "pm.collectionVariables.set('token_auditor', data.token);",
+                  "pm.collectionVariables.set('token', data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "GET Admin Panel",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_gerente}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -397,7 +486,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_tecnico}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -420,7 +509,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_usuario}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1283,7 +1372,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1305,7 +1394,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1329,7 +1418,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_tecnico}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1353,7 +1442,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1376,7 +1465,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1399,7 +1488,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1422,7 +1511,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_usuario}}"
+                "value": "Bearer {{token}}"
               },
               {
                 "key": "Content-Type",
@@ -1452,7 +1541,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               },
               {
                 "key": "Content-Type",
@@ -1483,7 +1572,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_tecnico}}"
+                "value": "Bearer {{token}}"
               },
               {
                 "key": "Content-Type",
@@ -1515,7 +1604,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_gerente}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1798,7 +1887,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_tecnico}}"
+                "value": "Bearer {{token}}"
               },
               {
                 "key": "Content-Type",
@@ -1831,13 +1920,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const data = pm.response.json();",
-                  "const before = Number(pm.collectionVariables.get('stock_before'));",
-                  "const used = Number(pm.collectionVariables.get('cantidad_usada'));",
-                  "if (!Number.isNaN(before) && !Number.isNaN(used)) {",
-                  "  pm.test('Stock descontado', function () {",
-                  "    pm.expect(data.stock).to.eql(before - used);",
-                  "  });",
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const data = pm.response.json();",
+                  "  const before = Number(pm.collectionVariables.get('stock_before'));",
+                  "  const used = Number(pm.collectionVariables.get('cantidad_usada'));",
+                  "  if (!Number.isNaN(before) && !Number.isNaN(used)) {",
+                  "    pm.test('Stock descontado', function () {",
+                  "      pm.expect(data.stock).to.eql(before - used);",
+                  "    });",
+                  "  }",
                   "}"
                 ]
               }
@@ -1908,7 +1999,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_gerente}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1930,7 +2021,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_gerente}}"
+                "value": "Bearer {{token}}"
               },
               {
                 "key": "Content-Type",
@@ -1965,7 +2056,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -1992,7 +2083,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -2020,7 +2111,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -2042,7 +2133,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -2065,7 +2156,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -2089,7 +2180,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -2113,7 +2204,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_analista}}"
+                "value": "Bearer {{token}}"
               },
               {
                 "key": "Content-Type",
@@ -2143,7 +2234,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_tecnico}}"
+                "value": "Bearer {{token}}"
               },
               {
                 "key": "Content-Type",
@@ -2175,7 +2266,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_tecnico}}"
+                "value": "Bearer {{token}}"
               },
               {
                 "key": "Content-Type",
@@ -2206,7 +2297,7 @@
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{token_gerente}}"
+                "value": "Bearer {{token}}"
               }
             ],
             "url": {
@@ -2231,20 +2322,46 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "if (!pm.collectionVariables.get(\"run_id\")) {",
-          "  const runId = Date.now();",
+          "const iter = pm.info.iteration || 0;",
+          "const storedIter = Number(pm.collectionVariables.get(\"run_id_iteration\") || -1);",
+          "let runId = pm.collectionVariables.get(\"run_id\");",
+          "if (!runId || storedIter !== iter) {",
+          "  runId = `${Date.now()}_${iter}`;",
           "  pm.collectionVariables.set(\"run_id\", runId);",
+          "  pm.collectionVariables.set(\"run_id_iteration\", String(iter));",
+          "  pm.collectionVariables.unset(\"ticket_id\");",
+          "  pm.collectionVariables.unset(\"orden_id\");",
+          "  pm.collectionVariables.unset(\"stock_before\");",
+          "  pm.collectionVariables.unset(\"repuesto_id\");",
+          "  pm.collectionVariables.unset(\"cantidad_usada\");",
           "}",
           "const domain = pm.collectionVariables.get(\"email_domain\") || \"sigam.test\";",
           "pm.collectionVariables.set(\"email_domain\", domain);",
-          "const runId = pm.collectionVariables.get(\"run_id\");",
           "pm.collectionVariables.set(\"email_gerente\", `gerente_${runId}@${domain}`);",
           "pm.collectionVariables.set(\"email_analista\", `analista_${runId}@${domain}`);",
           "pm.collectionVariables.set(\"email_tecnico\", `tecnico_${runId}@${domain}`);",
           "pm.collectionVariables.set(\"email_usuario\", `usuario_${runId}@${domain}`);",
+          "pm.collectionVariables.set(\"email_auditor\", `auditor_${runId}@${domain}`);",
           "if (!pm.collectionVariables.get(\"password_default\")) {",
           "  pm.collectionVariables.set(\"password_default\", \"Password1\");",
-          "}"
+          "}",
+          "const roleRaw = pm.iterationData.get(\"role\") || pm.collectionVariables.get(\"role\") || \"gerente\";",
+          "const role = String(roleRaw)",
+          "  .normalize(\"NFD\")",
+          "  .replace(/[\\u0300-\\u036f]/g, \"\")",
+          "  .toLowerCase()",
+          "  .trim();",
+          "pm.collectionVariables.set(\"current_role\", role);",
+          "const tokenMap = {",
+          "  gerente: \"token_gerente\",",
+          "  analista: \"token_analista\",",
+          "  tecnico: \"token_tecnico\",",
+          "  usuario: \"token_usuario\",",
+          "  auditor: \"token_auditor\"",
+          "};",
+          "const tokenVar = tokenMap[role];",
+          "const tokenVal = tokenVar ? pm.collectionVariables.get(tokenVar) : \"\";",
+          "pm.collectionVariables.set(\"token\", tokenVal || \"\");"
         ]
       }
     },
@@ -2253,9 +2370,110 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "pm.test(\"Status 2xx\", function () {",
-          "  pm.expect(pm.response.code).to.be.within(200, 299);",
+          "const routes = [",
+          "  { method: \"GET\", path: \"/health\", public: true, success: 200 },",
+          "  { method: \"POST\", path: \"/auth/register\", public: true, success: 201 },",
+          "  { method: \"POST\", path: \"/auth/login\", public: true, success: 200 },",
+          "  { method: \"GET\", path: \"/auth/admin-panel\", roles: [\"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/auth/configuracion\", roles: [\"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/auth/perfil\", roles: [\"analista\", \"tecnico\", \"gerente\", \"usuario\"], success: 200 },",
+          "  { method: \"GET\", path: \"/usuarios\", roles: [\"gerente\", \"analista\"], success: 200 },",
+          "  { method: \"POST\", path: \"/usuarios\", roles: [\"gerente\"], success: 201 },",
+          "  { method: \"GET\", path: \"/activos\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/activos/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/activos/:id/historial\", roles: [\"analista\", \"tecnico\", \"gerente\", \"auditor\"], success: 200 },",
+          "  { method: \"POST\", path: \"/activos\", roles: [\"analista\", \"gerente\"], success: 201 },",
+          "  { method: \"PUT\", path: \"/activos/:id\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"DELETE\", path: \"/activos/:id\", roles: [\"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/tickets\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/tickets/activo/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/tickets/asignados/mis\", roles: [\"tecnico\"], success: 200 },",
+          "  { method: \"GET\", path: \"/tickets/metricas\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/tickets/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200, conditionalRoles: [\"tecnico\"] },",
+          "  { method: \"POST\", path: \"/tickets\", roles: [\"analista\", \"tecnico\", \"gerente\", \"usuario\"], success: 201 },",
+          "  { method: \"PUT\", path: \"/tickets/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200, conditionalRoles: [\"tecnico\"] },",
+          "  { method: \"PATCH\", path: \"/tickets/:id/estado\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200, conditionalRoles: [\"tecnico\"] },",
+          "  { method: \"DELETE\", path: \"/tickets/:id\", roles: [\"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/mantenimientos\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/mantenimientos/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/mantenimientos/tecnico/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/mantenimientos/:id/consumos\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"POST\", path: \"/mantenimientos\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 201 },",
+          "  { method: \"POST\", path: \"/mantenimientos/:id/consumos\", roles: [\"tecnico\"], success: 201 },",
+          "  { method: \"PUT\", path: \"/mantenimientos/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"DELETE\", path: \"/mantenimientos/:id\", roles: [\"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/metricas/operacion\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/categorias\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/repuestos\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/repuestos/bajo-stock\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/repuestos/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"POST\", path: \"/repuestos\", roles: [\"analista\", \"gerente\"], success: 201 },",
+          "  { method: \"PUT\", path: \"/repuestos/:id\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"DELETE\", path: \"/repuestos/:id\", roles: [\"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/proveedores\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/proveedores/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"POST\", path: \"/proveedores\", roles: [\"analista\", \"gerente\"], success: 201 },",
+          "  { method: \"PUT\", path: \"/proveedores/:id\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"DELETE\", path: \"/proveedores/:id\", roles: [\"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/ubicaciones\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/ubicaciones/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"POST\", path: \"/ubicaciones\", roles: [\"analista\", \"gerente\"], success: 201 },",
+          "  { method: \"PUT\", path: \"/ubicaciones/:id\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"DELETE\", path: \"/ubicaciones/:id\", roles: [\"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/licencias\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/licencias/:id\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/licencias/:id/asignaciones\", roles: [\"analista\", \"gerente\", \"auditor\"], success: 200 },",
+          "  { method: \"POST\", path: \"/licencias\", roles: [\"analista\", \"gerente\"], success: 201 },",
+          "  { method: \"POST\", path: \"/licencias/asignar\", roles: [\"analista\", \"gerente\"], success: 201 },",
+          "  { method: \"PUT\", path: \"/licencias/:id\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"DELETE\", path: \"/licencias/:id\", roles: [\"gerente\"], success: 200 },",
+          "  { method: \"DELETE\", path: \"/licencias/asignacion/:id\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/software\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"GET\", path: \"/software/:id\", roles: [\"analista\", \"tecnico\", \"gerente\"], success: 200 },",
+          "  { method: \"POST\", path: \"/software\", roles: [\"analista\", \"gerente\"], success: 201 },",
+          "  { method: \"PUT\", path: \"/software/:id\", roles: [\"analista\", \"gerente\"], success: 200 },",
+          "  { method: \"DELETE\", path: \"/software/:id\", roles: [\"gerente\"], success: 200 }",
+          "];",
+          "",
+          "function normalizePath(path) {",
+          "  return path.split(\"/\").map(seg => {",
+          "    if (!seg) return \"\";",
+          "    if (seg.startsWith(\"{{\") && seg.endsWith(\"}}\")) return \":param\";",
+          "    if (seg.startsWith(\":\")) return \":param\";",
+          "    if (/^\\d+$/.test(seg)) return \":param\";",
+          "    return seg;",
+          "  }).join(\"/\");",
+          "}",
+          "",
+          "const method = pm.request.method.toUpperCase();",
+          "const path = \"/\" + (pm.request.url.path || []).join(\"/\");",
+          "const normalized = normalizePath(path);",
+          "const route = routes.find(r => r.method === method && normalizePath(r.path) === normalized);",
+          "",
+          "pm.test(\"Ruta en matriz\", function () {",
+          "  pm.expect(route, `Sin matriz para ${method} ${path}`).to.not.be.undefined;",
           "});",
+          "",
+          "if (route) {",
+          "  const role = pm.collectionVariables.get(\"current_role\") || \"anon\";",
+          "  let expected = [];",
+          "  if (route.public) {",
+          "    expected = [route.success];",
+          "  } else if (role === \"anon\") {",
+          "    expected = [401];",
+          "  } else if ((route.roles || []).includes(role)) {",
+          "    expected = [route.success];",
+          "    if (route.conditionalRoles && route.conditionalRoles.includes(role)) {",
+          "      expected.push(403);",
+          "    }",
+          "  } else {",
+          "    expected = [403];",
+          "  }",
+          "  pm.test(`Status esperado (${expected.join(\", \")})`, function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf(expected);",
+          "  });",
+          "}",
+          "",
           "if (pm.response.text() && pm.response.text().trim().length > 0) {",
           "  pm.test(\"Respuesta JSON\", function () {",
           "    pm.response.to.be.json;",
@@ -2318,6 +2536,26 @@
     {
       "key": "password_default",
       "value": "Password1"
+    },
+    {
+      "key": "token_auditor",
+      "value": ""
+    },
+    {
+      "key": "email_auditor",
+      "value": ""
+    },
+    {
+      "key": "run_id_iteration",
+      "value": ""
+    },
+    {
+      "key": "current_role",
+      "value": ""
+    },
+    {
+      "key": "role",
+      "value": "gerente"
     }
   ]
 }

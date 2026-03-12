@@ -3,7 +3,8 @@ import AuthController from '../controllers/auth.controller.js';
 import AuthService from '../services/auth.service.js';
 import UserModel from '../models/User.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
-import roleMiddleware from '../middlewares/role.middleware.js';
+import optionalAuth from '../middlewares/optionalAuth.middleware.js';
+import permit from '../middlewares/permit.middleware.js';
 import { validateRequired } from '../middlewares/validate.middleware.js';
 import rateLimit from 'express-rate-limit';
 
@@ -18,18 +19,18 @@ const loginLimiter = rateLimit({
     legacyHeaders: false
 });
 
-router.post('/register', validateRequired(['nombre', 'email', 'password', 'rol']), authController.register);
+router.post('/register', validateRequired(['nombre', 'email', 'password']), authController.register);
 router.post('/login', loginLimiter, validateRequired(['email', 'password']), authController.login);
 
-router.get('/admin-panel', authMiddleware, roleMiddleware(['Gerente']), (req, res) => {
+router.get('/admin-panel', authMiddleware, permit('auth', 'admin_panel'), (req, res) => {
     res.json({ msg: 'Bienvenido, Gerente' });
 });
 
-router.get('/configuracion', authMiddleware, roleMiddleware(['Técnico', 'Gerente']), (req, res) => {
+router.get('/configuracion', authMiddleware, permit('auth', 'configuracion'), (req, res) => {
     res.json({ msg: 'Acceso a configuración técnica' });
 });
 
-router.get('/perfil', authMiddleware, roleMiddleware(['Analista', 'Técnico', 'Gerente', 'Usuario']), (req, res) => {
+router.get('/perfil', authMiddleware, permit('auth', 'perfil'), (req, res) => {
     res.json({ msg: 'Tu perfil de usuario' });
 });
 

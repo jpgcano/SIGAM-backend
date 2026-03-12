@@ -13,21 +13,22 @@ RESTART IDENTITY CASCADE;
 
 -- 1. DATOS DE CATÁLOGO
 INSERT INTO USUARIOS (nombre, email, password_hash, rol) VALUES
-('Ana Gómez', 'ana.gomez@empresa.com', '$2b$10$anasigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Analista'),
-('Luis Pérez', 'luis.perez@empresa.com', '$2b$10$luissigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Técnico'),
-('Carlos Ruiz', 'carlos.ruiz@empresa.com', '$2b$10$carlossigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Gerente'),
-('Marta Díaz', 'marta.diaz@empresa.com', '$2b$10$martasigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Técnico'),
-('Jorge Vega', 'jorge.vega@empresa.com', '$2b$10$jorgesigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Técnico'),
-('Elena Mora', 'elena.mora@empresa.com', '$2b$10$elenasigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('Pedro Gil', 'pedro.gil@empresa.com', '$2b$10$pedrosigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('Lucía Paz', 'lucia.paz@empresa.com', '$2b$10$luciasigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('Raúl Ríos', 'raul.rios@empresa.com', '$2b$10$raulsigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('Sara Luna', 'sara.luna@empresa.com', '$2b$10$sarasigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('David Sol', 'david.sol@empresa.com', '$2b$10$davidsigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('Alba Roa', 'alba.roa@empresa.com', '$2b$10$albasigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('Hugo Rey', 'hugo.rey@empresa.com', '$2b$10$hugosigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('Inés Cid', 'ines.cid@empresa.com', '$2b$10$inessigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario'),
-('Omar Leo', 'omar.leo@empresa.com', '$2b$10$omarsigamhashxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'Usuario');
+('Ana Gómez', 'ana.gomez@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Analista'),
+('Luis Pérez', 'luis.perez@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Técnico'),
+('Carlos Ruiz', 'carlos.ruiz@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Gerente'),
+('Marta Díaz', 'marta.diaz@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Técnico'),
+('Jorge Vega', 'jorge.vega@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Técnico'),
+('Elena Mora', 'elena.mora@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Pedro Gil', 'pedro.gil@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Lucía Paz', 'lucia.paz@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Raúl Ríos', 'raul.rios@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Sara Luna', 'sara.luna@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('David Sol', 'david.sol@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Alba Roa', 'alba.roa@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Hugo Rey', 'hugo.rey@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Inés Cid', 'ines.cid@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Omar Leo', 'omar.leo@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Usuario'),
+('Ariel Audit', 'ariel.audit@empresa.com', '$2b$10$xwmpRHSr7knFZEd1Ri95feru36Eql1hPBJqsuP3luPowLiZ6Tx40S', 'Auditor');
 
 INSERT INTO CATEGORIAS (nombre_categoria) VALUES
 ('Laptop'), ('Desktop'), ('Servidor'), ('Monitor'), ('Impresora'),
@@ -55,7 +56,7 @@ INSERT INTO REPUESTOS (nombre, stock, stock_minimo) VALUES
 ('Pasta Térmica', 15, 3);
 
 -- 2. GENERACIÓN MASIVA
-INSERT INTO ACTIVOS (serial, modelo, fecha_compra, vida_util, nivel_criticidad, especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor)
+INSERT INTO ACTIVOS (serial, modelo, fecha_compra, vida_util, nivel_criticidad, especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor, costo_compra)
 SELECT
     'SN-' || LPAD(i::text, 6, '0'),
     'Modelo Genérico ' || floor(random() * 10 + 1)::int,
@@ -65,7 +66,8 @@ SELECT
     CASE WHEN random() > 0.5 THEN '120V - 15A' ELSE '240V - 20A' END,
     floor(random() * 10 + 1)::int,
     floor(random() * 10 + 1)::int,
-    floor(random() * 5 + 1)::int
+    floor(random() * 5 + 1)::int,
+    floor(random() * 5000000 + 800000)::numeric
 FROM generate_series(1, 40) s(i);
 
 INSERT INTO TICKETS (id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp, estado, fecha_creacion)
@@ -95,12 +97,18 @@ SELECT
     floor(random() * 50 + 10)::int
 FROM generate_series(1, 20) s(i);
 
+WITH base AS (
+    SELECT l.id_licencia, random() AS r
+    FROM LICENCIAS l
+    ORDER BY random()
+    LIMIT 30
+)
 INSERT INTO ASIGNACION_LICENCIAS (id_licencia, id_usuario, id_activo)
 SELECT
-    floor(random() * 20 + 1)::int,
-    CASE WHEN random() > 0.5 THEN floor(random() * 15 + 1)::int ELSE NULL END,
-    CASE WHEN random() <= 0.5 THEN floor(random() * 40 + 1)::int ELSE NULL END
-FROM generate_series(1, 30) s(i);
+    b.id_licencia,
+    CASE WHEN b.r > 0.5 THEN (SELECT id_usuario FROM USUARIOS ORDER BY random() LIMIT 1) ELSE NULL END,
+    CASE WHEN b.r <= 0.5 THEN (SELECT id_activo FROM ACTIVOS ORDER BY random() LIMIT 1) ELSE NULL END
+FROM base b;
 
 INSERT INTO CATALOGO_PRECIOS_PROVEEDORES (id_proveedor, id_repuesto, precio)
 SELECT

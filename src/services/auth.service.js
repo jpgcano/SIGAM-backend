@@ -25,16 +25,21 @@ class AuthService {
         };
     }
 
-    async register({ nombre, email, password, rol }) {
-        if (!ALLOWED_ROLES_SET.has(rol)) {
-            throw { status: 400, message: `rol inválido: ${rol}` };
+    async register({ nombre, email, password, rol }, actor) {
+        const isGerente = actor?.role === 'Gerente';
+        const desiredRole = rol || 'Usuario';
+
+        const finalRole = isGerente ? desiredRole : 'Usuario';
+
+        if (!ALLOWED_ROLES_SET.has(finalRole)) {
+            throw { status: 400, message: `rol inválido: ${finalRole}` };
         }
         const passwordHash = await HashUtil.hashPassword(password);
         const created = await this.userModel.create({
             nombre,
             email,
             passwordHash,
-            rol
+            rol: finalRole
         });
 
         return {

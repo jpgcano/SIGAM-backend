@@ -15,7 +15,7 @@ class SupabaseAdapter {
             throw new Error('SUPABASE_URL y SUPABASE_ANON_KEY son requeridos en .env para usar Supabase');
         }
         this.client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
-        console.log('⚡ Base de datos: Supabase');
+        console.log('Base de datos: Supabase');
         return this.client;
     }
 
@@ -43,10 +43,8 @@ class SupabaseAdapter {
     }
 
     async testConnection() {
-        const client = this.ensureClient();
-        const { error } = await client.from('usuarios').select('id_usuario').limit(1);
-        if (error) throw error;
-        return { ok: true, mode: 'supabase' };
+        const { rows } = await this.query('SELECT 1 AS ok, NOW() AS now');
+        return rows?.[0] || { ok: 1 };
     }
 
     get supabase() {
