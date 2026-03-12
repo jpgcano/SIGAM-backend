@@ -95,6 +95,16 @@ class MaintenanceModel extends BaseModel {
         });
     }
 
+    async updateByTicketId(id_ticket, { diagnostico, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico }) {
+        return this.dbUpdate('ordenes_mantenimiento', 'id_ticket', id_ticket, {
+            diagnostico,
+            fecha_inicio,
+            fecha_fin,
+            checklist_seguridad,
+            id_usuario_tecnico
+        });
+    }
+
     async remove(id) {
         return this.dbRemove('ordenes_mantenimiento', 'id_orden', id);
     }
@@ -129,4 +139,3 @@ class MaintenanceModel extends BaseModel {
 }
 
 export default MaintenanceModel;
-

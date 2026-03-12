@@ -18,7 +18,8 @@ class AssetModel extends BaseModel {
         const {
             serial, modelo, fecha_compra, vida_util, codigo_qr,
             nivel_criticidad, especificaciones_electricas,
-            id_ubicacion, id_categoria, id_proveedor
+            id_ubicacion, id_categoria, id_proveedor,
+            costo_compra
         } = payload;
 
         let activo;
@@ -29,7 +30,8 @@ class AssetModel extends BaseModel {
                 .insert({
                     serial, codigo_qr, modelo, fecha_compra, vida_util,
                     nivel_criticidad: nivel_criticidad || 'Media',
-                    especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor
+                    especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor,
+                    costo_compra
                 })
                 .select().single();
             if (error) throw error;
@@ -43,10 +45,10 @@ class AssetModel extends BaseModel {
         } else {
             const { rows } = await this.query(
                 `INSERT INTO activos (serial, codigo_qr, modelo, fecha_compra, vida_util, nivel_criticidad,
-                    especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+                    especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor, costo_compra)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
                 [serial, codigo_qr, modelo, fecha_compra, vida_util, nivel_criticidad || 'Media',
-                especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor]
+                especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor, costo_compra]
             );
             activo = rows[0];
             await this.query(
@@ -60,7 +62,7 @@ class AssetModel extends BaseModel {
 
     async update(id, payload) {
         const { modelo, vida_util, nivel_criticidad, especificaciones_electricas, estado_activo,
-                id_ubicacion, id_categoria, id_proveedor } = payload;
+                id_ubicacion, id_categoria, id_proveedor, costo_compra } = payload;
 
         if (this.useSupabase) {
             const updateData = {};
@@ -72,6 +74,7 @@ class AssetModel extends BaseModel {
             if (id_ubicacion !== undefined) updateData.id_ubicacion = id_ubicacion;
             if (id_categoria !== undefined) updateData.id_categoria = id_categoria;
             if (id_proveedor !== undefined) updateData.id_proveedor = id_proveedor;
+            if (costo_compra !== undefined) updateData.costo_compra = costo_compra;
 
             const { data, error } = await this.supabase
                 .from('activos').update(updateData)
@@ -87,12 +90,50 @@ class AssetModel extends BaseModel {
                 especificaciones_electricas = COALESCE($4, especificaciones_electricas),
                 estado_activo = COALESCE($5, estado_activo),
                 id_ubicacion = COALESCE($6, id_ubicacion), id_categoria = COALESCE($7, id_categoria),
-                id_proveedor = COALESCE($8, id_proveedor)
-             WHERE id_activo = $9 RETURNING *`,
+                id_proveedor = COALESCE($8, id_proveedor),
+                costo_compra = COALESCE($9, costo_compra)
+             WHERE id_activo = $10 RETURNING *`,
             [modelo, vida_util, nivel_criticidad, especificaciones_electricas, estado_activo,
-            id_ubicacion, id_categoria, id_proveedor, id]
+            id_ubicacion, id_categoria, id_proveedor, costo_compra, id]
         );
         return rows[0] || null;
+    }
+
+    async getRepairPartsCostWindowByActivo({ windowDays = 365 } = {}) {
+        const days = Number(windowDays);
+        if (!Number.isInteger(days) || days <= 0 || days > 3650) {
+            throw { status: 400, message: 'windowDays inválido' };
+        }
+
+        const { rows } = await this.query(
+            `WITH min_price AS (
+                SELECT id_repuesto, MIN(precio) AS precio_unit
+                FROM catalogo_precios_proveedores
+                GROUP BY id_repuesto
+            ),
+            consumo AS (
+                SELECT
+                    t.id_activo,
+                    SUM(cr.cantidad_usada * COALESCE(mp.precio_unit, 0))::numeric AS costo_repuestos_window
+                FROM consumo_repuestos cr
+                JOIN ordenes_mantenimiento om ON om.id_orden = cr.id_orden
+                JOIN tickets t ON t.id_ticket = om.id_ticket
+                LEFT JOIN min_price mp ON mp.id_repuesto = cr.id_repuesto
+                WHERE COALESCE(om.fecha_fin, om.fecha_inicio, t.fecha_creacion, NOW()) >= NOW() - ($1 * INTERVAL '1 day')
+                GROUP BY t.id_activo
+            )
+            SELECT
+                a.id_activo,
+                a.serial,
+                a.modelo,
+                a.costo_compra,
+                COALESCE(c.costo_repuestos_window, 0) AS costo_repuestos_window
+            FROM activos a
+            LEFT JOIN consumo c ON c.id_activo = a.id_activo
+            ORDER BY a.id_activo ASC`,
+            [days]
+        );
+        return rows || [];
     }
 
     async remove(id, motivoBaja, certificadoBorrado) {
@@ -147,7 +188,43 @@ class AssetModel extends BaseModel {
         );
         return rows[0];
     }
+
+    async findPreventiveMaintenanceCandidates({ intervalDays = 180, limit = 50 } = {}) {
+        const interval = Number(intervalDays);
+        const lim = Number(limit);
+        const safeInterval = Number.isInteger(interval) && interval > 0 && interval <= 3650 ? interval : 180;
+        const safeLimit = Number.isInteger(lim) && lim > 0 && lim <= 500 ? lim : 50;
+
+        const { rows } = await this.query(
+            `WITH last_maint AS (
+                SELECT
+                    a.id_activo,
+                    MAX(COALESCE(om.fecha_fin, om.fecha_inicio, t.fecha_creacion)) AS last_event
+                FROM activos a
+                LEFT JOIN tickets t ON t.id_activo = a.id_activo
+                LEFT JOIN ordenes_mantenimiento om ON om.id_ticket = t.id_ticket
+                WHERE a.estado_activo = TRUE
+                  AND (t.id_ticket IS NULL OR t.estado IN ('Resuelto', 'Cerrado'))
+                GROUP BY a.id_activo
+            )
+            SELECT
+                a.id_activo,
+                a.serial,
+                a.modelo,
+                a.fecha_compra,
+                a.nivel_criticidad,
+                COALESCE(lm.last_event, a.fecha_compra::timestamp) AS last_event,
+                (COALESCE(lm.last_event, a.fecha_compra::timestamp) + ($1 * INTERVAL '1 day')) AS next_due
+            FROM activos a
+            LEFT JOIN last_maint lm ON lm.id_activo = a.id_activo
+            WHERE a.estado_activo = TRUE
+              AND (COALESCE(lm.last_event, a.fecha_compra::timestamp) + ($1 * INTERVAL '1 day')) <= NOW()
+            ORDER BY next_due ASC, a.id_activo ASC
+            LIMIT $2`,
+            [safeInterval, safeLimit]
+        );
+        return rows || [];
+    }
 }
 
 export default AssetModel;
-
