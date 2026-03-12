@@ -1,6 +1,5 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-const useSupabase = (process.env.DB_MODE || 'postgres').toLowerCase() === 'supabase';
 const OPEN_TICKET_STATES = ['Abierto', 'Asignado', 'En Proceso'];
 const SUPPORT_ROLES = new Set(['tecnico', 'soporte']);
 
@@ -12,41 +11,18 @@ function normalizeRole(rol) {
         .trim();
 }
 
-class TicketModel {
+class TicketModel extends BaseModel {
     async findAll() {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('vw_tickets_operacion')
-                .select('*')
-                .order('id_ticket', { ascending: false });
-            if (error) throw error;
-            return data;
-        }
-        const { rows } = await db.query(
-            'SELECT * FROM vw_tickets_operacion ORDER BY id_ticket DESC'
-        );
-        return rows;
+        return this.dbFindAll('vw_tickets_operacion', 'id_ticket', 'DESC');
     }
 
     async findById(id) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('vw_tickets_operacion')
-                .select('*')
-                .eq('id_ticket', id)
-                .maybeSingle();
-            if (error) throw error;
-            return data || null;
-        }
-        const { rows } = await db.query(
-            'SELECT * FROM vw_tickets_operacion WHERE id_ticket = $1', [id]
-        );
-        return rows[0] || null;
+        return this.dbFindById('vw_tickets_operacion', 'id_ticket', id);
     }
 
     async findByActivo(id_activo) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('vw_tickets_operacion')
                 .select('*')
                 .eq('id_activo', id_activo)
@@ -54,7 +30,7 @@ class TicketModel {
             if (error) throw error;
             return data;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             'SELECT * FROM vw_tickets_operacion WHERE id_activo = $1 ORDER BY id_ticket DESC',
             [id_activo]
         );
@@ -62,8 +38,8 @@ class TicketModel {
     }
 
     async findSupportTechnicianWithLeastLoad() {
-        if (useSupabase) {
-            const { data: users, error: usersError } = await db.supabase
+        if (this.useSupabase) {
+            const { data: users, error: usersError } = await this.supabase
                 .from('usuarios')
                 .select('id_usuario, nombre, rol');
             if (usersError) throw usersError;
@@ -72,7 +48,7 @@ class TicketModel {
             if (!technicians.length) return null;
 
             const techIds = technicians.map((t) => t.id_usuario);
-            const { data: maintRows, error: maintError } = await db.supabase
+            const { data: maintRows, error: maintError } = await this.supabase
                 .from('ordenes_mantenimiento')
                 .select('id_usuario_tecnico, tickets(estado)')
                 .in('id_usuario_tecnico', techIds);
@@ -100,7 +76,7 @@ class TicketModel {
             };
         }
 
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT
                 u.id_usuario,
                 u.nombre,
@@ -110,7 +86,7 @@ class TicketModel {
              LEFT JOIN tickets t
                 ON t.id_ticket = om.id_ticket
                AND t.estado IN ('Abierto', 'Asignado', 'En Proceso')
-             WHERE lower(translate(u.rol, 'ÁÉÍÓÚáéíóú', 'AEIOUaeiou')) IN ('tecnico', 'soporte')
+             WHERE lower(translate(u.rol, 'ÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³Ãº', 'AEIOUaeiou')) IN ('tecnico', 'soporte')
              GROUP BY u.id_usuario, u.nombre
              ORDER BY COUNT(t.id_ticket) ASC, u.id_usuario ASC
              LIMIT 1`
@@ -123,11 +99,11 @@ class TicketModel {
     async create({ id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp }) {
         const tecnico = await this.findSupportTechnicianWithLeastLoad();
         if (!tecnico) {
-            throw { status: 409, message: 'No hay técnicos de soporte disponibles para asignar el ticket' };
+            throw { status: 409, message: 'No hay tÃ©cnicos de soporte disponibles para asignar el ticket' };
         }
 
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('tickets')
                 .insert({
                     id_activo,
@@ -141,7 +117,7 @@ class TicketModel {
                 .single();
             if (error) throw error;
 
-            const { error: assignError } = await db.supabase
+            const { error: assignError } = await this.supabase
                 .from('ordenes_mantenimiento')
                 .insert({
                     id_ticket: data.id_ticket,
@@ -155,14 +131,14 @@ class TicketModel {
                 tecnico_asignado: tecnico.nombre
             };
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `INSERT INTO tickets (id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp, estado)
              VALUES ($1,$2,$3,$4,$5,'Asignado') RETURNING *`,
             [id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp]
         );
         const ticket = rows[0];
 
-        await db.query(
+        await this.query(
             `INSERT INTO ordenes_mantenimiento (id_ticket, id_usuario_tecnico)
              VALUES ($1, $2)`,
             [ticket.id_ticket, tecnico.id_usuario]
@@ -176,55 +152,16 @@ class TicketModel {
     }
 
     async update(id, { prioridad_ia, clasificacion_nlp, estado }) {
-        if (useSupabase) {
-            const updateData = {};
-            if (prioridad_ia !== undefined) updateData.prioridad_ia = prioridad_ia;
-            if (clasificacion_nlp !== undefined) updateData.clasificacion_nlp = clasificacion_nlp;
-            if (estado !== undefined) updateData.estado = estado;
-            const { data, error } = await db.supabase
-                .from('tickets')
-                .update(updateData)
-                .eq('id_ticket', id)
-                .select('*')
-                .single();
-            if (error) throw error;
-            return data || null;
-        }
-        const { rows } = await db.query(
-            `UPDATE tickets SET
-                prioridad_ia = COALESCE($1, prioridad_ia),
-                clasificacion_nlp = COALESCE($2, clasificacion_nlp),
-                estado = COALESCE($3, estado)
-             WHERE id_ticket = $4 RETURNING *`,
-            [prioridad_ia, clasificacion_nlp, estado, id]
-        );
-        return rows[0] || null;
+        return this.dbUpdate('tickets', 'id_ticket', id, { prioridad_ia, clasificacion_nlp, estado });
     }
 
     async updateEstado(id, estado) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('tickets')
-                .update({ estado })
-                .eq('id_ticket', id)
-                .select('*')
-                .single();
-            if (error) throw error;
-            return data || null;
-        }
-        const { rows } = await db.query(
-            `UPDATE tickets
-             SET estado = $1
-             WHERE id_ticket = $2
-             RETURNING *`,
-            [estado, id]
-        );
-        return rows[0] || null;
+        return this.dbUpdate('tickets', 'id_ticket', id, { estado });
     }
 
     async isReportedByUser(id_ticket, id_usuario) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('tickets')
                 .select('id_ticket')
                 .eq('id_ticket', id_ticket)
@@ -233,7 +170,7 @@ class TicketModel {
             if (error) throw error;
             return Array.isArray(data) && data.length > 0;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT 1
              FROM tickets
              WHERE id_ticket = $1
@@ -249,7 +186,7 @@ class TicketModel {
             throw { status: 400, message: 'consumos es requerido' };
         }
 
-        if (useSupabase) {
+        if (this.useSupabase) {
             const values = [];
             const params = [id_ticket];
             consumos.forEach((item) => {
@@ -280,7 +217,7 @@ class TicketModel {
                     (SELECT id_ticket FROM upd) AS id_ticket
             `;
 
-            const { rows } = await db.query(sql, params);
+            const { rows } = await this.query(sql, params);
             const meta = rows?.[0];
             if (!meta || Number(meta.orden_exists) === 0) {
                 throw { status: 404, message: `Orden no encontrada para ticket ${id_ticket}` };
@@ -291,11 +228,11 @@ class TicketModel {
             return this.findById(id_ticket);
         }
 
-        if (typeof db.transaction !== 'function') {
+        if (typeof this.db.transaction !== 'function') {
             throw { status: 500, message: 'Transacciones no soportadas en el adaptador actual' };
         }
 
-        return db.transaction(async (client) => {
+        return this.transaction(async (client) => {
             const order = await client.query(
                 'SELECT id_orden FROM ordenes_mantenimiento WHERE id_ticket = $1',
                 [id_ticket]
@@ -325,8 +262,8 @@ class TicketModel {
     }
 
     async isAssignedToTecnico(id_ticket, id_tecnico) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('ordenes_mantenimiento')
                 .select('id_orden')
                 .eq('id_ticket', id_ticket)
@@ -335,7 +272,7 @@ class TicketModel {
             if (error) throw error;
             return Array.isArray(data) && data.length > 0;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT 1
              FROM ordenes_mantenimiento
              WHERE id_ticket = $1
@@ -347,20 +284,11 @@ class TicketModel {
     }
 
     async remove(id) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('tickets').delete().eq('id_ticket', id).select('*').single();
-            if (error) throw error;
-            return data || null;
-        }
-        const { rows } = await db.query(
-            'DELETE FROM tickets WHERE id_ticket = $1 RETURNING *', [id]
-        );
-        return rows[0] || null;
+        return this.dbRemove('tickets', 'id_ticket', id);
     }
 
     async getMetrics({ id_activo } = {}) {
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `WITH mttr AS (
                 SELECT AVG(EXTRACT(EPOCH FROM (om.fecha_fin - om.fecha_inicio))) AS mttr_seconds,
                        COUNT(*) AS reparaciones
@@ -400,3 +328,4 @@ class TicketModel {
 }
 
 export default TicketModel;
+

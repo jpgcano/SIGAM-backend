@@ -1,11 +1,10 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-const useSupabase = (process.env.DB_MODE || 'postgres').toLowerCase() === 'supabase';
 
-class MaintenanceModel {
+class MaintenanceModel extends BaseModel {
     async findAll() {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('ordenes_mantenimiento')
                 .select(`
                     *,
@@ -16,7 +15,7 @@ class MaintenanceModel {
             if (error) throw error;
             return data;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT om.*, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado,
                     u.nombre AS tecnico_nombre
              FROM ordenes_mantenimiento om
@@ -28,8 +27,8 @@ class MaintenanceModel {
     }
 
     async findById(id) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('ordenes_mantenimiento')
                 .select(`
                     *,
@@ -41,7 +40,7 @@ class MaintenanceModel {
             if (error) throw error;
             return data || null;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT om.*, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado,
                     t.prioridad_ia, u.nombre AS tecnico_nombre
              FROM ordenes_mantenimiento om
@@ -54,8 +53,8 @@ class MaintenanceModel {
     }
 
     async findByTecnico(id_tecnico) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('ordenes_mantenimiento')
                 .select('*, tickets(descripcion, estado, prioridad_ia)')
                 .eq('id_usuario_tecnico', id_tecnico)
@@ -63,7 +62,7 @@ class MaintenanceModel {
             if (error) throw error;
             return data;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT om.*, t.descripcion AS ticket_descripcion,
                     t.estado AS ticket_estado, t.prioridad_ia
              FROM ordenes_mantenimiento om
@@ -76,77 +75,33 @@ class MaintenanceModel {
     }
 
     async create({ id_ticket, id_usuario_tecnico, diagnostico, fecha_inicio, fecha_fin, checklist_seguridad }) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('ordenes_mantenimiento')
-                .insert({
-                    id_ticket, id_usuario_tecnico, diagnostico,
-                    fecha_inicio: fecha_inicio || null,
-                    fecha_fin: fecha_fin || null,
-                    checklist_seguridad: checklist_seguridad ?? false
-                })
-                .select('*')
-                .single();
-            if (error) throw error;
-            return data;
-        }
-        const { rows } = await db.query(
-            `INSERT INTO ordenes_mantenimiento
-                (id_ticket, id_usuario_tecnico, diagnostico, fecha_inicio, fecha_fin, checklist_seguridad)
-             VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-            [id_ticket, id_usuario_tecnico, diagnostico,
-            fecha_inicio || null, fecha_fin || null, checklist_seguridad ?? false]
-        );
-        return rows[0];
+        return this.dbCreate('ordenes_mantenimiento', {
+            id_ticket,
+            id_usuario_tecnico,
+            diagnostico,
+            fecha_inicio: fecha_inicio || null,
+            fecha_fin: fecha_fin || null,
+            checklist_seguridad: checklist_seguridad ?? false
+        });
     }
 
     async update(id, { diagnostico, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico }) {
-        if (useSupabase) {
-            const updateData = {};
-            if (diagnostico !== undefined) updateData.diagnostico = diagnostico;
-            if (fecha_inicio !== undefined) updateData.fecha_inicio = fecha_inicio;
-            if (fecha_fin !== undefined) updateData.fecha_fin = fecha_fin;
-            if (checklist_seguridad !== undefined) updateData.checklist_seguridad = checklist_seguridad;
-            if (id_usuario_tecnico !== undefined) updateData.id_usuario_tecnico = id_usuario_tecnico;
-            const { data, error } = await db.supabase
-                .from('ordenes_mantenimiento')
-                .update(updateData)
-                .eq('id_orden', id)
-                .select('*')
-                .single();
-            if (error) throw error;
-            return data || null;
-        }
-        const { rows } = await db.query(
-            `UPDATE ordenes_mantenimiento SET
-                diagnostico = COALESCE($1, diagnostico),
-                fecha_inicio = COALESCE($2, fecha_inicio),
-                fecha_fin = COALESCE($3, fecha_fin),
-                checklist_seguridad = COALESCE($4, checklist_seguridad),
-                id_usuario_tecnico = COALESCE($5, id_usuario_tecnico)
-             WHERE id_orden = $6 RETURNING *`,
-            [diagnostico, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico, id]
-        );
-        return rows[0] || null;
+        return this.dbUpdate('ordenes_mantenimiento', 'id_orden', id, {
+            diagnostico,
+            fecha_inicio,
+            fecha_fin,
+            checklist_seguridad,
+            id_usuario_tecnico
+        });
     }
 
     async remove(id) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('ordenes_mantenimiento').delete()
-                .eq('id_orden', id).select('*').single();
-            if (error) throw error;
-            return data || null;
-        }
-        const { rows } = await db.query(
-            'DELETE FROM ordenes_mantenimiento WHERE id_orden = $1 RETURNING *', [id]
-        );
-        return rows[0] || null;
+        return this.dbRemove('ordenes_mantenimiento', 'id_orden', id);
     }
 
     // HU-08: Registrar consumo + cambio de estado (funcion SQL transaccional)
     async registrarConsumo(id_orden, { id_repuesto, cantidad_usada, estado_ticket }) {
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT * FROM fn_registrar_consumo_ticket($1,$2,$3,$4)`,
             [id_orden, id_repuesto, cantidad_usada, estado_ticket]
         );
@@ -154,15 +109,15 @@ class MaintenanceModel {
     }
 
     async getConsumos(id_orden) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('consumo_repuestos')
                 .select('*, repuestos(nombre)')
                 .eq('id_orden', id_orden);
             if (error) throw error;
             return data;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT cr.*, r.nombre AS repuesto_nombre
              FROM consumo_repuestos cr
              LEFT JOIN repuestos r ON r.id_repuesto = cr.id_repuesto
@@ -174,3 +129,4 @@ class MaintenanceModel {
 }
 
 export default MaintenanceModel;
+

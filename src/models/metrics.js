@@ -1,6 +1,5 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-const useSupabase = (process.env.DB_MODE || 'postgres').toLowerCase() === 'supabase';
 
 function toMillis(value) {
     if (!value) return null;
@@ -51,10 +50,10 @@ function buildMetrics(rows) {
     };
 }
 
-class MetricsModel {
+class MetricsModel extends BaseModel {
     async getOperationalMetrics() {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('tickets')
                 .select('id_activo, fecha_creacion, ordenes_mantenimiento(fecha_inicio, fecha_fin)');
             if (error) throw error;
@@ -69,7 +68,7 @@ class MetricsModel {
             return buildMetrics(rows);
         }
 
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT
                 t.id_activo,
                 t.fecha_creacion,
@@ -84,3 +83,4 @@ class MetricsModel {
 }
 
 export default MetricsModel;
+

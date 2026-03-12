@@ -1,50 +1,17 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-const useSupabase = (process.env.DB_MODE || 'postgres').toLowerCase() === 'supabase';
 
-class AssetModel {
+class AssetModel extends BaseModel {
     async findAll() {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('vw_activos_detalle')
-                .select('*')
-                .order('id_activo', { ascending: true });
-            if (error) throw error;
-            return data;
-        }
-        const { rows } = await db.query('SELECT * FROM vw_activos_detalle ORDER BY id_activo');
-        return rows;
+        return this.dbFindAll('vw_activos_detalle', 'id_activo');
     }
 
     async findById(id) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('vw_activos_detalle')
-                .select('*')
-                .eq('id_activo', id)
-                .maybeSingle();
-            if (error) throw error;
-            return data || null;
-        }
-        const { rows } = await db.query('SELECT * FROM vw_activos_detalle WHERE id_activo = $1', [id]);
-        return rows[0] || null;
+        return this.dbFindById('vw_activos_detalle', 'id_activo', id);
     }
 
     async findBySerial(serial) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('activos')
-                .select('id_activo, serial')
-                .eq('serial', serial)
-                .maybeSingle();
-            if (error) throw error;
-            return data || null;
-        }
-        const { rows } = await db.query(
-            'SELECT id_activo, serial FROM activos WHERE serial = $1',
-            [serial]
-        );
-        return rows[0] || null;
+        return this.dbFindById('activos', 'serial', serial, ['id_activo', 'serial']);
     }
 
     async create(payload) {
@@ -56,8 +23,8 @@ class AssetModel {
 
         let activo;
 
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('activos')
                 .insert({
                     serial, codigo_qr, modelo, fecha_compra, vida_util,
@@ -68,13 +35,13 @@ class AssetModel {
             if (error) throw error;
             activo = data;
 
-            await db.supabase.from('historial_activos').insert({
+            await this.supabase.from('historial_activos').insert({
                 id_activo: activo.id_activo,
                 tipo_evento: 'Registro',
                 detalle: 'Activo creado en el sistema'
             });
         } else {
-            const { rows } = await db.query(
+            const { rows } = await this.query(
                 `INSERT INTO activos (serial, codigo_qr, modelo, fecha_compra, vida_util, nivel_criticidad,
                     especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor)
                  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
@@ -82,7 +49,7 @@ class AssetModel {
                 especificaciones_electricas, id_ubicacion, id_categoria, id_proveedor]
             );
             activo = rows[0];
-            await db.query(
+            await this.query(
                 `INSERT INTO historial_activos (id_activo, tipo_evento, detalle)
                  VALUES ($1, 'Registro', 'Activo creado en el sistema')`,
                 [activo.id_activo]
@@ -95,7 +62,7 @@ class AssetModel {
         const { modelo, vida_util, nivel_criticidad, especificaciones_electricas, estado_activo,
                 id_ubicacion, id_categoria, id_proveedor } = payload;
 
-        if (useSupabase) {
+        if (this.useSupabase) {
             const updateData = {};
             if (modelo !== undefined) updateData.modelo = modelo;
             if (vida_util !== undefined) updateData.vida_util = vida_util;
@@ -106,14 +73,14 @@ class AssetModel {
             if (id_categoria !== undefined) updateData.id_categoria = id_categoria;
             if (id_proveedor !== undefined) updateData.id_proveedor = id_proveedor;
 
-            const { data, error } = await db.supabase
+            const { data, error } = await this.supabase
                 .from('activos').update(updateData)
                 .eq('id_activo', id).select().single();
             if (error) throw error;
             return data || null;
         }
 
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `UPDATE activos SET
                 modelo = COALESCE($1, modelo), vida_util = COALESCE($2, vida_util),
                 nivel_criticidad = COALESCE($3, nivel_criticidad),
@@ -129,8 +96,8 @@ class AssetModel {
     }
 
     async remove(id, motivoBaja, certificadoBorrado) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('bajas_activos')
                 .insert({
                     id_activo: id,
@@ -141,7 +108,7 @@ class AssetModel {
             if (error) throw error;
             return data;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `INSERT INTO bajas_activos (id_activo, fecha_baja, motivo, borrado_seguro)
              VALUES ($1, CURRENT_DATE, $2, $3) RETURNING *`,
             [id, motivoBaja, certificadoBorrado]
@@ -150,22 +117,22 @@ class AssetModel {
     }
 
     async getHistory(id) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('historial_activos').select('*')
                 .eq('id_activo', id).order('fecha_evento', { ascending: false });
             if (error) throw error;
             return data;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `SELECT * FROM historial_activos WHERE id_activo = $1 ORDER BY fecha_evento DESC`, [id]
         );
         return rows;
     }
 
     async addHistory(id_activo, tipo_evento, detalle) {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
                 .from('historial_activos')
                 .insert({ id_activo, tipo_evento, detalle })
                 .select()
@@ -173,7 +140,7 @@ class AssetModel {
             if (error) throw error;
             return data;
         }
-        const { rows } = await db.query(
+        const { rows } = await this.query(
             `INSERT INTO historial_activos (id_activo, tipo_evento, detalle)
              VALUES ($1, $2, $3) RETURNING *`,
             [id_activo, tipo_evento, detalle]
@@ -183,3 +150,4 @@ class AssetModel {
 }
 
 export default AssetModel;
+
