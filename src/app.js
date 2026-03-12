@@ -8,8 +8,6 @@ import userRoutes from './routes/user.routes.js';
 import assetRoutes from './routes/asset.routes.js';
 import ticketRoutes from './routes/ticket.routes.js';
 import maintenanceRoutes from './routes/maintenance.routes.js';
-
-//  Nuevas rutas CRUD completos
 import repuestoRoutes from './routes/repuesto.routes.js';
 import proveedorRoutes from './routes/proveedor.routes.js';
 import ubicacionRoutes from './routes/ubicacion.routes.js';
