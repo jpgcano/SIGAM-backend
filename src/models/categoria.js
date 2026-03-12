@@ -1,20 +1,11 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-const useSupabase = (process.env.DB_MODE || 'postgres').toLowerCase() === 'supabase';
 
-class CategoriaModel {
+class CategoriaModel extends BaseModel {
     async findAll() {
-        if (useSupabase) {
-            const { data, error } = await db.supabase
-                .from('categorias')
-                .select('*')
-                .order('id_categoria', { ascending: true });
-            if (error) throw error;
-            return data;
-        }
-        const { rows } = await db.query('SELECT * FROM categorias ORDER BY id_categoria');
-        return rows;
+        return this.dbFindAll('categorias', 'id_categoria');
     }
 }
 
 export default CategoriaModel;
+
