@@ -1,11 +1,16 @@
 {
   "name": "sigam-backend",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.31.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "type": "module",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
@@ -14,11 +19,15 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "pg": "^8.20.0"
   },
   "devDependencies": {
+    "eslint": "^10.0.3",
+    "eslint-plugin-security": "^4.0.0",
     "nodemon": "^3.1.14"
   },
   "description": "Backend de J-AXON (SIGAM), un sistema para gestion de activos TI, tickets de soporte y mantenimiento.",
@@ -32,5 +41,8 @@
   "bugs": {
     "url": "https://github.com/jpgcano/SIGAM-backend/issues"
   },
-  "homepage": "https://github.com/jpgcano/SIGAM-backend#readme"
+  "homepage": "https://github.com/jpgcano/SIGAM-backend#readme",
+  "directories": {
+    "test": "test"
+  }
 }

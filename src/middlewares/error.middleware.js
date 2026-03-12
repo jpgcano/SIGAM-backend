@@ -1,9 +1,9 @@
 import { getErrorCode, getErrorMessage } from '../utils/error.util.js';
 
 function errorMiddleware(err, req, res, next) {
-    const message = getErrorMessage(err);
-    const code = getErrorCode(err);
     const status = err?.status || 500;
+    const message = status >= 500 ? 'Error interno' : getErrorMessage(err);
+    const code = getErrorCode(err);
 
     const logPayload = {
         code,
