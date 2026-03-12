@@ -1,53 +1,37 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-class RepuestoModel {
+
+class RepuestoModel extends BaseModel {
     async findAll() {
-        const { data, error } = await db.supabase
-            .from('repuestos').select('*').order('id_repuesto', { ascending: true });
-        if (error) throw error;
-        return data;
+        return this.dbFindAll('repuestos', 'id_repuesto');
     }
 
     async findById(id) {
-        const { data, error } = await db.supabase
-            .from('repuestos').select('*').eq('id_repuesto', id).maybeSingle();
-        if (error) throw error;
-        return data || null;
+        return this.dbFindById('repuestos', 'id_repuesto', id);
     }
 
     async findBajoStock() {
-        const { data, error } = await db.supabase
-            .from('vw_repuestos_bajo_stock').select('*');
-        if (error) throw error;
-        return data;
+        return this.dbFindAll('vw_repuestos_bajo_stock');
     }
 
     async create({ nombre, stock, stock_minimo }) {
-        const { data, error } = await db.supabase
-            .from('repuestos')
-            .insert({ nombre, stock: stock ?? 0, stock_minimo: stock_minimo ?? 5 })
-            .select().single();
-        if (error) throw error;
-        return data;
+        return this.dbCreate('repuestos', {
+            nombre,
+            stock: stock ?? 0,
+            stock_minimo: stock_minimo ?? 5
+        });
     }
 
     async update(id, { nombre, stock, stock_minimo }) {
-        const updateData = {};
-        if (nombre !== undefined) updateData.nombre = nombre;
-        if (stock !== undefined) updateData.stock = stock;
-        if (stock_minimo !== undefined) updateData.stock_minimo = stock_minimo;
-        const { data, error } = await db.supabase
-            .from('repuestos').update(updateData)
-            .eq('id_repuesto', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbUpdate('repuestos', 'id_repuesto', id, {
+            nombre,
+            stock,
+            stock_minimo
+        });
     }
 
     async remove(id) {
-        const { data, error } = await db.supabase
-            .from('repuestos').delete().eq('id_repuesto', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbRemove('repuestos', 'id_repuesto', id);
     }
 }
 

@@ -1,14 +1,11 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-class CategoriaModel {
+
+class CategoriaModel extends BaseModel {
     async findAll() {
-        const { data, error } = await db.supabase
-            .from('categorias')
-            .select('*')
-            .order('id_categoria', { ascending: true });
-        if (error) throw error;
-        return data;
+        return this.dbFindAll('categorias', 'id_categoria');
     }
 }
 
 export default CategoriaModel;
+

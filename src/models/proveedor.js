@@ -1,45 +1,25 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-class ProveedorModel {
+
+class ProveedorModel extends BaseModel {
     async findAll() {
-        const { data, error } = await db.supabase
-            .from('proveedores').select('*').order('id_proveedor', { ascending: true });
-        if (error) throw error;
-        return data;
+        return this.dbFindAll('proveedores', 'id_proveedor');
     }
 
     async findById(id) {
-        const { data, error } = await db.supabase
-            .from('proveedores').select('*').eq('id_proveedor', id).maybeSingle();
-        if (error) throw error;
-        return data || null;
+        return this.dbFindById('proveedores', 'id_proveedor', id);
     }
 
     async create({ nombre, contacto, identificacion_legal }) {
-        const { data, error } = await db.supabase
-            .from('proveedores')
-            .insert({ nombre, contacto, identificacion_legal })
-            .select().single();
-        if (error) throw error;
-        return data;
+        return this.dbCreate('proveedores', { nombre, contacto, identificacion_legal });
     }
 
     async update(id, { nombre, contacto }) {
-        const updateData = {};
-        if (nombre !== undefined) updateData.nombre = nombre;
-        if (contacto !== undefined) updateData.contacto = contacto;
-        const { data, error } = await db.supabase
-            .from('proveedores').update(updateData)
-            .eq('id_proveedor', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbUpdate('proveedores', 'id_proveedor', id, { nombre, contacto });
     }
 
     async remove(id) {
-        const { data, error } = await db.supabase
-            .from('proveedores').delete().eq('id_proveedor', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbRemove('proveedores', 'id_proveedor', id);
     }
 }
 

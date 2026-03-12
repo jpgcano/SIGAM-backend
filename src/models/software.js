@@ -1,46 +1,27 @@
-﻿import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-class SoftwareModel {
+
+class SoftwareModel extends BaseModel {
     async findAll() {
-        const { data, error } = await db.supabase
-            .from('software').select('*').order('id_software', { ascending: true });
-        if (error) throw error;
-        return data;
+        return this.dbFindAll('software', 'id_software');
     }
 
     async findById(id) {
-        const { data, error } = await db.supabase
-            .from('software').select('*').eq('id_software', id).maybeSingle();
-        if (error) throw error;
-        return data || null;
+        return this.dbFindById('software', 'id_software', id);
     }
 
     async create({ nombre, fabricante }) {
-        const { data, error } = await db.supabase
-            .from('software')
-            .insert({ nombre, fabricante })
-            .select().single();
-        if (error) throw error;
-        return data;
+        return this.dbCreate('software', { nombre, fabricante });
     }
 
     async update(id, { nombre, fabricante }) {
-        const updateData = {};
-        if (nombre !== undefined) updateData.nombre = nombre;
-        if (fabricante !== undefined) updateData.fabricante = fabricante;
-        const { data, error } = await db.supabase
-            .from('software').update(updateData)
-            .eq('id_software', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbUpdate('software', 'id_software', id, { nombre, fabricante });
     }
 
     async remove(id) {
-        const { data, error } = await db.supabase
-            .from('software').delete().eq('id_software', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbRemove('software', 'id_software', id);
     }
 }
 
 export default SoftwareModel;
+

@@ -1,71 +1,65 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-class LicenciaModel {
+
+class LicenciaModel extends BaseModel {
     async findAll() {
-        const { data, error } = await db.supabase
-            .from('vw_licencias_ocupacion').select('*').order('id_licencia', { ascending: true });
-        if (error) throw error;
-        return data;
+        return this.dbFindAll('vw_licencias_ocupacion', 'id_licencia');
     }
 
     async findById(id) {
-        const { data, error } = await db.supabase
-            .from('vw_licencias_ocupacion').select('*').eq('id_licencia', id).maybeSingle();
-        if (error) throw error;
-        return data || null;
+        return this.dbFindById('vw_licencias_ocupacion', 'id_licencia', id);
     }
 
     async create({ id_software, clave_producto, fecha_expiracion, asientos_totales }) {
-        const { data, error } = await db.supabase
-            .from('licencias')
-            .insert({ id_software, clave_producto, fecha_expiracion, asientos_totales: asientos_totales ?? 1 })
-            .select().single();
-        if (error) throw error;
-        return data;
+        return this.dbCreate('licencias', {
+            id_software,
+            clave_producto,
+            fecha_expiracion,
+            asientos_totales: asientos_totales ?? 1
+        });
     }
 
     async update(id, { fecha_expiracion, asientos_totales }) {
-        const updateData = {};
-        if (fecha_expiracion !== undefined) updateData.fecha_expiracion = fecha_expiracion;
-        if (asientos_totales !== undefined) updateData.asientos_totales = asientos_totales;
-        const { data, error } = await db.supabase
-            .from('licencias').update(updateData)
-            .eq('id_licencia', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbUpdate('licencias', 'id_licencia', id, {
+            fecha_expiracion,
+            asientos_totales
+        });
     }
 
     async remove(id) {
-        const { data, error } = await db.supabase
-            .from('licencias').delete().eq('id_licencia', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbRemove('licencias', 'id_licencia', id);
     }
 
     async asignar({ id_licencia, id_usuario, id_activo }) {
-        const { data, error } = await db.supabase
-            .from('asignacion_licencias')
-            .insert({ id_licencia, id_usuario: id_usuario || null, id_activo: id_activo || null })
-            .select().single();
-        if (error) throw error;
-        return data;
+        return this.dbCreate('asignacion_licencias', {
+            id_licencia,
+            id_usuario: id_usuario || null,
+            id_activo: id_activo || null
+        });
     }
 
     async getAsignaciones(id_licencia) {
-        const { data, error } = await db.supabase
-            .from('asignacion_licencias')
-            .select('*, usuarios(nombre), activos(serial)')
-            .eq('id_licencia', id_licencia);
-        if (error) throw error;
-        return data;
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('asignacion_licencias')
+                .select('*, usuarios(nombre), activos(serial)')
+                .eq('id_licencia', id_licencia);
+            if (error) throw error;
+            return data;
+        }
+        const { rows } = await this.query(
+            `SELECT al.*, u.nombre as usuario, a.serial as activo
+             FROM asignacion_licencias al
+             LEFT JOIN usuarios u ON u.id_usuario = al.id_usuario
+             LEFT JOIN activos a ON a.id_activo = al.id_activo
+             WHERE al.id_licencia = $1`,
+            [id_licencia]
+        );
+        return rows;
     }
 
     async revocarAsignacion(id_asignacion) {
-        const { data, error } = await db.supabase
-            .from('asignacion_licencias').delete()
-            .eq('id_asignacion', id_asignacion).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbRemove('asignacion_licencias', 'id_asignacion', id_asignacion);
     }
 }
 

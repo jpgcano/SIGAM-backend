@@ -1,66 +1,61 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-class UserModel {
+
+class UserModel extends BaseModel {
     async findByEmail(email) {
-        const { data, error } = await db.supabase
-            .from('usuarios')
-            .select('id_usuario, nombre, email, password_hash, rol')
-            .eq('email', email)
-            .maybeSingle();
-        if (error) throw error;
-        return data || null;
+        return this.dbFindById(
+            'usuarios',
+            'email',
+            email,
+            ['id_usuario', 'nombre', 'email', 'password_hash', 'rol']
+        );
     }
 
     async findAll() {
-        const { data, error } = await db.supabase
-            .from('usuarios')
-            .select('id_usuario, nombre, email, rol, fecha_creacion')
-            .order('id_usuario', { ascending: true });
-        if (error) throw error;
-        return data;
+        return this.dbFindAll(
+            'usuarios',
+            'id_usuario',
+            'ASC',
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+        );
     }
 
     async findById(id) {
-        const { data, error } = await db.supabase
-            .from('usuarios')
-            .select('id_usuario, nombre, email, rol, fecha_creacion')
-            .eq('id_usuario', id)
-            .maybeSingle();
-        if (error) throw error;
-        return data || null;
+        return this.dbFindById(
+            'usuarios',
+            'id_usuario',
+            id,
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+        );
     }
 
     async create({ nombre, email, passwordHash, rol }) {
-        const { data, error } = await db.supabase
-            .from('usuarios')
-            .insert({ nombre, email, password_hash: passwordHash, rol })
-            .select('id_usuario, nombre, email, rol, fecha_creacion')
-            .single();
-        if (error) throw error;
-        return data;
+        return this.dbCreate(
+            'usuarios',
+            { nombre, email, password_hash: passwordHash, rol },
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+        );
     }
 
     async update(id, { nombre, email, rol }) {
-        const { data, error } = await db.supabase
-            .from('usuarios')
-            .update({ nombre, email, rol })
-            .eq('id_usuario', id)
-            .select('id_usuario, nombre, email, rol, fecha_creacion')
-            .single();
-        if (error) throw error;
-        return data;
+        return this.dbUpdate(
+            'usuarios',
+            'id_usuario',
+            id,
+            { nombre, email, rol },
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+        );
     }
 
     async remove(id) {
-        const { data, error } = await db.supabase
-            .from('usuarios')
-            .delete()
-            .eq('id_usuario', id)
-            .select('id_usuario, nombre, email')
-            .single();
-        if (error) throw error;
-        return data;
+        return this.dbRemove(
+            'usuarios',
+            'id_usuario',
+            id,
+            ['id_usuario', 'nombre', 'email']
+        );
     }
 }
 
 export default UserModel;
+

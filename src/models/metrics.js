@@ -1,4 +1,5 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
+
 
 function toMillis(value) {
     if (!value) return null;
@@ -49,22 +50,37 @@ function buildMetrics(rows) {
     };
 }
 
-class MetricsModel {
+class MetricsModel extends BaseModel {
     async getOperationalMetrics() {
-        const { data, error } = await db.supabase
-            .from('tickets')
-            .select('id_activo, fecha_creacion, ordenes_mantenimiento(fecha_inicio, fecha_fin)');
-        if (error) throw error;
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('tickets')
+                .select('id_activo, fecha_creacion, ordenes_mantenimiento(fecha_inicio, fecha_fin)');
+            if (error) throw error;
 
-        const rows = (data || []).map((row) => ({
-            id_activo: row.id_activo,
-            fecha_creacion: row.fecha_creacion,
-            fecha_inicio: row.ordenes_mantenimiento?.fecha_inicio || null,
-            fecha_fin: row.ordenes_mantenimiento?.fecha_fin || null
-        }));
+            const rows = (data || []).map((row) => ({
+                id_activo: row.id_activo,
+                fecha_creacion: row.fecha_creacion,
+                fecha_inicio: row.ordenes_mantenimiento?.fecha_inicio || null,
+                fecha_fin: row.ordenes_mantenimiento?.fecha_fin || null
+            }));
+
+            return buildMetrics(rows);
+        }
+
+        const { rows } = await this.query(
+            `SELECT
+                t.id_activo,
+                t.fecha_creacion,
+                om.fecha_inicio,
+                om.fecha_fin
+             FROM tickets t
+             LEFT JOIN ordenes_mantenimiento om ON om.id_ticket = t.id_ticket`
+        );
 
         return buildMetrics(rows);
     }
 }
 
 export default MetricsModel;
+

@@ -1,44 +1,25 @@
-import db from '../config/db.js';
+﻿import BaseModel from './BaseModel.js';
 
-class UbicacionModel {
+
+class UbicacionModel extends BaseModel {
     async findAll() {
-        const { data, error } = await db.supabase
-            .from('ubicaciones').select('*').order('id_ubicacion', { ascending: true });
-        if (error) throw error;
-        return data;
+        return this.dbFindAll('ubicaciones', 'id_ubicacion');
     }
 
     async findById(id) {
-        const { data, error } = await db.supabase
-            .from('ubicaciones').select('*').eq('id_ubicacion', id).maybeSingle();
-        if (error) throw error;
-        return data || null;
+        return this.dbFindById('ubicaciones', 'id_ubicacion', id);
     }
 
     async create({ sede, piso, sala }) {
-        const { data, error } = await db.supabase
-            .from('ubicaciones').insert({ sede, piso, sala }).select().single();
-        if (error) throw error;
-        return data;
+        return this.dbCreate('ubicaciones', { sede, piso, sala });
     }
 
     async update(id, { sede, piso, sala }) {
-        const updateData = {};
-        if (sede !== undefined) updateData.sede = sede;
-        if (piso !== undefined) updateData.piso = piso;
-        if (sala !== undefined) updateData.sala = sala;
-        const { data, error } = await db.supabase
-            .from('ubicaciones').update(updateData)
-            .eq('id_ubicacion', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbUpdate('ubicaciones', 'id_ubicacion', id, { sede, piso, sala });
     }
 
     async remove(id) {
-        const { data, error } = await db.supabase
-            .from('ubicaciones').delete().eq('id_ubicacion', id).select().single();
-        if (error) throw error;
-        return data || null;
+        return this.dbRemove('ubicaciones', 'id_ubicacion', id);
     }
 }
 
