@@ -271,7 +271,7 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
 - Evidencia:
   - revision manual de cambios.
 - Commit(s):
-  - N/A
+  - a53b46a - Add Vercel config using app.js handler
 
 ### 2026-03-10 - IA: Codex GPT-5
 - Issue: Configurar variables entorno para PostgreSQL produccion
@@ -318,5 +318,20 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
 - Evidencia:
   - `pnpm test` OK.
   - `pnpm exec eslint . -f json -o reports/eslint-security.json`.
+- Commit(s):
+  - N/A
+
+### 2026-03-11 - IA: Codex GPT-5
+- Issue: Configuracion Vercel (handler serverless)
+- Rama: feature/vercel-config
+- Objetivo: ajustar despliegue en Vercel para usar `src/app.js` como handler.
+- Cambios:
+  - `vercel.json` - configuracion de build y routes apuntando a `src/app.js`.
+  - `README.md` - seccion de deploy en Vercel documentada.
+- Decisiones tecnicas: usar `src/app.js` directamente por exportar `app` y evitar `listen` en serverless.
+- Pendiente: N/A
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de `vercel.json` y `README.md`.
 - Commit(s):
   - N/A

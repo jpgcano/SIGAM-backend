@@ -62,18 +62,6 @@ class TicketModel extends BaseModel {
                     loadByTech.set(row.id_usuario_tecnico, current + 1);
                 }
             }
-
-            const selected = [...technicians].sort((a, b) => {
-                const loadDiff = (loadByTech.get(a.id_usuario) || 0) - (loadByTech.get(b.id_usuario) || 0);
-                if (loadDiff !== 0) return loadDiff;
-                return a.id_usuario - b.id_usuario;
-            })[0];
-
-            return {
-                id_usuario: selected.id_usuario,
-                nombre: selected.nombre,
-                carga_abierta: loadByTech.get(selected.id_usuario) || 0
-            };
         }
 
         const { rows } = await this.query(
@@ -92,8 +80,11 @@ class TicketModel extends BaseModel {
              LIMIT 1`
         );
 
-        if (!rows.length) return null;
-        return rows[0];
+        return {
+            id_usuario: selected.id_usuario,
+            nombre: selected.nombre,
+            carga_abierta: loadByTech.get(selected.id_usuario) || 0
+        };
     }
 
     async create({ id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp }) {
@@ -145,7 +136,7 @@ class TicketModel extends BaseModel {
         );
 
         return {
-            ...ticket,
+            ...data,
             id_usuario_tecnico: tecnico.id_usuario,
             tecnico_asignado: tecnico.nombre
         };
