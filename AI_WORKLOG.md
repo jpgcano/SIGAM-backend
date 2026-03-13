@@ -514,6 +514,20 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-12 - IA: Codex GPT-5
+- Issue: README en inglés + verificación de idioma en código
+- Rama: feature/docs-api
+- Objetivo: traducir README principal y listar hallazgos de texto en español en código.
+- Cambios:
+  - `README.md` - versión en inglés con pasos de inicio y DB.
+- Decisiones tecnicas: mantener guía detallada en README_FUNCIONAMIENTO_DETALLADO.md.
+- Pendiente: decidir si se traduce el texto en español dentro del código (mensajes, comentarios, nombres).
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - búsqueda de texto en español en `src/`.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
 - Issue: Documentacion de API y limpieza de planes
 - Rama: feature/docs-api
 - Objetivo: documentar uso de endpoints con request/response y eliminar archivos de planeacion.
