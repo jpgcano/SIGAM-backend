@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS ACTIVOS (
     nivel_criticidad VARCHAR(50) DEFAULT 'Media',
     especificaciones_electricas VARCHAR(255),
     id_ubicacion INT REFERENCES UBICACIONES(id_ubicacion),
-    id_categoria INT REFERENCES CATEGORIAS(id_categoria),
-    id_proveedor INT REFERENCES PROVEEDORES(id_proveedor),
+    id_categoria INT NOT NULL REFERENCES CATEGORIAS(id_categoria),
+    id_proveedor INT NOT NULL REFERENCES PROVEEDORES(id_proveedor),
     CONSTRAINT chk_activos_vida_util CHECK (vida_util > 0 AND vida_util <= 240),
     CONSTRAINT chk_activos_costo_compra_non_negative CHECK (costo_compra IS NULL OR costo_compra >= 0),
     CONSTRAINT chk_activos_criticidad CHECK (nivel_criticidad IN ('Baja', 'Media', 'Alta', 'Crítica'))

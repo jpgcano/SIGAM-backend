@@ -514,6 +514,22 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-12 - IA: Codex GPT-5
+- Issue: Validaciones DB + API para activos y ajuste de tickets
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: exigir categoria/proveedor en activos (API + DB) y no bloquear creación de tickets por falta de técnico.
+- Cambios:
+  - `src/services/ticket.service.js` - elimina rechazo cuando no hay técnico disponible.
+  - `sql/01_schema.sql` - `id_categoria` y `id_proveedor` como NOT NULL en ACTIVOS.
+  - `sql/09_migration_activos_categoria_proveedor_not_null.sql` - migración con validación previa.
+- Decisiones tecnicas: regla en DB para evitar nulos y validación temprana en service.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: la migración fallará si hay activos con NULL en esos campos.
+- Evidencia:
+  - revision manual de schema y migración.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
 - Issue: Integracion de cambios feature/SM
 - Rama: feature/auditoria-rbac-ia
 - Objetivo: exigir id_categoria/id_proveedor en activos y validar disponibilidad de tecnico/analista en tickets.
