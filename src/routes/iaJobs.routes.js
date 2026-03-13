@@ -4,9 +4,11 @@ import permit from '../middlewares/permit.middleware.js';
 import IaJobsController from '../controllers/iaJobs.controller.js';
 import IaJobsService from '../services/ia/jobs.service.js';
 
+// IA jobs routes and controller wiring.
 const router = express.Router();
 const ctrl = new IaJobsController(new IaJobsService());
 
+// Generate purchase suggestions for spare parts.
 router.post(
     '/repuestos/sugerencias',
     authMiddleware,
@@ -14,6 +16,7 @@ router.post(
     ctrl.generatePurchaseSuggestions
 );
 
+// Generate asset disposal suggestions.
 router.post(
     '/activos/baja-sugerida',
     authMiddleware,
@@ -21,6 +24,7 @@ router.post(
     ctrl.generateDisposalSuggestions
 );
 
+// Reprocess tickets for IA classification and priority.
 router.post(
     '/tickets/reprocess',
     authMiddleware,
@@ -28,6 +32,7 @@ router.post(
     ctrl.reprocessTicketsExternal
 );
 
+// Generate preventive maintenance suggestions.
 router.post(
     '/mantenimientos/preventivos',
     authMiddleware,

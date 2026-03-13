@@ -1,6 +1,7 @@
 import { generateToken } from '../utils/jwt.js';
 import buildAuditContext from '../utils/auditContext.js';
 
+// Auth controller: HTTP layer for login and registration flows.
 class AuthController {
     constructor(authService) {
         this.authService = authService;
@@ -8,6 +9,7 @@ class AuthController {
         this.register = this.register.bind(this);
     }
 
+    // Authenticate credentials, issue JWT, and return user profile.
     async login(req, res, next) {
         try {
             const { email, password } = req.body;
@@ -20,6 +22,7 @@ class AuthController {
         }
     }
 
+    // Register a new user (role assignment enforced in the service).
     async register(req, res, next) {
         try {
             const user = await this.authService.register(req.body, req.user, buildAuditContext(req));

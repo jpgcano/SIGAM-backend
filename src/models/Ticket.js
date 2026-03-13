@@ -1,8 +1,11 @@
 ﻿import BaseModel from './BaseModel.js';
 
+// Ticket states considered "open" for workload calculations.
 const OPEN_TICKET_STATES = ['Abierto', 'Asignado', 'En Proceso'];
+// Roles allowed to receive automatic ticket assignments.
 const SUPPORT_ROLES = new Set(['tecnico', 'soporte']);
 
+// Normalize role strings to match case/diacritics across providers.
 function normalizeRole(rol) {
     return String(rol || '')
         .normalize('NFD')
@@ -12,14 +15,17 @@ function normalizeRole(rol) {
 }
 
 class TicketModel extends BaseModel {
+    // List tickets using the operational view for consistent joins.
     async findAll() {
         return this.dbFindAll('vw_tickets_operacion', 'id_ticket', 'DESC');
     }
 
+    // Fetch a single ticket from the operational view.
     async findById(id) {
         return this.dbFindById('vw_tickets_operacion', 'id_ticket', id);
     }
 
+    // Fetch a minimal ticket payload for IA processing.
     async findCoreById(id_ticket) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -39,6 +45,7 @@ class TicketModel extends BaseModel {
         return rows[0] || null;
     }
 
+    // List tickets for a specific asset.
     async findByActivo(id_activo) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -56,6 +63,7 @@ class TicketModel extends BaseModel {
         return rows;
     }
 
+    // Get recent resolved tickets on the same asset for similarity checks.
     async findResolvedCandidatesByActivo({ id_activo, exclude_id_ticket, limit = 10 }) {
         const lim = Number.isInteger(limit) && limit > 0 ? limit : 10;
         const { rows } = await this.query(
@@ -79,6 +87,7 @@ class TicketModel extends BaseModel {
         return rows || [];
     }
 
+    // Detect if an asset already has an open preventive maintenance ticket.
     async hasOpenPreventiveTicket(id_activo) {
         const { rows } = await this.query(
             `SELECT 1
@@ -92,6 +101,7 @@ class TicketModel extends BaseModel {
         return rows.length > 0;
     }
 
+    // Load recent tickets that need IA classification recalculation.
     async findTicketsForIaReprocess({ limit = 20, sinceDays = 30 } = {}) {
         const lim = Number(limit);
         const days = Number(sinceDays);
@@ -123,6 +133,7 @@ class TicketModel extends BaseModel {
         return rows || [];
     }
 
+    // Update IA fields with backward compatibility for older schemas.
     async updateIaFields(id_ticket, fields) {
         const {
             clasificacion_nlp,
@@ -175,6 +186,7 @@ class TicketModel extends BaseModel {
         return this.dbUpdate('tickets', 'id_ticket', id_ticket, fullUpdate);
     }
 
+    // Select the support technician with the lowest open-ticket load.
     async findSupportTechnicianWithLeastLoad() {
         if (this.useSupabase) {
             const { data: users, error: usersError } = await this.supabase
@@ -235,6 +247,7 @@ class TicketModel extends BaseModel {
         };
     }
 
+    // Create a ticket with optional IA metadata.
     async create({
         id_activo,
         id_usuario_reporta,
@@ -319,6 +332,7 @@ class TicketModel extends BaseModel {
         return rows[0] || null;
     }
 
+    // Assign a ticket to a technician and mark it as "Asignado".
     async assignToTechnician(id_ticket, id_usuario_tecnico) {
         if (this.useSupabase) {
             const { error: insertError } = await this.supabase
@@ -347,14 +361,17 @@ class TicketModel extends BaseModel {
         return rows[0] || null;
     }
 
+    // Update core IA fields and ticket state.
     async update(id, { prioridad_ia, clasificacion_nlp, estado }) {
         return this.dbUpdate('tickets', 'id_ticket', id, { prioridad_ia, clasificacion_nlp, estado });
     }
 
+    // Update only the ticket state.
     async updateEstado(id, estado) {
         return this.dbUpdate('tickets', 'id_ticket', id, { estado });
     }
 
+    // Check if a ticket was reported by a given user.
     async isReportedByUser(id_ticket, id_usuario) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -377,6 +394,7 @@ class TicketModel extends BaseModel {
         return rows.length > 0;
     }
 
+    // Close a ticket and register the consumed spare parts.
     async closeWithConsumos(id_ticket, consumos) {
         if (!Array.isArray(consumos) || consumos.length === 0) {
             throw { status: 400, message: 'consumos es requerido' };
@@ -457,6 +475,7 @@ class TicketModel extends BaseModel {
         });
     }
 
+    // Verify if a ticket is assigned to the given technician.
     async isAssignedToTecnico(id_ticket, id_tecnico) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -479,10 +498,12 @@ class TicketModel extends BaseModel {
         return rows.length > 0;
     }
 
+    // Remove a ticket record.
     async remove(id) {
         return this.dbRemove('tickets', 'id_ticket', id);
     }
 
+    // Compute MTTR/MTBF metrics optionally filtered by asset.
     async getMetrics({ id_activo } = {}) {
         const { rows } = await this.query(
             `WITH mttr AS (

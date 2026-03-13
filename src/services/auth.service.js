@@ -2,12 +2,15 @@ import HashUtil from '../utils/hash.js';
 import { ALLOWED_ROLES_SET } from '../config/roles.js';
 import AuditLogService from './auditLog.service.js';
 
+// Auth service: domain rules for login and registration.
 class AuthService {
     constructor(userModel, auditLogService = new AuditLogService()) {
         this.userModel = userModel;
         this.auditLogService = auditLogService;
     }
 
+    // Validate credentials and return normalized user payload.
+    // Logs success/failure events to audit trail.
     async login(email, password, auditContext) {
         try {
             const user = await this.userModel.findByEmail(email);
@@ -54,6 +57,8 @@ class AuthService {
         }
     }
 
+    // Register user; only a Manager can assign privileged roles.
+    // Logs user creation and role assignment events.
     async register({ nombre, email, password, rol }, actor, auditContext) {
         const isGerente = actor?.role === 'Gerente';
         const desiredRole = rol || 'Usuario';

@@ -1,8 +1,10 @@
 import AuditLogModel from '../models/auditLog.js';
 
+// Limits for stored text and JSON payloads.
 const DEFAULT_MAX_TEXT = 2000;
 const DEFAULT_MAX_JSON = 20000;
 
+// Keys that must be redacted from audit payloads.
 const SENSITIVE_KEYS = new Set([
     'password',
     'password_hash',
@@ -14,16 +16,19 @@ const SENSITIVE_KEYS = new Set([
     'jwt_secret'
 ]);
 
+// Truncate long strings to avoid oversized logs.
 function truncateText(value, maxLen = DEFAULT_MAX_TEXT) {
     const s = String(value ?? '');
     if (s.length <= maxLen) return s;
     return s.slice(0, maxLen) + '...';
 }
 
+// Normalize object keys for sensitive checks.
 function sanitizeKey(key) {
     return String(key || '').toLowerCase().trim();
 }
 
+// Sanitize payloads while enforcing size limits and redacting secrets.
 function sanitizeValue(value, budget) {
     if (value === null || value === undefined) return value;
     if (typeof value === 'string') {
@@ -52,6 +57,7 @@ function sanitizeValue(value, budget) {
     return String(value);
 }
 
+// Infer domain entity from the request path.
 function inferEntidadFromRoute(path) {
     const p = String(path || '').split('?')[0];
     const parts = p.split('/').filter(Boolean);
@@ -60,11 +66,13 @@ function inferEntidadFromRoute(path) {
     return String(segment || 'unknown').toUpperCase();
 }
 
+// Service for recording and querying audit log entries.
 class AuditLogService {
     constructor(model = new AuditLogModel()) {
         this.model = model;
     }
 
+    // Safely store an audit entry without breaking the request flow.
     async safeLog(entry) {
         try {
             const budget = { count: 0 };
@@ -96,10 +104,11 @@ class AuditLogService {
                 metadata
             });
         } catch {
-            // No interrumpir flujo principal si el log falla.
+            // Keep main flow running if audit logging fails.
         }
     }
 
+    // Build an audit entry for a request/response cycle.
     buildRequestEntry({ req, resStatusCode, durationMs, status, error }) {
         const path = req?.originalUrl || req?.url;
         const entidad = inferEntidadFromRoute(path);
@@ -127,6 +136,7 @@ class AuditLogService {
         };
     }
 
+    // Build an audit entry for a domain action.
     buildDomainEntry({
         actor,
         context,
@@ -160,10 +170,12 @@ class AuditLogService {
         };
     }
 
+    // List audit entries with filters and pagination.
     findAll(filters) {
         return this.model.findAll(filters);
     }
 
+    // Fetch a single audit entry by id.
     async findById(id) {
         const row = await this.model.findById(id);
         if (!row) throw { status: 404, message: `AuditLog ${id} no encontrado` };

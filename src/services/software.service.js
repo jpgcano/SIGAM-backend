@@ -1,19 +1,23 @@
 ﻿import AuditLogService from './auditLog.service.js';
 
+// Service layer for the software catalog.
 class SoftwareService {
     constructor(model, auditLogService = new AuditLogService()) {
         this.model = model;
         this.auditLogService = auditLogService;
     }
 
+    // List software entries.
     findAll() { return this.model.findAll(); }
 
+    // Fetch software by id and validate existence.
     async findById(id) {
         const s = await this.model.findById(id);
         if (!s) throw { status: 404, message: `Software ${id} no encontrado` };
         return s;
     }
 
+    // Create a software entry and log creation.
     create(payload, actor, auditContext) {
         if (!payload.nombre) throw { status: 400, message: 'nombre es requerido' };
         return this.model.create(payload).then((created) => {
@@ -31,6 +35,7 @@ class SoftwareService {
         });
     }
 
+    // Update a software entry and log before/after states.
     async update(id, payload, actor, auditContext) {
         const before = await this.model.findById(id);
         const s = await this.model.update(id, payload);
@@ -49,6 +54,7 @@ class SoftwareService {
         return s;
     }
 
+    // Remove a software entry and log deletion.
     async remove(id, actor, auditContext) {
         const before = await this.model.findById(id);
         const s = await this.model.remove(id);

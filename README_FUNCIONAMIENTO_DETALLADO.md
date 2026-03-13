@@ -47,6 +47,62 @@ DB_PASSWORD=...
 DB_NAME=...
 ```
 
+## 4.1) Iniciar la API paso a paso (breve)
+1. Instalar dependencias:
+```
+pnpm install
+```
+2. Crear `.env` con variables minimas:
+```
+PORT=4000
+JWT_SECRET=coloca_un_secreto_largo
+DB_MODE=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=usuario
+DB_PASSWORD=clave
+DB_NAME=sigam
+```
+3. Preparar base de datos (elige una opcion):
+
+Base nueva:
+```
+\i sql/01_schema.sql
+\i sql/03_views.sql
+\i sql/04_triggers.sql
+\i sql/06_migration_ticket_consumo_tx.sql
+\i sql/06_migration_ia_metadata.sql
+\i sql/07_migration_ia_asset_cost.sql
+\i sql/08_migration_audit_log.sql
+\i sql/09_migration_activos_categoria_proveedor_not_null.sql
+\i sql/02_seed_data.sql
+```
+
+Base existente:
+```
+\i sql/00_migration_add_password.sql
+\i sql/05_migration_db_foundations.sql
+\i sql/06_migration_ticket_consumo_tx.sql
+\i sql/06_migration_ia_metadata.sql
+\i sql/07_migration_ia_asset_cost.sql
+\i sql/08_migration_audit_log.sql
+\i sql/09_migration_activos_categoria_proveedor_not_null.sql
+\i sql/03_views.sql
+\i sql/04_triggers.sql
+```
+4. Ejecutar API:
+```
+pnpm dev
+```
+5. Verificar salud:
+```
+GET /health -> 200 { "status": "ok" }
+```
+6. Autenticarse:
+```
+POST /api/auth/login -> token
+```
+
 ## 5) Seguridad
 ### 5.1 Autenticacion
 - `POST /api/auth/login`
@@ -55,13 +111,14 @@ DB_NAME=...
 
 ### 5.2 Autorizacion
 - `authMiddleware`: requiere token.
-- `roleMiddleware`: autoriza por rol.
+- `permit(resource, action)`: autoriza por rol.
 
 Roles esperados:
 - `Analista`
 - `Tecnico`
 - `Gerente`
 - `Usuario`
+- `Auditor`
 
 ## 6) Modelo de datos (resumen)
 Tablas (ver `sql/01_schema.sql`):
@@ -106,181 +163,428 @@ HTTP Request
           -> Response JSON
 ```
 
-## 9) Endpoints por modulo (con ejemplos)
+## 9) Endpoints por modulo (uso y respuesta esperada)
 
-### 9.1 Auth
-**Login**
+### 9.1 Convenciones generales
+- Base URL: `http://localhost:4000`
+- Header de autenticacion:
 ```
-POST /api/auth/login
+Authorization: Bearer <token>
+```
+- Respuestas:
+  - Listas: `[]` de objetos.
+  - Lectura: objeto del recurso.
+  - Creacion/actualizacion: objeto creado/actualizado.
+  - Eliminacion: `{ "message": "..." }`
+
+### 9.2 Auth
+**POST /api/auth/register** (publico)
+Request:
+```
+{ "nombre": "Ana", "email": "ana@sigam.com", "password": "Password1", "rol": "Analista" }
+```
+Respuesta:
+```
+{ "id": 1, "nombre": "Ana", "email": "ana@sigam.com", "role": "Usuario", "fecha_creacion": "..." }
+```
+Nota: solo un `Gerente` autenticado puede asignar roles distintos de `Usuario`.
+
+**POST /api/auth/login** (publico)
+Request:
+```
+{ "email": "carlos.ruiz@empresa.com", "password": "Admin1234" }
+```
+Respuesta:
+```
+{ "token": "...", "user": { "id": 3, "nombre": "Carlos Ruiz", "email": "...", "role": "Gerente" } }
+```
+
+**GET /api/auth/admin-panel** (Gerente)
+Respuesta:
+```
+{ "msg": "Bienvenido, Gerente" }
+```
+
+**GET /api/auth/configuracion** (Tecnico, Gerente)
+Respuesta:
+```
+{ "msg": "Acceso a configuración técnica" }
+```
+
+**GET /api/auth/perfil** (Analista, Tecnico, Gerente, Usuario, Auditor)
+Respuesta:
+```
+{ "msg": "Tu perfil de usuario" }
+```
+
+### 9.3 Usuarios
+**GET /api/usuarios** (Gerente, Analista, Auditor)
+Respuesta:
+```
+[{ "id_usuario": 1, "nombre": "...", "email": "...", "rol": "Analista", "fecha_creacion": "..." }]
+```
+
+**POST /api/usuarios** (Gerente)
+Request:
+```
+{ "nombre": "Ana", "email": "ana@sigam.com", "password": "Password1", "rol": "Analista" }
+```
+Respuesta:
+```
+{ "id_usuario": 1, "nombre": "Ana", "email": "ana@sigam.com", "rol": "Analista", "fecha_creacion": "..." }
+```
+
+**PATCH /api/usuarios/:id/rol** (Gerente)
+Request:
+```
+{ "rol": "Técnico" }
+```
+Respuesta:
+```
+{ "id_usuario": 1, "nombre": "...", "email": "...", "rol": "Técnico", "fecha_creacion": "..." }
+```
+
+**PATCH /api/usuarios/:id/password** (Gerente)
+Request:
+```
+{ "password": "NuevaClave123" }
+```
+Respuesta:
+```
+{ "message": "Password actualizado", "user": { "id_usuario": 1, "nombre": "...", "email": "...", "rol": "..." } }
+```
+
+### 9.4 Ubicaciones
+**GET /api/ubicaciones**  
+Respuesta: lista de ubicaciones.
+
+**GET /api/ubicaciones/:id**  
+Respuesta:
+```
+{ "id_ubicacion": 1, "sede": "Norte", "piso": "Piso 1", "sala": "Recepcion" }
+```
+
+**POST /api/ubicaciones**  
+Request:
+```
+{ "sede": "Norte", "piso": "Piso 1", "sala": "Recepcion" }
+```
+Respuesta: objeto creado.
+
+**PUT /api/ubicaciones/:id**  
+Request:
+```
+{ "sede": "Norte", "piso": "Piso 2", "sala": "Soporte" }
+```
+Respuesta: objeto actualizado.
+
+**DELETE /api/ubicaciones/:id**  
+Respuesta:
+```
+{ "message": "Ubicacion eliminada" }
+```
+
+### 9.5 Categorias
+**GET /api/categorias**  
+Respuesta: lista de categorias.
+
+### 9.6 Proveedores
+**GET /api/proveedores**  
+Respuesta: lista de proveedores.
+
+**GET /api/proveedores/:id**  
+Respuesta: proveedor.
+
+**POST /api/proveedores**  
+Request:
+```
+{ "nombre": "Dell Colombia", "contacto": "Juan", "identificacion_legal": "900999123" }
+```
+Respuesta: proveedor creado.
+
+**PUT /api/proveedores/:id**  
+Request:
+```
+{ "nombre": "Dell Colombia", "contacto": "Juan" }
+```
+Respuesta: proveedor actualizado.
+
+**DELETE /api/proveedores/:id**  
+Respuesta:
+```
+{ "message": "Proveedor eliminado" }
+```
+
+### 9.7 Activos
+**GET /api/activos**  
+Respuesta: lista de activos.
+
+**GET /api/activos/:id**  
+Respuesta: activo.
+
+**GET /api/activos/:id/historial**  
+Respuesta: lista de historial.
+
+**POST /api/activos**  
+Request (requeridos: `serial`, `id_categoria`, `id_proveedor`, `fecha_compra`, `vida_util`):
+```
 {
-  "email": "carlos.ruiz@empresa.com",
-  "password": "Admin1234"
-}
-```
-**Response**
-```
-{
-  "token": "...",
-  "user": { "id": 3, "nombre": "Carlos Ruiz", "email": "...", "role": "Gerente" }
-}
-```
-
-### 9.2 Usuarios
-- `GET /api/usuarios` (Gerente, Analista)
-- `POST /api/usuarios` (Gerente)
-
-**Create**
-```
-POST /api/usuarios
-{
-  "nombre": "Ana",
-  "email": "ana@sigam.com",
-  "password": "Password1",
-  "rol": "Analista"
-}
-```
-
-### 9.3 Ubicaciones
-CRUD completo:
-- `GET /api/ubicaciones`
-- `GET /api/ubicaciones/:id`
-- `POST /api/ubicaciones`
-- `PUT /api/ubicaciones/:id`
-- `DELETE /api/ubicaciones/:id`
-
-**Response ejemplo**
-```
-{
-  "id_ubicacion": 1,
-  "sede": "Norte",
-  "piso": "Piso 1",
-  "sala": "Recepcion"
-}
-```
-
-### 9.4 Proveedores
-CRUD completo:
-- `GET /api/proveedores`
-- `GET /api/proveedores/:id`
-- `POST /api/proveedores`
-- `PUT /api/proveedores/:id`
-- `DELETE /api/proveedores/:id`
-
-### 9.5 Activos
-- `GET /api/activos`
-- `GET /api/activos/:id`
-- `GET /api/activos/:id/historial`
-- `POST /api/activos`
-- `PUT /api/activos/:id`
-- `DELETE /api/activos/:id`
-
-**Response de activo (vista)**
-```
-{
-  "id_activo": 1,
   "serial": "SN-000001",
-  "modelo": "Modelo Generico 5",
+  "id_categoria": 1,
+  "id_proveedor": 1,
   "fecha_compra": "2023-06-10",
   "vida_util": 48,
-  "nivel_criticidad": "Media",
-  "estado_vida_util": "Vigente",
-  "sede": "Norte",
-  "sala": "Recepcion",
-  "proveedor": "Dell Colombia"
+  "modelo": "Modelo X",
+  "nivel_criticidad": "Media"
 }
 ```
+Respuesta: activo creado.
 
-### 9.6 Tickets
-- `GET /api/tickets`
-- `GET /api/tickets/:id`
-- `GET /api/tickets/activo/:id_activo`
-- `GET /api/tickets/asignados/mis`
-- `POST /api/tickets`
-- `PUT /api/tickets/:id`
-- `PATCH /api/tickets/:id/estado`
-- `DELETE /api/tickets/:id`
-- `GET /api/tickets/metricas`
-- `GET /api/tickets/metricas?id_activo=1`
+**PUT /api/activos/:id**  
+Request: campos editables del activo.  
+Respuesta: activo actualizado.
 
-**Regla clave**
-Un tecnico solo puede cerrar tickets asignados a el.
-
-**Crear ticket**
+**DELETE /api/activos/:id**  
+Request:
 ```
-POST /api/tickets
-{
-  "id_activo": 1,
-  "id_usuario_reporta": 6,
-  "descripcion": "Falla de hardware"
-}
+{ "motivo_baja": "Fin de vida útil", "certificado_borrado": "CERT-12345" }
+```
+Respuesta:
+```
+{ "message": "Activo dado de baja correctamente (ISO 27001)", "data": { ... } }
 ```
 
-**Response ejemplo**
-```
-{
-  "id_ticket": 41,
-  "id_activo": 1,
-  "id_usuario_reporta": 6,
-  "estado": "Abierto",
-  "fecha_creacion": "2026-03-10T10:00:00Z"
-}
-```
+### 9.8 Tickets
+**GET /api/tickets**  
+Respuesta: lista de tickets.
 
-### 9.7 Mantenimientos
-- `GET /api/mantenimientos`
-- `GET /api/mantenimientos/:id`
-- `GET /api/mantenimientos/tecnico/:id_tecnico`
-- `POST /api/mantenimientos`
-- `PUT /api/mantenimientos/:id`
-- `DELETE /api/mantenimientos/:id`
-- `GET /api/mantenimientos/:id/consumos`
-- `POST /api/mantenimientos/:id/consumos`
+**GET /api/tickets/:id**  
+Respuesta: ticket.
 
-**Crear orden**
+**GET /api/tickets/activo/:id_activo**  
+Respuesta: tickets del activo.
+
+**GET /api/tickets/asignados/mis**  
+Respuesta: tickets asignados al tecnico autenticado.
+
+**GET /api/tickets/metricas**  
+Query opcional: `id_activo`.  
+Respuesta:
 ```
-POST /api/mantenimientos
-{
-  "id_ticket": 10,
-  "id_usuario_tecnico": 2,
-  "diagnostico": "Revision inicial",
-  "fecha_inicio": "2026-03-10T10:00:00Z"
-}
+{ "mttr_seconds": 0, "mttr_horas": 0, "mttr_dias": 0, "mtbf_seconds": 0, "mtbf_horas": 0, "mtbf_dias": 0 }
 ```
 
-### 9.8 Repuestos
-- `GET /api/repuestos`
-- `GET /api/repuestos/:id`
-- `GET /api/repuestos/bajo-stock`
-- `POST /api/repuestos`
-- `PUT /api/repuestos/:id`
-- `DELETE /api/repuestos/:id`
-
-**Response ejemplo**
+**GET /api/tickets/:id/suggestions**  
+Respuesta:
 ```
-{
-  "id_repuesto": 1,
-  "nombre": "Memoria RAM 16GB DDR4",
-  "stock": 50,
-  "stock_minimo": 10
-}
+{ "id_ticket": 1, "id_activo": 1, "suggestions": [ ... ] }
 ```
 
-### 9.9 Licencias
-- `GET /api/licencias`
-- `GET /api/licencias/:id`
-- `GET /api/licencias/:id/asignaciones`
-- `POST /api/licencias`
-- `POST /api/licencias/asignar`
-- `PUT /api/licencias/:id`
-- `DELETE /api/licencias/asignacion/:id_asignacion`
-- `DELETE /api/licencias/:id`
+**POST /api/tickets**  
+Request (requeridos: `id_activo`, `descripcion`):
+```
+{ "id_activo": 1, "descripcion": "Falla de hardware" }
+```
+Respuesta:
+```
+{ "id_ticket": 41, "id_activo": 1, "id_usuario_reporta": 6, "estado": "Abierto", "fecha_creacion": "..." }
+```
+Nota: el usuario reporta se toma del token. El sistema intenta autoasignar tecnico si hay disponible.
 
-### 9.10 Software
-- `GET /api/software`
-- `GET /api/software/:id`
-- `POST /api/software`
-- `PUT /api/software/:id`
-- `DELETE /api/software/:id`
+**PUT /api/tickets/:id**  
+Request: campos editables del ticket.  
+Respuesta: ticket actualizado.
+
+**PATCH /api/tickets/:id/estado**  
+Request:
+```
+{ "estado": "Cerrado", "consumos": [ { "id_repuesto": 1, "cantidad_usada": 2 } ] }
+```
+Respuesta: ticket actualizado/cerrado.
+
+**DELETE /api/tickets/:id**  
+Respuesta:
+```
+{ "message": "Ticket eliminado" }
+```
+
+### 9.9 Mantenimientos
+**GET /api/mantenimientos**  
+Respuesta: lista de ordenes.
+
+**GET /api/mantenimientos/:id**  
+Respuesta: orden.
+
+**GET /api/mantenimientos/tecnico/:id_tecnico**  
+Respuesta: ordenes del tecnico.
+
+**GET /api/mantenimientos/:id/consumos**  
+Respuesta: consumos de repuestos.
+
+**POST /api/mantenimientos**  
+Request:
+```
+{ "id_ticket": 10, "id_usuario_tecnico": 2, "diagnostico": "Revision inicial", "fecha_inicio": "..." }
+```
+Respuesta: orden creada.
+
+**POST /api/mantenimientos/:id/consumos**  
+Request:
+```
+{ "id_repuesto": 1, "cantidad_usada": 2, "estado_ticket": "En Proceso" }
+```
+Respuesta: consumo registrado.
+
+**PUT /api/mantenimientos/:id**  
+Request: campos editables.  
+Respuesta: orden actualizada.
+
+**DELETE /api/mantenimientos/:id**  
+Respuesta:
+```
+{ "message": "Mantenimiento eliminado" }
+```
+
+### 9.10 Repuestos
+**GET /api/repuestos**  
+Respuesta: lista de repuestos.
+
+**GET /api/repuestos/:id**  
+Respuesta: repuesto.
+
+**GET /api/repuestos/bajo-stock**  
+Respuesta: lista bajo stock.
+
+**POST /api/repuestos**  
+Request:
+```
+{ "nombre": "Memoria RAM 16GB DDR4", "stock": 50, "stock_minimo": 10 }
+```
+Respuesta: repuesto creado.
+
+**PUT /api/repuestos/:id**  
+Request: campos editables (incluye `stock`, `stock_minimo`).  
+Respuesta: repuesto actualizado.
+
+**DELETE /api/repuestos/:id**  
+Respuesta:
+```
+{ "message": "Repuesto eliminado" }
+```
+
+### 9.11 Licencias
+**GET /api/licencias**  
+Respuesta: lista de licencias.
+
+**GET /api/licencias/:id**  
+Respuesta: licencia.
+
+**GET /api/licencias/:id/asignaciones**  
+Respuesta: asignaciones.
+
+**POST /api/licencias**  
+Request:
+```
+{ "id_software": 1, "clave_producto": "XYZ-123", "fecha_expiracion": "2026-12-31", "asientos_totales": 10 }
+```
+Respuesta: licencia creada.
+
+**POST /api/licencias/asignar**  
+Request (requerido `id_licencia`):
+```
+{ "id_licencia": 1, "id_usuario": 2, "id_activo": null }
+```
+Respuesta: asignacion creada.
+
+**PUT /api/licencias/:id**  
+Request:
+```
+{ "fecha_expiracion": "2027-12-31", "asientos_totales": 20 }
+```
+Respuesta: licencia actualizada.
+
+**DELETE /api/licencias/:id**  
+Respuesta:
+```
+{ "message": "Licencia eliminada" }
+```
+
+**DELETE /api/licencias/asignacion/:id_asignacion**  
+Respuesta:
+```
+{ "message": "Asignación revocada" }
+```
+
+### 9.12 Software
+**GET /api/software**  
+Respuesta: lista de software.
+
+**GET /api/software/:id**  
+Respuesta: software.
+
+**POST /api/software**  
+Request:
+```
+{ "nombre": "Office", "fabricante": "Microsoft" }
+```
+Respuesta: software creado.
+
+**PUT /api/software/:id**  
+Request:
+```
+{ "nombre": "Office 2", "fabricante": "Microsoft" }
+```
+Respuesta: software actualizado.
+
+**DELETE /api/software/:id**  
+Respuesta:
+```
+{ "message": "Software eliminado" }
+```
+
+### 9.13 Metricas
+**GET /api/metricas/operacion**  
+Respuesta:
+```
+{ "mttr_seconds": 0, "mttr_horas": 0, "mttr_dias": 0, "mtbf_seconds": 0, "mtbf_horas": 0, "mtbf_dias": 0 }
+```
+
+### 9.14 Auditoria
+**GET /api/auditoria**  
+Filtros: `from`, `to`, `entidad`, `entidad_id`, `accion`, `status`, `id_usuario_actor`, `limit`, `offset`.
+Respuesta: lista de logs.
+
+**GET /api/auditoria/:id**  
+Respuesta: log de auditoria.
+
+### 9.15 Jobs IA
+**POST /api/jobs/ia/repuestos/sugerencias**  
+Request:
+```
+{ "windowDays": 60, "horizonDays": 30 }
+```
+Respuesta: sugerencias y alertas creadas.
+
+**POST /api/jobs/ia/activos/baja-sugerida**  
+Request:
+```
+{ "windowDays": 365, "thresholdPct": 0.6 }
+```
+Respuesta: sugerencias de baja y alertas creadas.
+
+**POST /api/jobs/ia/tickets/reprocess**  
+Request:
+```
+{ "limit": 20, "sinceDays": 30 }
+```
+Respuesta: resumen de reproceso.
+
+**POST /api/jobs/ia/mantenimientos/preventivos**  
+Request:
+```
+{ "intervalDays": 180, "scheduleOffsetDays": 1, "limit": 20 }
+```
+Respuesta: resumen de tickets preventivos creados.
 
 ## 10) Metricas MTTR y MTBF
 - MTTR: promedio de `(fecha_fin - fecha_inicio)` en ordenes de mantenimiento asociadas a tickets `Resuelto` o `Cerrado`.
@@ -329,9 +633,6 @@ Respuesta incluye segundos, horas y dias.
 pnpm install
 pnpm dev
 
-# con npm
-npm install
-npm run dev
 ```
 
 ## 16) Healthcheck

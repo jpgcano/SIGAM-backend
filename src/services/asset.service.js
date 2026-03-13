@@ -1,11 +1,13 @@
 import AuditLogService from './auditLog.service.js';
 
+// Assets service: business rules, normalization, and audit logging.
 class AssetService {
     constructor(assetModel, auditLogService = new AuditLogService()) {
         this.assetModel = assetModel;
         this.auditLogService = auditLogService;
     }
 
+    // Generate unique QR code for assets.
     static generateCodigoQR() {
         const now = new Date();
         const yyyy = now.getFullYear();
@@ -15,6 +17,7 @@ class AssetService {
         return `ACT-${yyyy}${mm}${dd}-${rand}`;
     }
 
+    // Compute obsolescence date from purchase date and lifespan.
     static computeFechaObsolescencia(fechaCompra, vidaUtil) {
         if (!fechaCompra || !vidaUtil) return null;
         const base = new Date(fechaCompra);
@@ -26,6 +29,7 @@ class AssetService {
         return result.toISOString().slice(0, 10);
     }
 
+    // Attach computed obsolescence date to asset output.
     static withObsolescence(asset) {
         if (!asset) return asset;
         const fecha_obsolescencia = AssetService.computeFechaObsolescencia(
@@ -42,12 +46,14 @@ class AssetService {
             : assets;
     }
 
+    // Read one asset and compute obsolescence.
     async findById(id) {
         const asset = await this.assetModel.findById(id);
         if (!asset) throw { status: 404, message: `Activo con id ${id} no encontrado` };
         return AssetService.withObsolescence(asset);
     }
 
+    // Create asset with required fields and audit log.
     async create(payload, actor, auditContext) {
         if (!payload?.serial) {
             throw { status: 400, message: 'serial es requerido' };
@@ -81,6 +87,7 @@ class AssetService {
         return AssetService.withObsolescence(asset);
     }
 
+    // Update asset, track state change, and log audit.
     async update(id, payload, actor, auditContext) {
         const before = await this.assetModel.findById(id);
         const asset = await this.assetModel.update(id, payload);
@@ -107,6 +114,7 @@ class AssetService {
         return AssetService.withObsolescence(asset);
     }
 
+    // Retire asset and record ISO 27001 reason/certificate.
     async remove(id, motivoBaja, certificadoBorrado, actor, auditContext) {
         if (!motivoBaja || !certificadoBorrado) {
             throw { status: 400, message: 'motivo_baja y certificado_borrado son requeridos (ISO 27001)' };
@@ -131,6 +139,7 @@ class AssetService {
         return result;
     }
 
+    // Asset history entries.
     async getHistory(id) {
         return this.assetModel.getHistory(id);
     }

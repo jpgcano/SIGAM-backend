@@ -8,10 +8,13 @@ import permit from '../middlewares/permit.middleware.js';
 import { validateRequired } from '../middlewares/validate.middleware.js';
 import rateLimit from 'express-rate-limit';
 
+// Auth module routes: public login/register and protected role-based endpoints.
 const router = express.Router();
 
+// Controller wiring with service + model dependencies.
 const authController = new AuthController(new AuthService(new UserModel()));
 
+// Rate limiter for login attempts to reduce brute-force risk.
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
@@ -19,9 +22,12 @@ const loginLimiter = rateLimit({
     legacyHeaders: false
 });
 
+// Public registration: required fields are validated before controller.
 router.post('/register', validateRequired(['nombre', 'email', 'password']), authController.register);
+// Public login: rate limited and required fields validated.
 router.post('/login', loginLimiter, validateRequired(['email', 'password']), authController.login);
 
+// Protected endpoints to validate role permissions.
 router.get('/admin-panel', authMiddleware, permit('auth', 'admin_panel'), (req, res) => {
     res.json({ msg: 'Bienvenido, Gerente' });
 });

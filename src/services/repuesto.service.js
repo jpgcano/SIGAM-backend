@@ -1,17 +1,22 @@
 import AuditLogService from './auditLog.service.js';
 
+// Service layer for spare parts and inventory adjustments.
 class RepuestoService {
     constructor(model, auditLogService = new AuditLogService()) {
         this.model = model;
         this.auditLogService = auditLogService;
     }
+    // List all spare parts.
     findAll() { return this.model.findAll(); }
+    // List spare parts below minimum stock.
     findBajoStock() { return this.model.findBajoStock(); }
+    // Fetch a spare part by id and validate existence.
     async findById(id) {
         const r = await this.model.findById(id);
         if (!r) throw { status: 404, message: `Repuesto ${id} no encontrado` };
         return r;
     }
+    // Create a spare part and emit audit log entry.
     async create(payload, actor, auditContext) {
         const created = await this.model.create(payload);
         this.auditLogService.safeLog(
@@ -26,6 +31,7 @@ class RepuestoService {
         );
         return created;
     }
+    // Update a spare part and log stock adjustments separately.
     async update(id, payload, actor, auditContext) {
         const before = await this.model.findById(id);
         const r = await this.model.update(id, payload);
@@ -64,6 +70,7 @@ class RepuestoService {
         }
         return r;
     }
+    // Remove a spare part record and log deletion.
     async remove(id, actor, auditContext) {
         const before = await this.model.findById(id);
         const r = await this.model.remove(id);

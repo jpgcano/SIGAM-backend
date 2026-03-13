@@ -1,9 +1,12 @@
+// Controller for audit log queries and filtering.
 class AuditLogController {
     constructor(service) {
         this.service = service;
+        // Bind methods for Express handlers.
         ['getAll', 'getById'].forEach((m) => (this[m] = this[m].bind(this)));
     }
 
+    // List audit entries using query filters.
     async getAll(req, res, next) {
         try {
             const {
@@ -33,6 +36,7 @@ class AuditLogController {
         }
     }
 
+    // Fetch a single audit entry by id with validation.
     async getById(req, res, next) {
         try {
             const id = Number(req.params.id);
@@ -45,4 +49,3 @@ class AuditLogController {
 }
 
 export default AuditLogController;
-
