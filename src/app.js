@@ -27,6 +27,9 @@ import iaJobsRoutes from './routes/iaJobs.routes.js';
 
 const app = express();
 
+// Trust proxy for Vercel/Edge so rate limiting reads client IP correctly.
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
