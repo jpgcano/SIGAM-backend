@@ -41,6 +41,24 @@ test('permit devuelve 403 cuando el rol no tiene permiso', async () => {
     assert.match(res.body.message, /Acceso denegado/i);
 });
 
+test('permit registra acceso denegado en auditoria', async () => {
+    const audit = {
+        entries: [],
+        buildDomainEntry(payload) { return payload; },
+        async safeLog(entry) { this.entries.push(entry); }
+    };
+    const middleware = permit('tickets', 'delete', audit);
+    const req = { user: { role: 'Analista' }, headers: {} };
+    const res = createRes();
+    let called = false;
+    await middleware(req, res, () => { called = true; });
+
+    assert.equal(called, false);
+    assert.equal(res.statusCode, 403);
+    assert.equal(audit.entries.length, 1);
+    assert.equal(audit.entries[0].accion, 'SECURITY_ACCESS_DENIED');
+});
+
 test('permit devuelve error 500 si no existe configuración', async () => {
     const middleware = permit('nope', 'nope');
     const req = { user: { role: 'Gerente' } };
@@ -52,4 +70,3 @@ test('permit devuelve error 500 si no existe configuración', async () => {
     assert.ok(nextErr);
     assert.equal(nextErr.status, 500);
 });
-

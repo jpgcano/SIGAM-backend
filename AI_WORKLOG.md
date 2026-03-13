@@ -498,3 +498,143 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `node --test` OK.
 - Commit(s):
   - N/A
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Plan de implementacion para logging de dominio
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: definir eventos base, pasos de instrumentacion y criterios de cierre para completar la auditoria de dominio.
+- Cambios:
+  - `README_PLAN_AUDITORIA.md` - agregado plan de implementacion con catalogo de eventos y validacion.
+- Decisiones tecnicas: separar logging de request y logging de dominio con convencion `ENTIDAD_ACCION`.
+- Pendiente: instrumentar servicios por modulo y agregar tests unitarios por evento base.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual del plan actualizado.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Endpoints de seguridad (rol y reset password)
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: habilitar cambio de rol y reset de contraseña con logs y permisos.
+- Cambios:
+  - `src/models/User.js` - métodos `updateRole` y `updatePassword`.
+  - `src/services/user.service.js` - `updateRole` + `resetPassword` con logs.
+  - `src/controllers/user.controller.js` - endpoints para rol y password.
+  - `src/routes/user.routes.js` - rutas PATCH `/:id/rol` y `/:id/password`.
+  - `src/config/permissions.js` - permisos `users.update_role` y `users.reset_password`.
+  - `test/user.service.test.js` y `test/auth.service.test.js` - pruebas de logs de seguridad.
+- Decisiones tecnicas: solo `Gerente` puede cambiar rol o resetear password.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicios y rutas.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Seguridad adicional + logs de jobs IA
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar asignaciones de rol privilegiado y ejecuciones/errores de jobs IA.
+- Cambios:
+  - `src/services/auth.service.js` y `src/services/user.service.js` - log SECURITY_ROLE_ASSIGN.
+  - `src/services/ia/jobs.service.js` - logs JOB_IA_RUN/JOB_IA_ERROR por job.
+  - `test/auth.service.test.js` y `test/user.service.test.js` - pruebas de role assign.
+  - `test/ia.jobs.audit.test.js` - pruebas de logging en IA-5 e IA-6.
+- Decisiones tecnicas: logs de jobs IA resumen solo contadores para evitar payloads grandes.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicios y tests.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Logging de seguridad (token inválido y acceso denegado)
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar eventos de seguridad en middleware de auth y autorizacion.
+- Cambios:
+  - `src/middlewares/verifyToken.middleware.js` - factory con logs AUTH_TOKEN_MISSING/INVALID.
+  - `src/middlewares/auth.middleware.js` - usa verifyToken como factory.
+  - `src/middlewares/permit.middleware.js` - log SECURITY_ACCESS_DENIED.
+  - `test/verifyToken.middleware.test.js` - pruebas de evento token inválido.
+  - `test/permit.middleware.test.js` - prueba de auditoria en acceso denegado.
+- Decisiones tecnicas: mantener logs de seguridad en middlewares para capturar eventos antes de llegar a controladores.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de middlewares y tests.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Logging inventario - ajustes de stock
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar ajustes de stock en repuestos.
+- Cambios:
+  - `src/services/repuesto.service.js` - log adicional REPUESTO_ADJUST cuando cambia stock/stock_minimo.
+  - `test/audit.domain.inventory.test.js` - prueba de ajuste de stock.
+- Decisiones tecnicas: emitir REPUESTO_UPDATE y REPUESTO_ADJUST cuando hay cambio de stock.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicio y test.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Tests de auditoria para eventos secundarios
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: validar que servicios de licencias/software/proveedores/ubicaciones emiten logs de dominio.
+- Cambios:
+  - `test/audit.domain.secondary.test.js` - pruebas unitarias para logs de dominio en servicios secundarios.
+- Decisiones tecnicas: se usan stubs de modelo y AuditLogService para aislar el comportamiento.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual del nuevo test.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Logging de dominio - eventos secundarios
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar eventos de licencias, software, proveedores y ubicaciones.
+- Cambios:
+  - `src/services/licencia.service.js` - logs LICENCIA_CREATE/UPDATE/DELETE/ASSIGN/REVOKE.
+  - `src/services/software.service.js` - logs SOFTWARE_CREATE/UPDATE/DELETE.
+  - `src/services/proveedor.service.js` - servicio corregido y logs PROVEEDOR_CREATE/UPDATE/DELETE.
+  - `src/services/ubicacion.service.js` - logs UBICACION_CREATE/UPDATE/DELETE.
+  - `src/controllers/licencia.controller.js` - pasar actor/contexto.
+  - `src/controllers/software.controller.js` - pasar actor/contexto.
+  - `src/controllers/proveedor.controller.js` - pasar actor/contexto.
+  - `src/controllers/ubicacion.controller.js` - pasar actor/contexto.
+- Decisiones tecnicas: logs emitidos en Services con convencion ENTIDAD_ACCION.
+- Pendiente: agregar tests unitarios de auditoria para estos modulos.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicios y controladores actualizados.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Implementacion inicial de logging de dominio
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar eventos criticos de negocio en servicios (activos, tickets, ordenes, repuestos, usuarios, auth).
+- Cambios:
+  - `src/services/auditLog.service.js` - helper `buildDomainEntry` para logs de dominio.
+  - `src/utils/auditContext.js` - helper para capturar contexto de request.
+  - `src/services/asset.service.js` - logs ACTIVO_CREATE/UPDATE/DELETE.
+  - `src/services/ticket.service.js` - logs TICKET_CREATE/UPDATE/CLOSE/ASSIGN/DELETE.
+  - `src/services/maintenance.service.js` - logs ORDEN_CREATE/UPDATE/DELETE y REPUESTO_CONSUME.
+  - `src/services/repuesto.service.js` - logs REPUESTO_CREATE/UPDATE/DELETE.
+  - `src/services/auth.service.js` - logs AUTH_LOGIN_SUCCESS/FAIL y USUARIO_CREATE.
+  - `src/services/user.service.js` - log USUARIO_CREATE.
+  - `src/controllers/*` - paso de actor y contexto de auditoria desde request.
+- Decisiones tecnicas: los logs de dominio se emiten en Services para mantener POO por capas.
+- Pendiente: agregar cobertura de eventos secundarios (licencias/software/proveedores/ubicaciones) y tests unitarios.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicios y controladores actualizados.
+- Commit(s):
+  - pendiente

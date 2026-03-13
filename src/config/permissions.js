@@ -22,7 +22,9 @@ export const PERMISSIONS = {
     },
     users: {
         list: roles('Gerente', 'Analista', 'Auditor'),
-        create: roles('Gerente')
+        create: roles('Gerente'),
+        update_role: roles('Gerente'),
+        reset_password: roles('Gerente')
     },
     assets: {
         list: roles('Analista', 'Técnico', 'Gerente', 'Auditor'),

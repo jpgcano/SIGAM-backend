@@ -104,7 +104,12 @@ test('AuthService.register permite crear roles privilegiados solo a Gerente', as
         }
     };
 
-    const service = new AuthService(model);
+    const audit = {
+        entries: [],
+        buildDomainEntry(payload) { return payload; },
+        async safeLog(entry) { this.entries.push(entry); }
+    };
+    const service = new AuthService(model, audit);
     const user = await service.register(
         { nombre: 'Tech', email: 'tech@acme.com', password: 'Secreta123', rol: 'Técnico' },
         { id: 1, role: 'Gerente' }
@@ -112,4 +117,29 @@ test('AuthService.register permite crear roles privilegiados solo a Gerente', as
 
     assert.equal(user.role, 'Técnico');
     assert.equal(capturedPayload.rol, 'Técnico');
+    assert.ok(audit.entries.some((e) => e.accion === 'SECURITY_ROLE_ASSIGN'));
+});
+
+test('AuthService.register no registra role assign cuando rol final es Usuario', async () => {
+    const model = {
+        async create(payload) {
+            return {
+                id_usuario: 99,
+                nombre: payload.nombre,
+                email: payload.email,
+                rol: payload.rol,
+                fecha_creacion: '2026-03-10T00:00:00Z'
+            };
+        }
+    };
+    const audit = {
+        entries: [],
+        buildDomainEntry(payload) { return payload; },
+        async safeLog(entry) { this.entries.push(entry); }
+    };
+    const service = new AuthService(model, audit);
+
+    await service.register({ nombre: 'U', email: 'u@acme.com', password: 'x' });
+
+    assert.ok(!audit.entries.some((e) => e.accion === 'SECURITY_ROLE_ASSIGN'));
 });
