@@ -24,10 +24,19 @@ test('UserService.create falla cuando rol es invalido', async () => {
 
 test('UserService.create permite rol valido', async () => {
     const model = createModelStub();
-    const service = new UserService(model);
+    const audit = {
+        entries: [],
+        buildDomainEntry(payload) { return payload; },
+        async safeLog(entry) { this.entries.push(entry); }
+    };
+    const service = new UserService(model, audit);
 
-    const user = await service.create({ nombre: 'B', email: 'b@b.com', password: 'x', rol: 'Analista' });
+    const user = await service.create(
+        { nombre: 'B', email: 'b@b.com', password: 'x', rol: 'Analista' },
+        { id: 1, role: 'Gerente' }
+    );
 
     assert.equal(user.rol, 'Analista');
     assert.equal(model.createCalls.length, 1);
+    assert.ok(audit.entries.some((e) => e.accion === 'SECURITY_ROLE_ASSIGN'));
 });

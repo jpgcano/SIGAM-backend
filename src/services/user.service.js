@@ -29,6 +29,18 @@ class UserService {
                 payload_after: created
             })
         );
+        if (rol !== 'Usuario') {
+            this.auditLogService.safeLog(
+                this.auditLogService.buildDomainEntry({
+                    actor,
+                    context: auditContext,
+                    entidad: 'AUTH',
+                    entidad_id: created?.id_usuario,
+                    accion: 'SECURITY_ROLE_ASSIGN',
+                    metadata: { rol_asignado: rol, creado_por: actor?.id ?? null }
+                })
+            );
+        }
         return created;
     }
 }

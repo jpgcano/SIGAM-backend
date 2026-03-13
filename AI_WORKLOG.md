@@ -514,6 +514,23 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-12 - IA: Codex GPT-5
+- Issue: Seguridad adicional + logs de jobs IA
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar asignaciones de rol privilegiado y ejecuciones/errores de jobs IA.
+- Cambios:
+  - `src/services/auth.service.js` y `src/services/user.service.js` - log SECURITY_ROLE_ASSIGN.
+  - `src/services/ia/jobs.service.js` - logs JOB_IA_RUN/JOB_IA_ERROR por job.
+  - `test/auth.service.test.js` y `test/user.service.test.js` - pruebas de role assign.
+  - `test/ia.jobs.audit.test.js` - pruebas de logging en IA-5 e IA-6.
+- Decisiones tecnicas: logs de jobs IA resumen solo contadores para evitar payloads grandes.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicios y tests.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
 - Issue: Logging de seguridad (token inválido y acceso denegado)
 - Rama: feature/auditoria-rbac-ia
 - Objetivo: registrar eventos de seguridad en middleware de auth y autorizacion.

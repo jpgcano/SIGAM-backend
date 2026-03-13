@@ -83,6 +83,19 @@ class AuthService {
             })
         );
 
+        if (finalRole !== 'Usuario') {
+            this.auditLogService.safeLog(
+                this.auditLogService.buildDomainEntry({
+                    actor: actor || { id: created.id_usuario, role: created.rol, email: created.email },
+                    context: auditContext,
+                    entidad: 'AUTH',
+                    entidad_id: created.id_usuario,
+                    accion: 'SECURITY_ROLE_ASSIGN',
+                    metadata: { rol_asignado: finalRole, creado_por: actor?.id ?? null }
+                })
+            );
+        }
+
         return {
             id: created.id_usuario,
             nombre: created.nombre,
