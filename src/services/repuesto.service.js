@@ -41,6 +41,27 @@ class RepuestoService {
                 payload_after: r
             })
         );
+        const stockChanged = payload?.stock !== undefined && Number(before?.stock) !== Number(r?.stock);
+        const stockMinChanged = payload?.stock_minimo !== undefined && Number(before?.stock_minimo) !== Number(r?.stock_minimo);
+        if (stockChanged || stockMinChanged) {
+            this.auditLogService.safeLog(
+                this.auditLogService.buildDomainEntry({
+                    actor,
+                    context: auditContext,
+                    entidad: 'REPUESTO',
+                    entidad_id: id,
+                    accion: 'REPUESTO_ADJUST',
+                    payload_before: before,
+                    payload_after: r,
+                    metadata: {
+                        stock_before: before?.stock ?? null,
+                        stock_after: r?.stock ?? null,
+                        stock_minimo_before: before?.stock_minimo ?? null,
+                        stock_minimo_after: r?.stock_minimo ?? null
+                    }
+                })
+            );
+        }
         return r;
     }
     async remove(id, actor, auditContext) {

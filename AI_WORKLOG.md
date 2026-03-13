@@ -514,6 +514,39 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-12 - IA: Codex GPT-5
+- Issue: Logging de seguridad (token inválido y acceso denegado)
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar eventos de seguridad en middleware de auth y autorizacion.
+- Cambios:
+  - `src/middlewares/verifyToken.middleware.js` - factory con logs AUTH_TOKEN_MISSING/INVALID.
+  - `src/middlewares/auth.middleware.js` - usa verifyToken como factory.
+  - `src/middlewares/permit.middleware.js` - log SECURITY_ACCESS_DENIED.
+  - `test/verifyToken.middleware.test.js` - pruebas de evento token inválido.
+  - `test/permit.middleware.test.js` - prueba de auditoria en acceso denegado.
+- Decisiones tecnicas: mantener logs de seguridad en middlewares para capturar eventos antes de llegar a controladores.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de middlewares y tests.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Logging inventario - ajustes de stock
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar ajustes de stock en repuestos.
+- Cambios:
+  - `src/services/repuesto.service.js` - log adicional REPUESTO_ADJUST cuando cambia stock/stock_minimo.
+  - `test/audit.domain.inventory.test.js` - prueba de ajuste de stock.
+- Decisiones tecnicas: emitir REPUESTO_UPDATE y REPUESTO_ADJUST cuando hay cambio de stock.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicio y test.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
 - Issue: Tests de auditoria para eventos secundarios
 - Rama: feature/auditoria-rbac-ia
 - Objetivo: validar que servicios de licencias/software/proveedores/ubicaciones emiten logs de dominio.
