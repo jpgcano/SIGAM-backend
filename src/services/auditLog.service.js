@@ -127,6 +127,39 @@ class AuditLogService {
         };
     }
 
+    buildDomainEntry({
+        actor,
+        context,
+        entidad,
+        entidad_id,
+        accion,
+        status,
+        error,
+        payload_before,
+        payload_after,
+        metadata
+    }) {
+        return {
+            id_usuario_actor: actor?.id ?? null,
+            rol_actor: actor?.role ?? null,
+            actor_email: actor?.email ?? null,
+            source: 'api',
+            request_id: context?.request_id ?? null,
+            ruta: context?.ruta ?? null,
+            metodo: context?.metodo ?? null,
+            ip: context?.ip ?? null,
+            user_agent: context?.user_agent ?? null,
+            entidad: entidad ?? null,
+            entidad_id: entidad_id !== undefined && entidad_id !== null ? String(entidad_id) : null,
+            accion: accion ?? null,
+            status: status || (error ? 'ERROR' : 'OK'),
+            error_message: error ? String(error?.message || error) : null,
+            payload_before,
+            payload_after,
+            metadata
+        };
+    }
+
     findAll(filters) {
         return this.model.findAll(filters);
     }
@@ -139,4 +172,3 @@ class AuditLogService {
 }
 
 export default AuditLogService;
-

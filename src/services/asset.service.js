@@ -1,6 +1,9 @@
+import AuditLogService from './auditLog.service.js';
+
 class AssetService {
-    constructor(assetModel) {
+    constructor(assetModel, auditLogService = new AuditLogService()) {
         this.assetModel = assetModel;
+        this.auditLogService = auditLogService;
     }
 
     static generateCodigoQR() {
@@ -45,7 +48,7 @@ class AssetService {
         return AssetService.withObsolescence(asset);
     }
 
-    async create(payload) {
+    async create(payload, actor, auditContext) {
         if (!payload?.serial) {
             throw { status: 400, message: 'serial es requerido' };
         }
@@ -59,10 +62,21 @@ class AssetService {
             codigo_qr: payload.codigo_qr || AssetService.generateCodigoQR()
         };
         const asset = await this.assetModel.create(normalizedPayload);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'ACTIVO',
+                entidad_id: asset?.id_activo,
+                accion: 'ACTIVO_CREATE',
+                payload_after: asset
+            })
+        );
         return AssetService.withObsolescence(asset);
     }
 
-    async update(id, payload) {
+    async update(id, payload, actor, auditContext) {
+        const before = await this.assetModel.findById(id);
         const asset = await this.assetModel.update(id, payload);
         if (!asset) throw { status: 404, message: `Activo con id ${id} no encontrado` };
         if (payload?.estado_activo !== undefined) {
@@ -73,14 +87,42 @@ class AssetService {
                 `Estado actualizado a "${estado}"`
             );
         }
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'ACTIVO',
+                entidad_id: asset?.id_activo ?? id,
+                accion: 'ACTIVO_UPDATE',
+                payload_before: before,
+                payload_after: asset
+            })
+        );
         return AssetService.withObsolescence(asset);
     }
 
-    async remove(id, motivoBaja, certificadoBorrado) {
+    async remove(id, motivoBaja, certificadoBorrado, actor, auditContext) {
         if (!motivoBaja || !certificadoBorrado) {
             throw { status: 400, message: 'motivo_baja y certificado_borrado son requeridos (ISO 27001)' };
         }
-        return this.assetModel.remove(id, motivoBaja, certificadoBorrado);
+        const before = await this.assetModel.findById(id);
+        const result = await this.assetModel.remove(id, motivoBaja, certificadoBorrado);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'ACTIVO',
+                entidad_id: id,
+                accion: 'ACTIVO_DELETE',
+                payload_before: before,
+                payload_after: result,
+                metadata: {
+                    motivo_baja: motivoBaja,
+                    certificado_borrado: certificadoBorrado
+                }
+            })
+        );
+        return result;
     }
 
     async getHistory(id) {

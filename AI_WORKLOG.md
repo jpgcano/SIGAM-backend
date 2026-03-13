@@ -498,3 +498,39 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `node --test` OK.
 - Commit(s):
   - N/A
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Plan de implementacion para logging de dominio
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: definir eventos base, pasos de instrumentacion y criterios de cierre para completar la auditoria de dominio.
+- Cambios:
+  - `README_PLAN_AUDITORIA.md` - agregado plan de implementacion con catalogo de eventos y validacion.
+- Decisiones tecnicas: separar logging de request y logging de dominio con convencion `ENTIDAD_ACCION`.
+- Pendiente: instrumentar servicios por modulo y agregar tests unitarios por evento base.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual del plan actualizado.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Implementacion inicial de logging de dominio
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar eventos criticos de negocio en servicios (activos, tickets, ordenes, repuestos, usuarios, auth).
+- Cambios:
+  - `src/services/auditLog.service.js` - helper `buildDomainEntry` para logs de dominio.
+  - `src/utils/auditContext.js` - helper para capturar contexto de request.
+  - `src/services/asset.service.js` - logs ACTIVO_CREATE/UPDATE/DELETE.
+  - `src/services/ticket.service.js` - logs TICKET_CREATE/UPDATE/CLOSE/ASSIGN/DELETE.
+  - `src/services/maintenance.service.js` - logs ORDEN_CREATE/UPDATE/DELETE y REPUESTO_CONSUME.
+  - `src/services/repuesto.service.js` - logs REPUESTO_CREATE/UPDATE/DELETE.
+  - `src/services/auth.service.js` - logs AUTH_LOGIN_SUCCESS/FAIL y USUARIO_CREATE.
+  - `src/services/user.service.js` - log USUARIO_CREATE.
+  - `src/controllers/*` - paso de actor y contexto de auditoria desde request.
+- Decisiones tecnicas: los logs de dominio se emiten en Services para mantener POO por capas.
+- Pendiente: agregar cobertura de eventos secundarios (licencias/software/proveedores/ubicaciones) y tests unitarios.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicios y controladores actualizados.
+- Commit(s):
+  - pendiente

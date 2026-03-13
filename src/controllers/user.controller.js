@@ -1,3 +1,5 @@
+import buildAuditContext from '../utils/auditContext.js';
+
 class UserController {
     constructor(userService) {
         this.userService = userService;
@@ -16,7 +18,7 @@ class UserController {
 
     async create(req, res, next) {
         try {
-            const user = await this.userService.create(req.body);
+            const user = await this.userService.create(req.body, req.user, buildAuditContext(req));
             res.status(201).json(user);
         } catch (error) {
             next(error);

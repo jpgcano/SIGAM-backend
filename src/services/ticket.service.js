@@ -2,14 +2,16 @@ import AssetModel from '../models/Asset.js';
 import { getIaConfig } from '../config/ia.js';
 import DecisionEngine from './ia/DecisionEngine.js';
 import TicketSuggestionEngine from './ia/TicketSuggestionEngine.js';
+import AuditLogService from './auditLog.service.js';
 
 class TicketService {
-    constructor(model, { assetModel, iaConfig, decisionEngine } = {}) {
+    constructor(model, { assetModel, iaConfig, decisionEngine, auditLogService } = {}) {
         this.model = model;
         this.assetModel = assetModel || new AssetModel();
         this.iaConfig = iaConfig || getIaConfig();
         this.decisionEngine = decisionEngine || new DecisionEngine(this.iaConfig);
         this.suggestionEngine = new TicketSuggestionEngine({ maxSuggestions: 3 });
+        this.auditLogService = auditLogService || new AuditLogService();
     }
     static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
@@ -45,7 +47,7 @@ class TicketService {
         };
     }
 
-    async create(payload, user) {
+    async create(payload, user, auditContext) {
         if (!payload.descripcion) throw { status: 400, message: 'descripcion es requerida' };
         if (!payload.id_activo) throw { status: 400, message: 'id_activo es requerido' };
         if (!user?.id) throw { status: 401, message: 'Usuario no autenticado' };
@@ -83,6 +85,18 @@ class TicketService {
 
         const created = await this.model.create(normalizedPayload);
 
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor: user,
+                context: auditContext,
+                entidad: 'TICKET',
+                entidad_id: created?.id_ticket,
+                accion: 'TICKET_CREATE',
+                payload_after: created,
+                metadata: { id_activo: payload.id_activo }
+            })
+        );
+
         if (!created?.id_ticket) return created;
 
         if (!this.iaConfig.enabled || !this.iaConfig.assignmentEnabled) {
@@ -101,6 +115,17 @@ class TicketService {
         await this.model.assignToTechnician(created.id_ticket, tecnico.id_usuario);
         const hydrated = await this.model.findById(created.id_ticket);
         if (!hydrated) return created;
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor: user,
+                context: auditContext,
+                entidad: 'TICKET',
+                entidad_id: created.id_ticket,
+                accion: 'TICKET_ASSIGN',
+                payload_after: hydrated,
+                metadata: { id_usuario_tecnico: tecnico.id_usuario }
+            })
+        );
         return {
             ...hydrated,
             id_usuario_tecnico: tecnico.id_usuario,
@@ -108,10 +133,10 @@ class TicketService {
         };
     }
 
-    async update(id, payload, user) {
+    async update(id, payload, user, auditContext) {
         await this.ensureAccess(id, user);
         if (payload?.estado !== undefined) {
-            await this.changeEstado(id, payload.estado, user, payload?.consumos);
+            await this.changeEstado(id, payload.estado, user, payload?.consumos, auditContext);
             const updateData = { ...payload };
             delete updateData.estado;
             delete updateData.consumos;
@@ -120,22 +145,47 @@ class TicketService {
                 if (!current) throw { status: 404, message: `Ticket ${id} no encontrado` };
                 return current;
             }
+            const before = await this.model.findById(id);
             const updated = await this.model.update(id, updateData);
             if (!updated) throw { status: 404, message: `Ticket ${id} no encontrado` };
+            this.auditLogService.safeLog(
+                this.auditLogService.buildDomainEntry({
+                    actor: user,
+                    context: auditContext,
+                    entidad: 'TICKET',
+                    entidad_id: id,
+                    accion: 'TICKET_UPDATE',
+                    payload_before: before,
+                    payload_after: updated
+                })
+            );
             return updated;
         }
+        const before = await this.model.findById(id);
         const t = await this.model.update(id, payload);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor: user,
+                context: auditContext,
+                entidad: 'TICKET',
+                entidad_id: id,
+                accion: 'TICKET_UPDATE',
+                payload_before: before,
+                payload_after: t
+            })
+        );
         return t;
     }
 
-    async changeEstado(id, estado, user, consumos) {
+    async changeEstado(id, estado, user, consumos, auditContext) {
         if (!estado) throw { status: 400, message: 'estado es requerido' };
         if (!TicketService.ESTADOS_VALIDOS.has(estado)) {
             throw { status: 400, message: `estado inválido: ${estado}` };
         }
 
         await this.ensureAccess(id, user);
+        const before = await this.model.findById(id);
 
         // Regla de negocio: un técnico solo puede cerrar tickets asignados a él.
         if (user?.role === 'Técnico' && estado === 'Cerrado') {
@@ -155,17 +205,53 @@ class TicketService {
                     throw { status: 400, message: 'consumos.cantidad_usada debe ser > 0' };
                 }
             }
-            return this.model.closeWithConsumos(id, consumos);
+            const closed = await this.model.closeWithConsumos(id, consumos);
+            this.auditLogService.safeLog(
+                this.auditLogService.buildDomainEntry({
+                    actor: user,
+                    context: auditContext,
+                    entidad: 'TICKET',
+                    entidad_id: id,
+                    accion: 'TICKET_CLOSE',
+                    payload_before: before,
+                    payload_after: closed,
+                    metadata: { consumos }
+                })
+            );
+            return closed;
         }
 
         const t = await this.model.updateEstado(id, estado);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor: user,
+                context: auditContext,
+                entidad: 'TICKET',
+                entidad_id: id,
+                accion: estado === 'Cerrado' ? 'TICKET_CLOSE' : 'TICKET_UPDATE',
+                payload_before: before,
+                payload_after: t
+            })
+        );
         return t;
     }
 
-    async remove(id) {
+    async remove(id, actor, auditContext) {
+        const before = await this.model.findById(id);
         const t = await this.model.remove(id);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'TICKET',
+                entidad_id: id,
+                accion: 'TICKET_DELETE',
+                payload_before: before,
+                payload_after: t
+            })
+        );
         return t;
     }
 
