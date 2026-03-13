@@ -35,6 +35,15 @@ app.use(requestContext);
 app.use(optionalAuth);
 app.use(auditRequest());
 
+// Root route for quick health/info checks in deployments.
+app.get('/', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'SIGAM API',
+        docs: '/health and /api/*'
+    });
+});
+
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
