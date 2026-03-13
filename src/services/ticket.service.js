@@ -53,6 +53,13 @@ class TicketService {
         const activo = await this.assetModel.findById(payload.id_activo);
         if (!activo) throw { status: 404, message: `Activo ${payload.id_activo} no encontrado` };
 
+        if (typeof this.model.findSupportTechnicianWithLeastLoad === 'function') {
+            const tecnico = await this.model.findSupportTechnicianWithLeastLoad();
+            if (!tecnico) {
+                throw { status: 409, message: 'No hay tecnico/analista disponible para asignar el ticket' };
+            }
+        }
+
         const criticidadActivo = activo.nivel_criticidad || activo.criticidad || 'Media';
 
         const clasificacion = await this.decisionEngine.classifyTicket({
