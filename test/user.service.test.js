@@ -40,3 +40,38 @@ test('UserService.create permite rol valido', async () => {
     assert.equal(model.createCalls.length, 1);
     assert.ok(audit.entries.some((e) => e.accion === 'SECURITY_ROLE_ASSIGN'));
 });
+
+test('UserService.updateRole registra SECURITY_ROLE_CHANGE', async () => {
+    const audit = {
+        entries: [],
+        buildDomainEntry(payload) { return payload; },
+        async safeLog(entry) { this.entries.push(entry); }
+    };
+    const model = {
+        async findById() { return { id_usuario: 1, rol: 'Usuario' }; },
+        async updateRole(id, rol) { return { id_usuario: id, rol }; }
+    };
+    const service = new UserService(model, audit);
+
+    const updated = await service.updateRole(1, 'Analista', { id: 9, role: 'Gerente' }, { request_id: 'r1' });
+
+    assert.equal(updated.rol, 'Analista');
+    assert.ok(audit.entries.some((e) => e.accion === 'SECURITY_ROLE_CHANGE'));
+});
+
+test('UserService.resetPassword registra SECURITY_PASSWORD_RESET', async () => {
+    const audit = {
+        entries: [],
+        buildDomainEntry(payload) { return payload; },
+        async safeLog(entry) { this.entries.push(entry); }
+    };
+    const model = {
+        async findById() { return { id_usuario: 1, rol: 'Usuario' }; },
+        async updatePassword(id) { return { id_usuario: id }; }
+    };
+    const service = new UserService(model, audit);
+
+    await service.resetPassword(1, 'Nueva123', { id: 9, role: 'Gerente' }, { request_id: 'r1' });
+
+    assert.ok(audit.entries.some((e) => e.accion === 'SECURITY_PASSWORD_RESET'));
+});

@@ -12,5 +12,7 @@ const userController = new UserController(new UserService(new UserModel()));
 
 router.get('/', authMiddleware, permit('users', 'list'), userController.getAll);
 router.post('/', authMiddleware, permit('users', 'create'), validateRequired(['nombre', 'email', 'password', 'rol']), userController.create);
+router.patch('/:id/rol', authMiddleware, permit('users', 'update_role'), validateRequired(['rol']), userController.updateRole);
+router.patch('/:id/password', authMiddleware, permit('users', 'reset_password'), validateRequired(['password']), userController.resetPassword);
 
 export default router;

@@ -43,6 +43,48 @@ class UserService {
         }
         return created;
     }
+
+    async updateRole(id, rol, actor, auditContext) {
+        if (!ALLOWED_ROLES_SET.has(rol)) {
+            throw { status: 400, message: `rol inválido: ${rol}` };
+        }
+        const before = await this.userModel.findById(id);
+        if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
+        const updated = await this.userModel.updateRole(id, rol);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'AUTH',
+                entidad_id: id,
+                accion: 'SECURITY_ROLE_CHANGE',
+                payload_before: before,
+                payload_after: updated,
+                metadata: { rol_anterior: before?.rol ?? null, rol_nuevo: rol }
+            })
+        );
+        return updated;
+    }
+
+    async resetPassword(id, newPassword, actor, auditContext) {
+        if (!newPassword) throw { status: 400, message: 'password es requerido' };
+        const before = await this.userModel.findById(id);
+        if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
+        const passwordHash = await HashUtil.hashPassword(newPassword);
+        const updated = await this.userModel.updatePassword(id, passwordHash);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'AUTH',
+                entidad_id: id,
+                accion: 'SECURITY_PASSWORD_RESET',
+                payload_before: before,
+                payload_after: updated
+            })
+        );
+        return updated;
+    }
 }
 
 export default UserService;

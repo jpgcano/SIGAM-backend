@@ -514,6 +514,25 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-12 - IA: Codex GPT-5
+- Issue: Endpoints de seguridad (rol y reset password)
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: habilitar cambio de rol y reset de contraseña con logs y permisos.
+- Cambios:
+  - `src/models/User.js` - métodos `updateRole` y `updatePassword`.
+  - `src/services/user.service.js` - `updateRole` + `resetPassword` con logs.
+  - `src/controllers/user.controller.js` - endpoints para rol y password.
+  - `src/routes/user.routes.js` - rutas PATCH `/:id/rol` y `/:id/password`.
+  - `src/config/permissions.js` - permisos `users.update_role` y `users.reset_password`.
+  - `test/user.service.test.js` y `test/auth.service.test.js` - pruebas de logs de seguridad.
+- Decisiones tecnicas: solo `Gerente` puede cambiar rol o resetear password.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicios y rutas.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
 - Issue: Seguridad adicional + logs de jobs IA
 - Rama: feature/auditoria-rbac-ia
 - Objetivo: registrar asignaciones de rol privilegiado y ejecuciones/errores de jobs IA.
