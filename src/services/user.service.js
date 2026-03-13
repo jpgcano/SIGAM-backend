@@ -2,16 +2,19 @@ import HashUtil from '../utils/hash.js';
 import { ALLOWED_ROLES_SET } from '../config/roles.js';
 import AuditLogService from './auditLog.service.js';
 
+// Users service: business rules for user lifecycle.
 class UserService {
     constructor(userModel, auditLogService = new AuditLogService()) {
         this.userModel = userModel;
         this.auditLogService = auditLogService;
     }
 
+    // List users (no auth checks here; handled by middleware).
     async findAll() {
         return this.userModel.findAll();
     }
 
+    // Create user with hashed password and audit logs.
     async create(payload, actor, auditContext) {
         const { nombre, email, password, rol } = payload;
         if (!ALLOWED_ROLES_SET.has(rol)) {
@@ -44,6 +47,7 @@ class UserService {
         return created;
     }
 
+    // Change user role with audit trail.
     async updateRole(id, rol, actor, auditContext) {
         if (!ALLOWED_ROLES_SET.has(rol)) {
             throw { status: 400, message: `rol inválido: ${rol}` };
@@ -66,6 +70,7 @@ class UserService {
         return updated;
     }
 
+    // Reset password for a user and log the action.
     async resetPassword(id, newPassword, actor, auditContext) {
         if (!newPassword) throw { status: 400, message: 'password es requerido' };
         const before = await this.userModel.findById(id);

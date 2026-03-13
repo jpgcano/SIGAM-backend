@@ -1,22 +1,28 @@
 import AuditLogService from './auditLog.service.js';
 
+// Service layer for maintenance orders and related domain logic.
 class MaintenanceService {
     constructor(model, auditLogService = new AuditLogService()) {
         this.model = model;
         this.auditLogService = auditLogService;
     }
+    // Valid ticket states allowed when registering consumptions.
     static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
+    // List all maintenance orders.
     findAll() { return this.model.findAll(); }
 
+    // Fetch a maintenance order by id and validate existence.
     async findById(id) {
         const m = await this.model.findById(id);
         if (!m) throw { status: 404, message: `Orden ${id} no encontrada` };
         return m;
     }
 
+    // List maintenance orders by technician.
     findByTecnico(id_tecnico) { return this.model.findByTecnico(id_tecnico); }
 
+    // Create a maintenance order and emit audit log entry.
     create(payload, actor, auditContext) {
         if (!payload.id_ticket) throw { status: 400, message: 'id_ticket es requerido' };
         if (!payload.id_usuario_tecnico) throw { status: 400, message: 'id_usuario_tecnico es requerido' };
@@ -36,6 +42,7 @@ class MaintenanceService {
         });
     }
 
+    // Update a maintenance order and log before/after states.
     async update(id, payload, actor, auditContext) {
         const before = await this.model.findById(id);
         const m = await this.model.update(id, payload);
@@ -54,6 +61,7 @@ class MaintenanceService {
         return m;
     }
 
+    // Remove a maintenance order and log the deletion.
     async remove(id, actor, auditContext) {
         const before = await this.model.findById(id);
         const m = await this.model.remove(id);
@@ -72,7 +80,7 @@ class MaintenanceService {
         return m;
     }
 
-    // HU-08: Registrar consumo de repuesto
+    // HU-08: Register spare parts consumption and update ticket state.
     registrarConsumo(id_orden, payload, actor, auditContext) {
         if (!payload.id_repuesto) throw { status: 400, message: 'id_repuesto es requerido' };
         if (!payload.cantidad_usada) throw { status: 400, message: 'cantidad_usada es requerida' };
@@ -104,6 +112,7 @@ class MaintenanceService {
         });
     }
 
+    // List all consumptions registered for a maintenance order.
     getConsumos(id_orden) { return this.model.getConsumos(id_orden); }
 }
 

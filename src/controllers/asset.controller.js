@@ -1,5 +1,6 @@
 import buildAuditContext from '../utils/auditContext.js';
 
+// Assets controller: HTTP layer for assets and history.
 class AssetController {
     constructor(assetService) {
         this.assetService = assetService;
@@ -18,6 +19,7 @@ class AssetController {
         } catch (error) { next(error); }
     }
 
+    // Read single asset by id.
     async getById(req, res, next) {
         try {
             const asset = await this.assetService.findById(req.params.id);
@@ -25,6 +27,7 @@ class AssetController {
         } catch (error) { next(error); }
     }
 
+    // Create asset and return stored entity.
     async create(req, res, next) {
         try {
             const asset = await this.assetService.create(req.body, req.user, buildAuditContext(req));
@@ -32,6 +35,7 @@ class AssetController {
         } catch (error) { next(error); }
     }
 
+    // Update asset fields.
     async update(req, res, next) {
         try {
             const asset = await this.assetService.update(req.params.id, req.body, req.user, buildAuditContext(req));
@@ -39,6 +43,7 @@ class AssetController {
         } catch (error) { next(error); }
     }
 
+    // Retire asset with mandatory ISO 27001 fields.
     async remove(req, res, next) {
         try {
             const { motivo_baja, certificado_borrado } = req.body;
@@ -53,6 +58,7 @@ class AssetController {
         } catch (error) { next(error); }
     }
 
+    // Fetch asset history entries.
     async getHistory(req, res, next) {
         try {
             const history = await this.assetService.getHistory(req.params.id);

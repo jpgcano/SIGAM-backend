@@ -1,7 +1,9 @@
 ﻿import BaseModel from './BaseModel.js';
 
 
+// Data access for maintenance orders and consumptions.
 class MaintenanceModel extends BaseModel {
+    // List maintenance orders with ticket and technician info.
     async findAll() {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -26,6 +28,7 @@ class MaintenanceModel extends BaseModel {
         return rows;
     }
 
+    // Fetch a maintenance order by id with related ticket info.
     async findById(id) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -52,6 +55,7 @@ class MaintenanceModel extends BaseModel {
         return rows[0] || null;
     }
 
+    // List maintenance orders assigned to a technician.
     async findByTecnico(id_tecnico) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -74,6 +78,7 @@ class MaintenanceModel extends BaseModel {
         return rows;
     }
 
+    // Create a maintenance order with optional fields.
     async create({ id_ticket, id_usuario_tecnico, diagnostico, fecha_inicio, fecha_fin, checklist_seguridad }) {
         return this.dbCreate('ordenes_mantenimiento', {
             id_ticket,
@@ -85,6 +90,7 @@ class MaintenanceModel extends BaseModel {
         });
     }
 
+    // Update a maintenance order by id.
     async update(id, { diagnostico, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico }) {
         return this.dbUpdate('ordenes_mantenimiento', 'id_orden', id, {
             diagnostico,
@@ -95,6 +101,7 @@ class MaintenanceModel extends BaseModel {
         });
     }
 
+    // Update a maintenance order using the linked ticket id.
     async updateByTicketId(id_ticket, { diagnostico, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico }) {
         return this.dbUpdate('ordenes_mantenimiento', 'id_ticket', id_ticket, {
             diagnostico,
@@ -105,11 +112,12 @@ class MaintenanceModel extends BaseModel {
         });
     }
 
+    // Remove a maintenance order.
     async remove(id) {
         return this.dbRemove('ordenes_mantenimiento', 'id_orden', id);
     }
 
-    // HU-08: Registrar consumo + cambio de estado (funcion SQL transaccional)
+    // HU-08: Register spare part consumption with transactional SQL function.
     async registrarConsumo(id_orden, { id_repuesto, cantidad_usada, estado_ticket }) {
         const { rows } = await this.query(
             `SELECT * FROM fn_registrar_consumo_ticket($1,$2,$3,$4)`,
@@ -118,6 +126,7 @@ class MaintenanceModel extends BaseModel {
         return rows[0];
     }
 
+    // List spare parts consumption for a maintenance order.
     async getConsumos(id_orden) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase

@@ -27,6 +27,21 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
 - Commit(s):
   - <hash corto> - <mensaje>
 
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Comentarios por módulos (Auth, Users, Assets, Tickets, Mantenimientos, Repuestos, Licencias, Software, Auditoría, IA Jobs)
+- Rama: feature/docs-api
+- Objetivo: documentar con comentarios en inglés cada bloque de código por módulo.
+- Cambios:
+  - `src/routes/*`, `src/controllers/*`, `src/services/*`, `src/models/*` - comentarios por módulo en rutas, controladores, servicios y modelos.
+  - `src/middlewares/*`, `src/utils/auditContext.js`, `src/services/ia/*` - comentarios de auditoría y flujos IA.
+- Decisiones tecnicas: comentarios concisos por bloque para mantener legibilidad.
+- Pendiente: N/A
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - `node --test` - pass (32)
+- Commit(s):
+  - pendiente
+
 ### 2026-03-05 - IA: Codex GPT-5
 - Issue: ISSUE 3 (script SQL MER) + ISSUE 7 (historial automatico de cambios)
 - Rama: main
@@ -510,6 +525,36 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
 - Riesgos/Bloqueos: N/A
 - Evidencia:
   - revision manual del plan actualizado.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: README en inglés + verificación de idioma en código
+- Rama: feature/docs-api
+- Objetivo: traducir README principal y listar hallazgos de texto en español en código.
+- Cambios:
+  - `README.md` - versión en inglés con pasos de inicio y DB.
+- Decisiones tecnicas: mantener guía detallada en README_FUNCIONAMIENTO_DETALLADO.md.
+- Pendiente: decidir si se traduce el texto en español dentro del código (mensajes, comentarios, nombres).
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - búsqueda de texto en español en `src/`.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Documentacion de API y limpieza de planes
+- Rama: feature/docs-api
+- Objetivo: documentar uso de endpoints con request/response y eliminar archivos de planeacion.
+- Cambios:
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - paso a paso de inicio + endpoints completos.
+  - `planIA.md` - eliminado.
+  - `README_PLAN_AUDITORIA.md` - eliminado.
+- Decisiones tecnicas: documentacion centralizada en el README detallado.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de la documentacion.
 - Commit(s):
   - pendiente
 

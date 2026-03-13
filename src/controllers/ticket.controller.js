@@ -1,23 +1,29 @@
 import buildAuditContext from '../utils/auditContext.js';
 
+// Tickets controller: HTTP layer for ticket operations.
 class TicketController {
     constructor(service) {
         this.service = service;
         ['getAll','getById','getByActivo','getAssigned','getMetrics','getSuggestions','create','update','changeEstado','remove']
             .forEach(m => this[m] = this[m].bind(this));
     }
+    // List tickets.
     async getAll(req, res, next) {
         try { res.json(await this.service.findAll()); } catch (e) { next(e); }
     }
+    // Read ticket by id with access checks.
     async getById(req, res, next) {
         try { res.json(await this.service.findById(req.params.id, req.user)); } catch (e) { next(e); }
     }
+    // Tickets for a given asset.
     async getByActivo(req, res, next) {
         try { res.json(await this.service.findByActivo(req.params.id_activo)); } catch (e) { next(e); }
     }
+    // Tickets assigned to current technician.
     async getAssigned(req, res, next) {
         try { res.json(await this.service.findAssignedByTecnico(req.user.id)); } catch (e) { next(e); }
     }
+    // MTTR/MTBF metrics (optional filter by asset id).
     async getMetrics(req, res, next) {
         try {
             const raw = req.query?.id_activo;
@@ -32,6 +38,7 @@ class TicketController {
             res.json(await this.service.getMetrics({ id_activo }));
         } catch (e) { next(e); }
     }
+    // Suggestions based on similar tickets.
     async getSuggestions(req, res, next) {
         try {
             const id = Number(req.params.id);
@@ -39,12 +46,15 @@ class TicketController {
             res.json(await this.service.getSuggestions(id, req.user));
         } catch (e) { next(e); }
     }
+    // Create ticket with classification and optional auto-assign.
     async create(req, res, next) {
         try { res.status(201).json(await this.service.create(req.body, req.user, buildAuditContext(req))); } catch (e) { next(e); }
     }
+    // Update ticket fields.
     async update(req, res, next) {
         try { res.json(await this.service.update(req.params.id, req.body, req.user, buildAuditContext(req))); } catch (e) { next(e); }
     }
+    // Change ticket state (and optionally register consumos).
     async changeEstado(req, res, next) {
         try {
             res.json(
@@ -58,6 +68,7 @@ class TicketController {
             );
         } catch (e) { next(e); }
     }
+    // Delete ticket.
     async remove(req, res, next) {
         try {
             await this.service.remove(req.params.id, req.user, buildAuditContext(req));

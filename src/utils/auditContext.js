@@ -1,3 +1,4 @@
+// Build a minimal audit context payload from the request.
 const buildAuditContext = (req) => ({
     request_id: req?.context?.request_id ?? null,
     ip: req?.context?.ip ?? null,

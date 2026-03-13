@@ -4,6 +4,7 @@ import DecisionEngine from './ia/DecisionEngine.js';
 import TicketSuggestionEngine from './ia/TicketSuggestionEngine.js';
 import AuditLogService from './auditLog.service.js';
 
+// Tickets service: classification, triage, assignment, and audit logging.
 class TicketService {
     constructor(model, { assetModel, iaConfig, decisionEngine, auditLogService } = {}) {
         this.model = model;
@@ -15,8 +16,10 @@ class TicketService {
     }
     static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
+    // List tickets (data access handled by model).
     findAll() { return this.model.findAll(); }
 
+    // Read ticket by id and enforce access rules.
     async findById(id, user) {
         const t = await this.model.findById(id);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
@@ -24,10 +27,13 @@ class TicketService {
         return t;
     }
 
+    // Tickets by asset id.
     findByActivo(id_activo) { return this.model.findByActivo(id_activo); }
 
+    // Tickets assigned to a technician.
     findAssignedByTecnico(id_tecnico) { return this.model.findAssignedByTecnico(id_tecnico); }
 
+    // Suggest similar resolutions using recent history.
     async getSuggestions(id_ticket, user) {
         await this.ensureAccess(id_ticket, user);
 
@@ -47,6 +53,7 @@ class TicketService {
         };
     }
 
+    // Create ticket: classify and triage with IA rules, then optionally auto-assign.
     async create(payload, user, auditContext) {
         if (!payload.descripcion) throw { status: 400, message: 'descripcion es requerida' };
         if (!payload.id_activo) throw { status: 400, message: 'id_activo es requerido' };
@@ -99,6 +106,7 @@ class TicketService {
 
         if (!created?.id_ticket) return created;
 
+        // Auto-assign if IA config allows and model supports it.
         if (!this.iaConfig.enabled || !this.iaConfig.assignmentEnabled) {
             return created;
         }
@@ -133,6 +141,7 @@ class TicketService {
         };
     }
 
+    // Update ticket fields or delegate to changeEstado when requested.
     async update(id, payload, user, auditContext) {
         await this.ensureAccess(id, user);
         if (payload?.estado !== undefined) {
@@ -180,6 +189,7 @@ class TicketService {
         return t;
     }
 
+    // Change state with validation and optional consumos handling.
     async changeEstado(id, estado, user, consumos, auditContext) {
         if (!estado) throw { status: 400, message: 'estado es requerido' };
         if (!TicketService.ESTADOS_VALIDOS.has(estado)) {
@@ -191,7 +201,7 @@ class TicketService {
             ? await this.model.findById(id)
             : null;
 
-        // Regla de negocio: un técnico solo puede cerrar tickets asignados a él.
+        // Business rule: technicians can only close tickets assigned to them.
         if (user?.role === 'Técnico' && estado === 'Cerrado') {
             const assigned = await this.model.isAssignedToTecnico(id, user.id);
             if (!assigned) {
@@ -241,6 +251,7 @@ class TicketService {
         return t;
     }
 
+    // Delete ticket with audit trail.
     async remove(id, actor, auditContext) {
         const before = await this.model.findById(id);
         const t = await this.model.remove(id);
@@ -259,6 +270,7 @@ class TicketService {
         return t;
     }
 
+    // Access control by role and ownership/assignment.
     async ensureAccess(id, user) {
         if (!user?.role) return;
         if (user.role === 'Gerente' || user.role === 'Analista') return;
@@ -277,6 +289,7 @@ class TicketService {
         }
     }
 
+    // MTTR/MTBF summary with optional asset filter.
     async getMetrics({ id_activo } = {}) {
         const m = await this.model.getMetrics({ id_activo });
         const mttrSeconds = Number(m.mttr_seconds) || 0;

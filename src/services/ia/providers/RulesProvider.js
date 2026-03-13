@@ -1,3 +1,4 @@
+// Normalize text for rule matching.
 function normalizeText(value) {
     return String(value || '')
         .normalize('NFD')
@@ -5,10 +6,12 @@ function normalizeText(value) {
         .toLowerCase();
 }
 
+// Check if any keyword appears in the text.
 function includesAny(text, keywords) {
     return keywords.some((k) => text.includes(k));
 }
 
+// Normalize criticality labels to canonical values.
 function normalizeCriticidad(value) {
     const v = String(value || '')
         .normalize('NFD')
@@ -22,11 +25,13 @@ function normalizeCriticidad(value) {
     return null;
 }
 
+// Rules-based IA provider for classification and triage.
 export default class RulesProvider {
     constructor() {
         this.name = 'rules_v1';
     }
 
+    // Classify ticket category based on keyword rules.
     async classifyTicket({ descripcion }) {
         const text = normalizeText(descripcion);
 
@@ -57,6 +62,7 @@ export default class RulesProvider {
         };
     }
 
+    // Determine ticket priority based on risk and asset criticality.
     async triageTicket({ descripcion, categoria, criticidadActivo }) {
         const text = normalizeText(descripcion);
         const crit = normalizeCriticidad(criticidadActivo) || 'Media';
@@ -94,4 +100,3 @@ export default class RulesProvider {
         };
     }
 }
-

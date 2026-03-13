@@ -1,19 +1,23 @@
 ﻿import BaseModel from './BaseModel.js';
 
-
+// Assets model: DB access for assets and related history.
 class AssetModel extends BaseModel {
+    // List assets with view-based details.
     async findAll() {
         return this.dbFindAll('vw_activos_detalle', 'id_activo');
     }
 
+    // Read asset detail by id.
     async findById(id) {
         return this.dbFindById('vw_activos_detalle', 'id_activo', id);
     }
 
+    // Find asset by serial for uniqueness checks.
     async findBySerial(serial) {
         return this.dbFindById('activos', 'serial', serial, ['id_activo', 'serial']);
     }
 
+    // Create asset and insert a history entry.
     async create(payload) {
         const {
             serial, modelo, fecha_compra, vida_util, codigo_qr,
@@ -60,6 +64,7 @@ class AssetModel extends BaseModel {
         return activo;
     }
 
+    // Update asset fields (Supabase and SQL paths supported).
     async update(id, payload) {
         const { modelo, vida_util, nivel_criticidad, especificaciones_electricas, estado_activo,
                 id_ubicacion, id_categoria, id_proveedor, costo_compra } = payload;
@@ -99,6 +104,7 @@ class AssetModel extends BaseModel {
         return rows[0] || null;
     }
 
+    // Aggregate repair parts cost in a sliding window for IA-6.
     async getRepairPartsCostWindowByActivo({ windowDays = 365 } = {}) {
         const days = Number(windowDays);
         if (!Number.isInteger(days) || days <= 0 || days > 3650) {
@@ -136,6 +142,7 @@ class AssetModel extends BaseModel {
         return rows || [];
     }
 
+    // Insert asset retirement record.
     async remove(id, motivoBaja, certificadoBorrado) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -157,6 +164,7 @@ class AssetModel extends BaseModel {
         return rows[0];
     }
 
+    // Read asset history ordered by newest first.
     async getHistory(id) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -171,6 +179,7 @@ class AssetModel extends BaseModel {
         return rows;
     }
 
+    // Add a history entry for an asset.
     async addHistory(id_activo, tipo_evento, detalle) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -189,6 +198,7 @@ class AssetModel extends BaseModel {
         return rows[0];
     }
 
+    // Candidates for preventive maintenance based on interval.
     async findPreventiveMaintenanceCandidates({ intervalDays = 180, limit = 50 } = {}) {
         const interval = Number(intervalDays);
         const lim = Number(limit);

@@ -1,10 +1,13 @@
 import RulesProvider from './providers/RulesProvider.js';
 import OpenAIProvider from './providers/OpenAIProvider.js';
 
+// Orchestrates IA providers with fallback to rules-based logic.
 export default class DecisionEngine {
     constructor(config) {
         this.config = config;
+        // Always keep a rules provider for deterministic fallback.
         this.rules = new RulesProvider();
+        // External provider is optional and guarded by config.
         this.external = new OpenAIProvider({
             apiKey: config.openAiApiKey,
             model: config.openAiModel,
@@ -13,6 +16,7 @@ export default class DecisionEngine {
         });
     }
 
+    // Classify a ticket using external IA when available.
     async classifyTicket({ descripcion }) {
         if (!this.config.enabled) {
             return this.rules.classifyTicket({ descripcion });
@@ -30,6 +34,7 @@ export default class DecisionEngine {
         return this.rules.classifyTicket({ descripcion });
     }
 
+    // Triage priority using external IA when available.
     async triageTicket({ descripcion, categoria, criticidadActivo }) {
         if (!this.config.enabled) {
             return this.rules.triageTicket({ descripcion, categoria, criticidadActivo });
@@ -47,4 +52,3 @@ export default class DecisionEngine {
         return this.rules.triageTicket({ descripcion, categoria, criticidadActivo });
     }
 }
-
