@@ -514,6 +514,22 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-12 - IA: Codex GPT-5
+- Issue: Documentacion de API y limpieza de planes
+- Rama: feature/docs-api
+- Objetivo: documentar uso de endpoints con request/response y eliminar archivos de planeacion.
+- Cambios:
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - paso a paso de inicio + endpoints completos.
+  - `planIA.md` - eliminado.
+  - `README_PLAN_AUDITORIA.md` - eliminado.
+- Decisiones tecnicas: documentacion centralizada en el README detallado.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de la documentacion.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
 - Issue: Validaciones DB + API para activos y ajuste de tickets
 - Rama: feature/auditoria-rbac-ia
 - Objetivo: exigir categoria/proveedor en activos (API + DB) y no bloquear creación de tickets por falta de técnico.
