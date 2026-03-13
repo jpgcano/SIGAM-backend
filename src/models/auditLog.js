@@ -1,5 +1,6 @@
 import BaseModel from './BaseModel.js';
 
+// Normalize query params to a safe positive integer range.
 function normalizePositiveInt(value, { min = 1, max = 1000, defaultValue }) {
     if (value === undefined || value === null || value === '') return defaultValue;
     const n = Number.parseInt(String(value), 10);
@@ -7,15 +8,19 @@ function normalizePositiveInt(value, { min = 1, max = 1000, defaultValue }) {
     return n;
 }
 
+// Data access for audit log records.
 class AuditLogModel extends BaseModel {
+    // Create an audit log entry.
     async create(payload) {
         return this.dbCreate('audit_log', payload);
     }
 
+    // Fetch a single audit log entry by id.
     async findById(id) {
         return this.dbFindById('audit_log', 'id_audit', id);
     }
 
+    // List audit log entries with optional filters and pagination.
     async findAll({
         limit = 50,
         offset = 0,
@@ -80,4 +85,3 @@ class AuditLogModel extends BaseModel {
 }
 
 export default AuditLogModel;
-

@@ -7,11 +7,13 @@ import { getIaConfig } from '../../config/ia.js';
 import OpenAIProvider from './providers/OpenAIProvider.js';
 import AuditLogService from '../auditLog.service.js';
 
+// Coerce values to numbers with a fallback.
 function toNumber(value, defaultValue = 0) {
     const n = Number(value);
     return Number.isFinite(n) ? n : defaultValue;
 }
 
+// Normalize query params to a safe positive integer range.
 function normalizePositiveInt(value, { min = 1, max = 3650, defaultValue }) {
     if (value === undefined || value === null || value === '') return defaultValue;
     const n = Number.parseInt(String(value), 10);
@@ -19,8 +21,10 @@ function normalizePositiveInt(value, { min = 1, max = 3650, defaultValue }) {
     return n;
 }
 
+// Service for IA batch jobs and scheduled recommendations.
 class IaJobsService {
     constructor({ repuestoModel, alertaModel, assetModel, ticketModel, maintenanceModel, openAiProvider, iaConfig, auditLogService } = {}) {
+        // Initialize dependencies with defaults.
         this.repuestoModel = repuestoModel || new RepuestoModel();
         this.alertaModel = alertaModel || new AlertaModel();
         this.assetModel = assetModel || new AssetModel();
@@ -36,6 +40,7 @@ class IaJobsService {
         });
     }
 
+    // Log a successful IA job execution.
     logJobSuccess(job, metadata) {
         this.auditLogService.safeLog(
             this.auditLogService.buildDomainEntry({
@@ -48,6 +53,7 @@ class IaJobsService {
         );
     }
 
+    // Log an IA job failure.
     logJobError(job, error, metadata) {
         this.auditLogService.safeLog(
             this.auditLogService.buildDomainEntry({
@@ -62,6 +68,7 @@ class IaJobsService {
         );
     }
 
+    // IA-5: Suggest spare part purchases based on consumption.
     async generatePurchaseSuggestions({
         windowDays = 60,
         horizonDays = 30,
@@ -132,6 +139,7 @@ class IaJobsService {
         }
     }
 
+    // IA-6: Suggest asset disposal based on repair cost ratio.
     async generateDisposalSuggestions({
         windowDays = 365,
         thresholdPct = 0.6,
@@ -205,6 +213,7 @@ class IaJobsService {
         }
     }
 
+    // Re-run external IA for ticket classification and priority.
     async reprocessTicketsExternal({
         limit = 20,
         sinceDays = 30
@@ -302,6 +311,7 @@ class IaJobsService {
         }
     }
 
+    // IA-7: Create preventive maintenance tickets on schedule.
     async generatePreventiveMaintenance({
         intervalDays = null,
         scheduleOffsetDays = null,
@@ -402,6 +412,7 @@ class IaJobsService {
         }
     }
 
+    // Compute a scheduled date based on asset criticality.
     #computeScheduleDate({ offsetDays, criticidad }) {
         const d = new Date();
         d.setDate(d.getDate() + Number(offsetDays || 0));

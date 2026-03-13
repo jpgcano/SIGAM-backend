@@ -1,19 +1,24 @@
 ﻿import BaseModel from './BaseModel.js';
 
 
+// Data access for spare parts inventory.
 class RepuestoModel extends BaseModel {
+    // List all spare parts.
     async findAll() {
         return this.dbFindAll('repuestos', 'id_repuesto');
     }
 
+    // Fetch a spare part by id.
     async findById(id) {
         return this.dbFindById('repuestos', 'id_repuesto', id);
     }
 
+    // List spare parts below minimum stock via view.
     async findBajoStock() {
         return this.dbFindAll('vw_repuestos_bajo_stock');
     }
 
+    // Create a spare part with default stock values.
     async create({ nombre, stock, stock_minimo }) {
         return this.dbCreate('repuestos', {
             nombre,
@@ -22,6 +27,7 @@ class RepuestoModel extends BaseModel {
         });
     }
 
+    // Update a spare part record.
     async update(id, { nombre, stock, stock_minimo }) {
         return this.dbUpdate('repuestos', 'id_repuesto', id, {
             nombre,
@@ -30,10 +36,12 @@ class RepuestoModel extends BaseModel {
         });
     }
 
+    // Remove a spare part record.
     async remove(id) {
         return this.dbRemove('repuestos', 'id_repuesto', id);
     }
 
+    // Aggregate consumption window to support forecasting.
     async getConsumptionWindowByRepuesto({ windowDays = 60 } = {}) {
         const days = Number(windowDays);
         if (!Number.isInteger(days) || days <= 0 || days > 3650) {

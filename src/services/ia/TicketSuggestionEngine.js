@@ -1,3 +1,4 @@
+// Normalize text for keyword comparison.
 function normalizeText(value) {
     return String(value || '')
         .normalize('NFD')
@@ -5,6 +6,7 @@ function normalizeText(value) {
         .toLowerCase();
 }
 
+// Tokenize text into a small keyword list.
 function tokenize(value) {
     const text = normalizeText(value);
     return text
@@ -15,11 +17,13 @@ function tokenize(value) {
         .filter((t) => t.length >= 3);
 }
 
+// Build a unique keyword set for similarity checks.
 function buildKeywordSet(text) {
     const tokens = tokenize(text);
     return new Set(tokens);
 }
 
+// Compute Jaccard similarity between two sets.
 function jaccard(aSet, bSet) {
     if (!aSet.size || !bSet.size) return 0;
     let intersection = 0;
@@ -30,11 +34,13 @@ function jaccard(aSet, bSet) {
     return union ? intersection / union : 0;
 }
 
+// Suggest similar tickets based on keyword overlap.
 export default class TicketSuggestionEngine {
     constructor({ maxSuggestions = 3 } = {}) {
         this.maxSuggestions = maxSuggestions;
     }
 
+    // Score candidates and return the top suggestions.
     suggest({ ticket, candidates }) {
         const baseText = `${ticket?.descripcion || ''} ${ticket?.clasificacion_nlp || ''} ${ticket?.prioridad_ia || ''}`;
         const baseKeywords = buildKeywordSet(baseText);
@@ -62,4 +68,3 @@ export default class TicketSuggestionEngine {
         return scored.slice(0, this.maxSuggestions);
     }
 }
-

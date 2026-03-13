@@ -5,37 +5,39 @@ import TicketModel from '../models/Ticket.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
 import permit from '../middlewares/permit.middleware.js';
 
+// Tickets module routes: CRUD, metrics, and suggestions.
 const router = express.Router();
+// Controller wiring with service + model dependencies.
 const ctrl = new TicketController(new TicketService(new TicketModel()));
 
-// GET /tickets
+// List tickets.
 router.get('/', authMiddleware, permit('tickets', 'list'), ctrl.getAll);
 
-// GET /tickets/activo/:id_activo — tickets de un activo específico
+// Tickets for a specific asset.
 router.get('/activo/:id_activo', authMiddleware, permit('tickets', 'by_activo'), ctrl.getByActivo);
 
-// GET /tickets/asignados/mis — listado de tickets asignados al técnico autenticado
+// Tickets assigned to the authenticated technician.
 router.get('/asignados/mis', authMiddleware, permit('tickets', 'assigned_mine'), ctrl.getAssigned);
 
-// GET /tickets/metricas — MTTR/MTBF
+// MTTR/MTBF metrics.
 router.get('/metricas', authMiddleware, permit('tickets', 'metrics'), ctrl.getMetrics);
 
-// GET /tickets/:id
+// Read ticket by id.
 router.get('/:id', authMiddleware, permit('tickets', 'read'), ctrl.getById);
 
-// GET /tickets/:id/suggestions — sugerencias basadas en historial del activo
+// Suggestions based on asset history.
 router.get('/:id/suggestions', authMiddleware, permit('tickets', 'suggestions'), ctrl.getSuggestions);
 
-// POST /tickets â€” crear ticket (HU-05)
+// Create ticket (HU-05).
 router.post('/', authMiddleware, permit('tickets', 'create'), ctrl.create);
 
-// PUT /tickets/:id â€” actualizar estado/prioridad (HU-06)
+// Update ticket fields (HU-06).
 router.put('/:id', authMiddleware, permit('tickets', 'update'), ctrl.update);
 
-// PATCH /tickets/:id/estado â€” cambio de estado con validaciones de negocio
+// Change state with business validations.
 router.patch('/:id/estado', authMiddleware, permit('tickets', 'change_estado'), ctrl.changeEstado);
 
-// DELETE /tickets/:id
+// Delete ticket.
 router.delete('/:id', authMiddleware, permit('tickets', 'delete'), ctrl.remove);
 
 export default router;

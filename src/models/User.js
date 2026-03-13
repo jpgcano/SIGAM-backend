@@ -1,7 +1,8 @@
 ﻿import BaseModel from './BaseModel.js';
 
-
+// Users model: DB access for users table operations.
 class UserModel extends BaseModel {
+    // Find user by email (includes password hash for login checks).
     async findByEmail(email) {
         return this.dbFindById(
             'usuarios',
@@ -20,6 +21,7 @@ class UserModel extends BaseModel {
         );
     }
 
+    // Find user by id (without password hash).
     async findById(id) {
         return this.dbFindById(
             'usuarios',
@@ -37,6 +39,7 @@ class UserModel extends BaseModel {
         );
     }
 
+    // Update basic user fields.
     async update(id, { nombre, email, rol }) {
         return this.dbUpdate(
             'usuarios',

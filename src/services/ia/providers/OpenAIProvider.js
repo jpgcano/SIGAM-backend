@@ -1,3 +1,4 @@
+// Parse JSON safely and return null on failure.
 function safeJsonParse(text) {
     try {
         return JSON.parse(text);
@@ -6,10 +7,12 @@ function safeJsonParse(text) {
     }
 }
 
+// Helper to get current time in ms.
 function nowMs() {
     return Date.now();
 }
 
+// OpenAI Responses API provider with a simple circuit breaker.
 export default class OpenAIProvider {
     constructor({ apiKey, model, timeoutMs, circuitBreaker }) {
         this.name = 'openai_responses_v1';
@@ -24,11 +27,13 @@ export default class OpenAIProvider {
         };
     }
 
+    // Provider availability based on apiKey and circuit breaker state.
     isAvailable() {
         if (!this.apiKey) return false;
         return nowMs() >= this.cb.openedUntil;
     }
 
+    // Record a failed call for the circuit breaker.
     recordFailure() {
         this.cb.failures += 1;
         if (this.cb.failures >= this.cb.failureThreshold) {
@@ -37,11 +42,13 @@ export default class OpenAIProvider {
         }
     }
 
+    // Reset circuit breaker on success.
     recordSuccess() {
         this.cb.failures = 0;
         this.cb.openedUntil = 0;
     }
 
+    // Classify ticket category using the external provider.
     async classifyTicket({ descripcion }) {
         const result = await this.#call({
             task: 'classify',
@@ -55,6 +62,7 @@ export default class OpenAIProvider {
         };
     }
 
+    // Triage ticket priority using the external provider.
     async triageTicket({ descripcion, categoria, criticidadActivo }) {
         const result = await this.#call({
             task: 'triage',
@@ -69,6 +77,7 @@ export default class OpenAIProvider {
         };
     }
 
+    // Execute a raw call to OpenAI and parse JSON output.
     async #call(payload) {
         if (!this.isAvailable()) {
             throw new Error('OpenAI provider no disponible (circuit breaker abierto o apiKey ausente)');
@@ -139,4 +148,3 @@ export default class OpenAIProvider {
         }
     }
 }
-

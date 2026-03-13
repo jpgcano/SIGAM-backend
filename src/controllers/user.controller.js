@@ -1,5 +1,6 @@
 import buildAuditContext from '../utils/auditContext.js';
 
+// Users controller: HTTP layer for user management.
 class UserController {
     constructor(userService) {
         this.userService = userService;
@@ -18,6 +19,7 @@ class UserController {
         }
     }
 
+    // Create user and return stored profile.
     async create(req, res, next) {
         try {
             const user = await this.userService.create(req.body, req.user, buildAuditContext(req));
@@ -27,6 +29,7 @@ class UserController {
         }
     }
 
+    // Update role for an existing user.
     async updateRole(req, res, next) {
         try {
             const user = await this.userService.updateRole(
@@ -41,6 +44,7 @@ class UserController {
         }
     }
 
+    // Reset password for an existing user.
     async resetPassword(req, res, next) {
         try {
             const user = await this.userService.resetPassword(

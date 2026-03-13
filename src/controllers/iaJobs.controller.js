@@ -1,9 +1,12 @@
+// Controller for IA batch jobs.
 class IaJobsController {
     constructor(service) {
         this.service = service;
+        // Bind methods for Express handlers.
         ['generatePurchaseSuggestions', 'generateDisposalSuggestions', 'reprocessTicketsExternal', 'generatePreventiveMaintenance'].forEach((m) => (this[m] = this[m].bind(this)));
     }
 
+    // Generate purchase suggestions based on consumption windows.
     async generatePurchaseSuggestions(req, res, next) {
         try {
             const windowDays = req.body?.windowDays ?? req.query?.windowDays;
@@ -14,6 +17,7 @@ class IaJobsController {
         }
     }
 
+    // Generate disposal suggestions for underused assets.
     async generateDisposalSuggestions(req, res, next) {
         try {
             const windowDays = req.body?.windowDays ?? req.query?.windowDays;
@@ -24,6 +28,7 @@ class IaJobsController {
         }
     }
 
+    // Reprocess tickets using the IA decision engine.
     async reprocessTicketsExternal(req, res, next) {
         try {
             const limit = req.body?.limit ?? req.query?.limit;
@@ -34,6 +39,7 @@ class IaJobsController {
         }
     }
 
+    // Generate preventive maintenance tickets based on usage intervals.
     async generatePreventiveMaintenance(req, res, next) {
         try {
             const intervalDays = req.body?.intervalDays ?? req.query?.intervalDays;

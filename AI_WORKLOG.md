@@ -27,6 +27,21 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
 - Commit(s):
   - <hash corto> - <mensaje>
 
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Comentarios por módulos (Auth, Users, Assets, Tickets, Mantenimientos, Repuestos, Licencias, Software, Auditoría, IA Jobs)
+- Rama: feature/docs-api
+- Objetivo: documentar con comentarios en inglés cada bloque de código por módulo.
+- Cambios:
+  - `src/routes/*`, `src/controllers/*`, `src/services/*`, `src/models/*` - comentarios por módulo en rutas, controladores, servicios y modelos.
+  - `src/middlewares/*`, `src/utils/auditContext.js`, `src/services/ia/*` - comentarios de auditoría y flujos IA.
+- Decisiones tecnicas: comentarios concisos por bloque para mantener legibilidad.
+- Pendiente: N/A
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - `node --test` - pass (32)
+- Commit(s):
+  - pendiente
+
 ### 2026-03-05 - IA: Codex GPT-5
 - Issue: ISSUE 3 (script SQL MER) + ISSUE 7 (historial automatico de cambios)
 - Rama: main
