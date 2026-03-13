@@ -52,6 +52,12 @@ class AssetService {
         if (!payload?.serial) {
             throw { status: 400, message: 'serial es requerido' };
         }
+        if (!payload?.id_categoria) {
+            throw { status: 400, message: 'id_categoria es requerido' };
+        }
+        if (!payload?.id_proveedor) {
+            throw { status: 400, message: 'id_proveedor es requerido' };
+        }
         const existing = await this.assetModel.findBySerial(payload.serial);
         if (existing) {
             throw { status: 409, message: `serial duplicado: ${payload.serial}` };

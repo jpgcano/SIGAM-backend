@@ -62,6 +62,8 @@ test('AssetService.create genera codigo_qr y calcula fecha_obsolescencia', async
 
     const asset = await service.create({
         serial: 'SN-100',
+        id_categoria: 1,
+        id_proveedor: 1,
         fecha_compra: '2026-01-15',
         vida_util: 12
     });
@@ -78,6 +80,8 @@ test('AssetService.create respeta codigo_qr enviado', async () => {
 
     const asset = await service.create({
         serial: 'SN-101',
+        id_categoria: 1,
+        id_proveedor: 1,
         fecha_compra: '2026-02-10',
         vida_util: 6,
         codigo_qr: 'ACT-TEST-0001'
@@ -94,6 +98,8 @@ test('AssetService.create rechaza serial duplicado', async () => {
     await assert.rejects(
         () => service.create({
             serial: 'DUP-1',
+            id_categoria: 1,
+            id_proveedor: 1,
             fecha_compra: '2026-03-01',
             vida_util: 24
         }),
