@@ -514,6 +514,23 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-12 - IA: Codex GPT-5
+- Issue: Integracion de cambios feature/SM
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: exigir id_categoria/id_proveedor en activos y validar disponibilidad de tecnico/analista en tickets.
+- Cambios:
+  - `src/services/asset.service.js` - validaciones de id_categoria/id_proveedor (cherry-pick).
+  - `src/services/ticket.service.js` - rechazar ticket si no hay tecnico/analista (cherry-pick).
+  - `test/asset.service.test.js` - ajustes de payload para nuevos campos requeridos.
+- Decisiones tecnicas: mantener reglas en service para validacion temprana.
+- Pendiente: N/A
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - `node --test` OK.
+- Commit(s):
+  - 9c5780d
+  - pendiente (ajuste tests)
+
+### 2026-03-12 - IA: Codex GPT-5
 - Issue: Endpoints de seguridad (rol y reset password)
 - Rama: feature/auditoria-rbac-ia
 - Objetivo: habilitar cambio de rol y reset de contraseña con logs y permisos.
