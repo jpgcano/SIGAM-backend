@@ -7,6 +7,9 @@ Tecnologias principales:
 - Express
 - Supabase (PostgreSQL + API)
 
+## Documentacion clave
+- `README_PLAN_AUDITORIA.md` (plan de auditoria y logging)
+
 ## Requisitos
 - Node.js 20+
 - pnpm 10+

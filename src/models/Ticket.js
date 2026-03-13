@@ -20,6 +20,25 @@ class TicketModel extends BaseModel {
         return this.dbFindById('vw_tickets_operacion', 'id_ticket', id);
     }
 
+    async findCoreById(id_ticket) {
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('tickets')
+                .select('id_ticket, id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp, estado, fecha_creacion')
+                .eq('id_ticket', id_ticket)
+                .maybeSingle();
+            if (error) throw error;
+            return data || null;
+        }
+        const { rows } = await this.query(
+            `SELECT id_ticket, id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp, estado, fecha_creacion
+             FROM tickets
+             WHERE id_ticket = $1`,
+            [id_ticket]
+        );
+        return rows[0] || null;
+    }
+
     async findByActivo(id_activo) {
         if (this.useSupabase) {
             const { data, error } = await this.supabase
@@ -35,6 +54,125 @@ class TicketModel extends BaseModel {
             [id_activo]
         );
         return rows;
+    }
+
+    async findResolvedCandidatesByActivo({ id_activo, exclude_id_ticket, limit = 10 }) {
+        const lim = Number.isInteger(limit) && limit > 0 ? limit : 10;
+        const { rows } = await this.query(
+            `SELECT
+                t.id_ticket,
+                t.fecha_creacion,
+                t.estado,
+                t.prioridad_ia,
+                t.clasificacion_nlp,
+                t.descripcion,
+                om.diagnostico
+             FROM tickets t
+             LEFT JOIN ordenes_mantenimiento om ON om.id_ticket = t.id_ticket
+             WHERE t.id_activo = $1
+               AND t.id_ticket <> $2
+               AND t.estado IN ('Resuelto', 'Cerrado')
+             ORDER BY t.fecha_creacion DESC
+             LIMIT $3`,
+            [id_activo, exclude_id_ticket, lim]
+        );
+        return rows || [];
+    }
+
+    async hasOpenPreventiveTicket(id_activo) {
+        const { rows } = await this.query(
+            `SELECT 1
+             FROM tickets
+             WHERE id_activo = $1
+               AND estado IN ('Abierto', 'Asignado', 'En Proceso')
+               AND descripcion ILIKE '%mantenimiento preventivo%'
+             LIMIT 1`,
+            [id_activo]
+        );
+        return rows.length > 0;
+    }
+
+    async findTicketsForIaReprocess({ limit = 20, sinceDays = 30 } = {}) {
+        const lim = Number(limit);
+        const days = Number(sinceDays);
+        const safeLimit = Number.isInteger(lim) && lim > 0 && lim <= 500 ? lim : 20;
+        const safeDays = Number.isInteger(days) && days > 0 && days <= 3650 ? days : 30;
+
+        const { rows } = await this.query(
+            `SELECT
+                id_ticket,
+                id_activo,
+                descripcion,
+                clasificacion_nlp,
+                prioridad_ia,
+                clasificacion_metodo,
+                prioridad_metodo,
+                fecha_creacion
+             FROM tickets
+             WHERE fecha_creacion >= NOW() - ($1 * INTERVAL '1 day')
+               AND (
+                    clasificacion_metodo IS NULL
+                    OR clasificacion_metodo = 'rules_v1'
+                    OR prioridad_metodo IS NULL
+                    OR prioridad_metodo = 'rules_v1'
+               )
+             ORDER BY fecha_creacion DESC
+             LIMIT $2`,
+            [safeDays, safeLimit]
+        );
+        return rows || [];
+    }
+
+    async updateIaFields(id_ticket, fields) {
+        const {
+            clasificacion_nlp,
+            prioridad_ia,
+            clasificacion_metodo,
+            clasificacion_confidence,
+            clasificacion_rationale,
+            prioridad_metodo,
+            prioridad_rationale
+        } = fields || {};
+
+        const baseUpdate = {
+            clasificacion_nlp,
+            prioridad_ia
+        };
+
+        const fullUpdate = {
+            ...baseUpdate,
+            clasificacion_metodo,
+            clasificacion_confidence,
+            clasificacion_rationale,
+            prioridad_metodo,
+            prioridad_rationale
+        };
+
+        if (this.useSupabase) {
+            const attempt = async (payload) => {
+                const { data, error } = await this.supabase
+                    .from('tickets')
+                    .update(payload)
+                    .eq('id_ticket', id_ticket)
+                    .select('*')
+                    .single();
+                if (error) throw error;
+                return data || null;
+            };
+
+            try {
+                return await attempt(fullUpdate);
+            } catch (err) {
+                const msg = String(err?.message || err?.details || err);
+                const looksLikeMissingColumn =
+                    msg.toLowerCase().includes('column') ||
+                    msg.toLowerCase().includes('schema cache');
+                if (!looksLikeMissingColumn) throw err;
+                return attempt(baseUpdate);
+            }
+        }
+
+        return this.dbUpdate('tickets', 'id_ticket', id_ticket, fullUpdate);
     }
 
     async findSupportTechnicianWithLeastLoad() {
@@ -62,6 +200,15 @@ class TicketModel extends BaseModel {
                     loadByTech.set(row.id_usuario_tecnico, current + 1);
                 }
             }
+
+            let selected = null;
+            for (const tech of technicians) {
+                const load = loadByTech.get(tech.id_usuario) || 0;
+                if (!selected || load < selected.carga_abierta || (load === selected.carga_abierta && tech.id_usuario < selected.id_usuario)) {
+                    selected = { id_usuario: tech.id_usuario, nombre: tech.nombre, carga_abierta: load };
+                }
+            }
+            return selected;
         }
 
         const { rows } = await this.query(
@@ -79,67 +226,125 @@ class TicketModel extends BaseModel {
              ORDER BY COUNT(t.id_ticket) ASC, u.id_usuario ASC
              LIMIT 1`
         );
-
+        const selected = rows?.[0];
+        if (!selected) return null;
         return {
             id_usuario: selected.id_usuario,
             nombre: selected.nombre,
-            carga_abierta: loadByTech.get(selected.id_usuario) || 0
+            carga_abierta: Number(selected.carga_abierta) || 0
         };
     }
 
-    async create({ id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp }) {
-        const tecnico = await this.findSupportTechnicianWithLeastLoad();
-        if (!tecnico) {
-            throw { status: 409, message: 'No hay tÃ©cnicos de soporte disponibles para asignar el ticket' };
-        }
-
+    async create({
+        id_activo,
+        id_usuario_reporta,
+        descripcion,
+        prioridad_ia,
+        clasificacion_nlp,
+        clasificacion_metodo,
+        clasificacion_confidence,
+        clasificacion_rationale,
+        prioridad_metodo,
+        prioridad_rationale,
+        estado = 'Abierto'
+    }) {
         if (this.useSupabase) {
-            const { data, error } = await this.supabase
-                .from('tickets')
-                .insert({
-                    id_activo,
-                    id_usuario_reporta,
-                    descripcion,
-                    prioridad_ia,
-                    clasificacion_nlp,
-                    estado: 'Asignado'
-                })
-                .select('*')
-                .single();
-            if (error) throw error;
-
-            const { error: assignError } = await this.supabase
-                .from('ordenes_mantenimiento')
-                .insert({
-                    id_ticket: data.id_ticket,
-                    id_usuario_tecnico: tecnico.id_usuario
-                });
-            if (assignError) throw assignError;
-
-            return {
-                ...data,
-                id_usuario_tecnico: tecnico.id_usuario,
-                tecnico_asignado: tecnico.nombre
+            const baseInsert = {
+                id_activo,
+                id_usuario_reporta,
+                descripcion,
+                prioridad_ia,
+                clasificacion_nlp,
+                estado
             };
+
+            const fullInsert = {
+                ...baseInsert,
+                clasificacion_metodo,
+                clasificacion_confidence,
+                clasificacion_rationale,
+                prioridad_metodo,
+                prioridad_rationale
+            };
+
+            const attempt = async (payload) => {
+                const { data, error } = await this.supabase
+                    .from('tickets')
+                    .insert(payload)
+                    .select('*')
+                    .single();
+                if (error) throw error;
+                return data;
+            };
+
+            try {
+                return await attempt(fullInsert);
+            } catch (err) {
+                const msg = String(err?.message || err?.details || err);
+                const looksLikeMissingColumn =
+                    msg.toLowerCase().includes('column') ||
+                    msg.toLowerCase().includes('schema cache');
+                if (!looksLikeMissingColumn) throw err;
+                return attempt(baseInsert);
+            }
         }
         const { rows } = await this.query(
-            `INSERT INTO tickets (id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp, estado)
-             VALUES ($1,$2,$3,$4,$5,'Asignado') RETURNING *`,
-            [id_activo, id_usuario_reporta, descripcion, prioridad_ia, clasificacion_nlp]
+            `INSERT INTO tickets (
+                id_activo,
+                id_usuario_reporta,
+                descripcion,
+                prioridad_ia,
+                clasificacion_nlp,
+                clasificacion_metodo,
+                clasificacion_confidence,
+                clasificacion_rationale,
+                prioridad_metodo,
+                prioridad_rationale,
+                estado
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+            [
+                id_activo,
+                id_usuario_reporta,
+                descripcion,
+                prioridad_ia,
+                clasificacion_nlp,
+                clasificacion_metodo,
+                clasificacion_confidence,
+                clasificacion_rationale,
+                prioridad_metodo,
+                prioridad_rationale,
+                estado
+            ]
         );
-        const ticket = rows[0];
+        return rows[0] || null;
+    }
+
+    async assignToTechnician(id_ticket, id_usuario_tecnico) {
+        if (this.useSupabase) {
+            const { error: insertError } = await this.supabase
+                .from('ordenes_mantenimiento')
+                .insert({ id_ticket, id_usuario_tecnico });
+            if (insertError) throw insertError;
+
+            const { data: updated, error: updateError } = await this.supabase
+                .from('tickets')
+                .update({ estado: 'Asignado' })
+                .eq('id_ticket', id_ticket)
+                .select('*')
+                .single();
+            if (updateError) throw updateError;
+            return updated || null;
+        }
 
         await this.query(
-            `INSERT INTO ordenes_mantenimiento (id_ticket, id_usuario_tecnico)
-             VALUES ($1, $2)`,
-            [ticket.id_ticket, tecnico.id_usuario]
+            `INSERT INTO ordenes_mantenimiento (id_ticket, id_usuario_tecnico) VALUES ($1,$2)`,
+            [id_ticket, id_usuario_tecnico]
         );
-
-        return {
-            ...data,
-            id_usuario_tecnico: tecnico.id_usuario,
-            tecnico_asignado: tecnico.nombre
-        };
+        const { rows } = await this.query(
+            `UPDATE tickets SET estado = 'Asignado' WHERE id_ticket = $1 RETURNING *`,
+            [id_ticket]
+        );
+        return rows[0] || null;
     }
 
     async update(id, { prioridad_ia, clasificacion_nlp, estado }) {
@@ -319,4 +524,3 @@ class TicketModel extends BaseModel {
 }
 
 export default TicketModel;
-

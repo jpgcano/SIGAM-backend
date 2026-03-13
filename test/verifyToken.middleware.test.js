@@ -27,7 +27,8 @@ test('verifyToken acepta token valido y expone req.user', async () => {
     let nextCalled = false;
     const next = () => { nextCalled = true; };
 
-    verifyToken(req, res, next);
+    const middleware = verifyToken();
+    middleware(req, res, next);
 
     assert.equal(nextCalled, true);
     assert.deepEqual(req.user.id, 7);
@@ -39,9 +40,28 @@ test('verifyToken rechaza cuando no hay token', async () => {
     const res = createRes();
     let nextCalled = false;
 
-    verifyToken(req, res, () => { nextCalled = true; });
+    const middleware = verifyToken();
+    middleware(req, res, () => { nextCalled = true; });
 
     assert.equal(nextCalled, false);
     assert.equal(res.statusCode, 401);
     assert.match(res.body.message, /token no proporcionado/i);
+});
+
+test('verifyToken registra evento cuando token es inválido', async () => {
+    process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+    const audit = {
+        entries: [],
+        buildDomainEntry(payload) { return payload; },
+        async safeLog(entry) { this.entries.push(entry); }
+    };
+
+    const req = { headers: { authorization: 'Bearer invalido' } };
+    const res = createRes();
+    const middleware = verifyToken(audit);
+    middleware(req, res, () => {});
+
+    assert.equal(res.statusCode, 401);
+    assert.equal(audit.entries.length, 1);
+    assert.equal(audit.entries[0].accion, 'AUTH_TOKEN_INVALID');
 });

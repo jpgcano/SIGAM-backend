@@ -1,7 +1,9 @@
+import buildAuditContext from '../utils/auditContext.js';
+
 class TicketController {
     constructor(service) {
         this.service = service;
-        ['getAll','getById','getByActivo','getAssigned','getMetrics','create','update','changeEstado','remove']
+        ['getAll','getById','getByActivo','getAssigned','getMetrics','getSuggestions','create','update','changeEstado','remove']
             .forEach(m => this[m] = this[m].bind(this));
     }
     async getAll(req, res, next) {
@@ -30,11 +32,18 @@ class TicketController {
             res.json(await this.service.getMetrics({ id_activo }));
         } catch (e) { next(e); }
     }
+    async getSuggestions(req, res, next) {
+        try {
+            const id = Number(req.params.id);
+            if (!Number.isInteger(id) || id <= 0) throw { status: 400, message: 'id debe ser un entero positivo' };
+            res.json(await this.service.getSuggestions(id, req.user));
+        } catch (e) { next(e); }
+    }
     async create(req, res, next) {
-        try { res.status(201).json(await this.service.create(req.body)); } catch (e) { next(e); }
+        try { res.status(201).json(await this.service.create(req.body, req.user, buildAuditContext(req))); } catch (e) { next(e); }
     }
     async update(req, res, next) {
-        try { res.json(await this.service.update(req.params.id, req.body, req.user)); } catch (e) { next(e); }
+        try { res.json(await this.service.update(req.params.id, req.body, req.user, buildAuditContext(req))); } catch (e) { next(e); }
     }
     async changeEstado(req, res, next) {
         try {
@@ -43,14 +52,15 @@ class TicketController {
                     req.params.id,
                     req.body?.estado,
                     req.user,
-                    req.body?.consumos
+                    req.body?.consumos,
+                    buildAuditContext(req)
                 )
             );
         } catch (e) { next(e); }
     }
     async remove(req, res, next) {
         try {
-            await this.service.remove(req.params.id);
+            await this.service.remove(req.params.id, req.user, buildAuditContext(req));
             res.json({ message: 'Ticket eliminado' });
         } catch (e) { next(e); }
     }

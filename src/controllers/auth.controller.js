@@ -1,4 +1,5 @@
 import { generateToken } from '../utils/jwt.js';
+import buildAuditContext from '../utils/auditContext.js';
 
 class AuthController {
     constructor(authService) {
@@ -10,7 +11,7 @@ class AuthController {
     async login(req, res, next) {
         try {
             const { email, password } = req.body;
-            const user = await this.authService.login(email, password);
+            const user = await this.authService.login(email, password, buildAuditContext(req));
             const token = generateToken({ id: user.id, role: user.role });
             res.status(200).json({ token, user });
         } catch (error) {
@@ -21,7 +22,7 @@ class AuthController {
 
     async register(req, res, next) {
         try {
-            const user = await this.authService.register(req.body);
+            const user = await this.authService.register(req.body, req.user, buildAuditContext(req));
             res.status(201).json(user);
         } catch (error) {
             next(error);
