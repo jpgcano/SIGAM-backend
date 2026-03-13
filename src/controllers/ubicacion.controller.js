@@ -1,3 +1,5 @@
+import buildAuditContext from '../utils/auditContext.js';
+
 class UbicacionController {
     constructor(service) {
         this.service = service;
@@ -11,14 +13,14 @@ class UbicacionController {
         try { res.json(await this.service.findById(req.params.id)); } catch (e) { next(e); }
     }
     async create(req, res, next) {
-        try { res.status(201).json(await this.service.create(req.body)); } catch (e) { next(e); }
+        try { res.status(201).json(await this.service.create(req.body, req.user, buildAuditContext(req))); } catch (e) { next(e); }
     }
     async update(req, res, next) {
-        try { res.json(await this.service.update(req.params.id, req.body)); } catch (e) { next(e); }
+        try { res.json(await this.service.update(req.params.id, req.body, req.user, buildAuditContext(req))); } catch (e) { next(e); }
     }
     async remove(req, res, next) {
         try {
-            await this.service.remove(req.params.id);
+            await this.service.remove(req.params.id, req.user, buildAuditContext(req));
             res.json({ message: 'Ubicacion eliminada' });
         } catch (e) { next(e); }
     }

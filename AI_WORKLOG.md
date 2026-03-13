@@ -514,6 +514,41 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-12 - IA: Codex GPT-5
+- Issue: Tests de auditoria para eventos secundarios
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: validar que servicios de licencias/software/proveedores/ubicaciones emiten logs de dominio.
+- Cambios:
+  - `test/audit.domain.secondary.test.js` - pruebas unitarias para logs de dominio en servicios secundarios.
+- Decisiones tecnicas: se usan stubs de modelo y AuditLogService para aislar el comportamiento.
+- Pendiente: ejecutar `node --test` si el equipo lo solicita.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual del nuevo test.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
+- Issue: Logging de dominio - eventos secundarios
+- Rama: feature/auditoria-rbac-ia
+- Objetivo: registrar eventos de licencias, software, proveedores y ubicaciones.
+- Cambios:
+  - `src/services/licencia.service.js` - logs LICENCIA_CREATE/UPDATE/DELETE/ASSIGN/REVOKE.
+  - `src/services/software.service.js` - logs SOFTWARE_CREATE/UPDATE/DELETE.
+  - `src/services/proveedor.service.js` - servicio corregido y logs PROVEEDOR_CREATE/UPDATE/DELETE.
+  - `src/services/ubicacion.service.js` - logs UBICACION_CREATE/UPDATE/DELETE.
+  - `src/controllers/licencia.controller.js` - pasar actor/contexto.
+  - `src/controllers/software.controller.js` - pasar actor/contexto.
+  - `src/controllers/proveedor.controller.js` - pasar actor/contexto.
+  - `src/controllers/ubicacion.controller.js` - pasar actor/contexto.
+- Decisiones tecnicas: logs emitidos en Services con convencion ENTIDAD_ACCION.
+- Pendiente: agregar tests unitarios de auditoria para estos modulos.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - revision manual de servicios y controladores actualizados.
+- Commit(s):
+  - pendiente
+
+### 2026-03-12 - IA: Codex GPT-5
 - Issue: Implementacion inicial de logging de dominio
 - Rama: feature/auditoria-rbac-ia
 - Objetivo: registrar eventos criticos de negocio en servicios (activos, tickets, ordenes, repuestos, usuarios, auth).

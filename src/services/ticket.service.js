@@ -161,7 +161,9 @@ class TicketService {
             );
             return updated;
         }
-        const before = await this.model.findById(id);
+        const before = typeof this.model.findById === 'function'
+            ? await this.model.findById(id)
+            : null;
         const t = await this.model.update(id, payload);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
         this.auditLogService.safeLog(
@@ -185,7 +187,9 @@ class TicketService {
         }
 
         await this.ensureAccess(id, user);
-        const before = await this.model.findById(id);
+        const before = typeof this.model.findById === 'function'
+            ? await this.model.findById(id)
+            : null;
 
         // Regla de negocio: un técnico solo puede cerrar tickets asignados a él.
         if (user?.role === 'Técnico' && estado === 'Cerrado') {

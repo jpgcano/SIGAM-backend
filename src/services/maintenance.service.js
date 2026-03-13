@@ -17,22 +17,23 @@ class MaintenanceService {
 
     findByTecnico(id_tecnico) { return this.model.findByTecnico(id_tecnico); }
 
-    async create(payload, actor, auditContext) {
+    create(payload, actor, auditContext) {
         if (!payload.id_ticket) throw { status: 400, message: 'id_ticket es requerido' };
         if (!payload.id_usuario_tecnico) throw { status: 400, message: 'id_usuario_tecnico es requerido' };
-        const created = await this.model.create(payload);
-        this.auditLogService.safeLog(
-            this.auditLogService.buildDomainEntry({
-                actor,
-                context: auditContext,
-                entidad: 'ORDEN',
-                entidad_id: created?.id_orden,
-                accion: 'ORDEN_CREATE',
-                payload_after: created,
-                metadata: { id_ticket: payload.id_ticket }
-            })
-        );
-        return created;
+        return this.model.create(payload).then((created) => {
+            this.auditLogService.safeLog(
+                this.auditLogService.buildDomainEntry({
+                    actor,
+                    context: auditContext,
+                    entidad: 'ORDEN',
+                    entidad_id: created?.id_orden,
+                    accion: 'ORDEN_CREATE',
+                    payload_after: created,
+                    metadata: { id_ticket: payload.id_ticket }
+                })
+            );
+            return created;
+        });
     }
 
     async update(id, payload, actor, auditContext) {
@@ -72,7 +73,7 @@ class MaintenanceService {
     }
 
     // HU-08: Registrar consumo de repuesto
-    async registrarConsumo(id_orden, payload, actor, auditContext) {
+    registrarConsumo(id_orden, payload, actor, auditContext) {
         if (!payload.id_repuesto) throw { status: 400, message: 'id_repuesto es requerido' };
         if (!payload.cantidad_usada) throw { status: 400, message: 'cantidad_usada es requerida' };
         if (payload.cantidad_usada <= 0) throw { status: 400, message: 'cantidad_usada debe ser mayor que 0' };
@@ -82,24 +83,25 @@ class MaintenanceService {
             throw { status: 400, message: `estado_ticket inválido: ${estado_ticket}` };
         }
 
-        const result = await this.model.registrarConsumo(id_orden, { ...payload, estado_ticket });
-        this.auditLogService.safeLog(
-            this.auditLogService.buildDomainEntry({
-                actor,
-                context: auditContext,
-                entidad: 'REPUESTO',
-                entidad_id: payload.id_repuesto,
-                accion: 'REPUESTO_CONSUME',
-                payload_after: result,
-                metadata: {
-                    id_orden,
-                    id_repuesto: payload.id_repuesto,
-                    cantidad_usada: payload.cantidad_usada,
-                    estado_ticket
-                }
-            })
-        );
-        return result;
+        return this.model.registrarConsumo(id_orden, { ...payload, estado_ticket }).then((result) => {
+            this.auditLogService.safeLog(
+                this.auditLogService.buildDomainEntry({
+                    actor,
+                    context: auditContext,
+                    entidad: 'REPUESTO',
+                    entidad_id: payload.id_repuesto,
+                    accion: 'REPUESTO_CONSUME',
+                    payload_after: result,
+                    metadata: {
+                        id_orden,
+                        id_repuesto: payload.id_repuesto,
+                        cantidad_usada: payload.cantidad_usada,
+                        estado_ticket
+                    }
+                })
+            );
+            return result;
+        });
     }
 
     getConsumos(id_orden) { return this.model.getConsumos(id_orden); }
