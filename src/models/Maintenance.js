@@ -4,9 +4,9 @@
 // Data access for maintenance orders and consumptions.
 class MaintenanceModel extends BaseModel {
     // List maintenance orders with ticket and technician info.
-    async findAll() {
+    async findAll({ limit, offset } = {}) {
         if (this.useSupabase) {
-            const { data, error } = await this.supabase
+            let query = this.supabase
                 .from('ordenes_mantenimiento')
                 .select(`
                     *,
@@ -14,17 +14,25 @@ class MaintenanceModel extends BaseModel {
                     usuarios(nombre)
                 `)
                 .order('id_orden', { ascending: false });
+            if (limit !== undefined && offset !== undefined) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            const { data, error } = await query;
             if (error) throw error;
             return data;
         }
-        const { rows } = await this.query(
-            `SELECT om.*, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado,
-                    u.nombre AS tecnico_nombre
-             FROM ordenes_mantenimiento om
-             LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
-             LEFT JOIN usuarios u ON u.id_usuario = om.id_usuario_tecnico
-             ORDER BY om.id_orden DESC`
-        );
+        const params = [];
+        let sql = `SELECT om.*, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado,
+                        u.nombre AS tecnico_nombre
+                   FROM ordenes_mantenimiento om
+                   LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
+                   LEFT JOIN usuarios u ON u.id_usuario = om.id_usuario_tecnico
+                   ORDER BY om.id_orden DESC`;
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ' LIMIT $1 OFFSET $2';
+        }
+        const { rows } = await this.query(sql, params);
         return rows;
     }
 
@@ -56,25 +64,32 @@ class MaintenanceModel extends BaseModel {
     }
 
     // List maintenance orders assigned to a technician.
-    async findByTecnico(id_tecnico) {
+    async findByTecnico(id_tecnico, { limit, offset } = {}) {
         if (this.useSupabase) {
-            const { data, error } = await this.supabase
+            let query = this.supabase
                 .from('ordenes_mantenimiento')
                 .select('*, tickets(descripcion, estado, prioridad_ia)')
                 .eq('id_usuario_tecnico', id_tecnico)
                 .order('id_orden', { ascending: false });
+            if (limit !== undefined && offset !== undefined) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            const { data, error } = await query;
             if (error) throw error;
             return data;
         }
-        const { rows } = await this.query(
-            `SELECT om.*, t.descripcion AS ticket_descripcion,
-                    t.estado AS ticket_estado, t.prioridad_ia
-             FROM ordenes_mantenimiento om
-             LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
-             WHERE om.id_usuario_tecnico = $1
-             ORDER BY om.id_orden DESC`,
-            [id_tecnico]
-        );
+        const params = [id_tecnico];
+        let sql = `SELECT om.*, t.descripcion AS ticket_descripcion,
+                        t.estado AS ticket_estado, t.prioridad_ia
+                   FROM ordenes_mantenimiento om
+                   LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
+                   WHERE om.id_usuario_tecnico = $1
+                   ORDER BY om.id_orden DESC`;
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ' LIMIT $2 OFFSET $3';
+        }
+        const { rows } = await this.query(sql, params);
         return rows;
     }
 

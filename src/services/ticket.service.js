@@ -6,6 +6,7 @@ import DecisionEngine from './ia/DecisionEngine.js';
 import TicketSuggestionEngine from './ia/TicketSuggestionEngine.js';
 import AuditLogService from './auditLog.service.js';
 import NotificationService from './notification.service.js';
+import { normalizePagination } from '../utils/pagination.js';
 
 // Tickets service: classification, triage, assignment, and audit logging.
 class TicketService {
@@ -23,7 +24,10 @@ class TicketService {
     static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
     // List tickets (data access handled by model).
-    findAll() { return this.model.findAll(); }
+    findAll({ limit, offset } = {}) {
+        const pagination = normalizePagination({ limit, offset, defaultLimit: 100, maxLimit: 500 });
+        return this.model.findAll(pagination);
+    }
 
     // Read ticket by id and enforce access rules.
     async findById(id, user) {
@@ -34,10 +38,16 @@ class TicketService {
     }
 
     // Tickets by asset id.
-    findByActivo(id_activo) { return this.model.findByActivo(id_activo); }
+    findByActivo(id_activo, { limit, offset } = {}) {
+        const pagination = normalizePagination({ limit, offset, defaultLimit: 100, maxLimit: 500 });
+        return this.model.findByActivo(id_activo, pagination);
+    }
 
     // Tickets assigned to a technician.
-    findAssignedByTecnico(id_tecnico) { return this.model.findAssignedByTecnico(id_tecnico); }
+    findAssignedByTecnico(id_tecnico, { limit, offset } = {}) {
+        const pagination = normalizePagination({ limit, offset, defaultLimit: 100, maxLimit: 500 });
+        return this.model.findAssignedByTecnico(id_tecnico, pagination);
+    }
 
     // Suggest similar resolutions using recent history.
     async getSuggestions(id_ticket, user) {

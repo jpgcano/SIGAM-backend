@@ -218,7 +218,8 @@ Respuesta:
 ```
 
 ### 9.3 Usuarios
-**GET /api/usuarios** (Gerente, Analista, Auditor)
+**GET /api/usuarios** (Gerente, Analista, Auditor)  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta:
 ```
 [{ "id_usuario": 1, "nombre": "...", "email": "...", "rol": "Analista", "fecha_creacion": "..." }]
@@ -375,6 +376,7 @@ Respuesta:
 
 ### 9.8 Tickets
 **GET /api/tickets**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: lista de tickets.
 
 **GET /api/tickets/:id**  
@@ -382,9 +384,11 @@ Query opcional: `suggestions=true` para incluir sugerencias.
 Respuesta: ticket (y sugerencias si se solicita).
 
 **GET /api/tickets/activo/:id_activo**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: tickets del activo.
 
 **GET /api/tickets/asignados/mis**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: tickets asignados al tecnico autenticado.
 
 **GET /api/tickets/metricas**  
@@ -430,12 +434,14 @@ Respuesta:
 
 ### 9.9 Mantenimientos
 **GET /api/mantenimientos**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: lista de ordenes.
 
 **GET /api/mantenimientos/:id**  
 Respuesta: orden.
 
 **GET /api/mantenimientos/tecnico/:id_tecnico**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: ordenes del tecnico.
 
 **GET /api/mantenimientos/:id/consumos**  
