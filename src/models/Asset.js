@@ -142,6 +142,29 @@ class AssetModel extends BaseModel {
         return rows || [];
     }
 
+    // Find assets that exceed a given age in months.
+    async findObsolescenceCandidates({ months = 48, limit = 50 } = {}) {
+        const m = Number(months);
+        const lim = Number(limit);
+        if (!Number.isInteger(m) || m <= 0 || m > 2400) {
+            throw { status: 400, message: 'months inválido' };
+        }
+        if (!Number.isInteger(lim) || lim <= 0 || lim > 500) {
+            throw { status: 400, message: 'limit inválido' };
+        }
+
+        const { rows } = await this.query(
+            `SELECT id_activo, serial, modelo, fecha_compra, vida_util
+             FROM activos
+             WHERE fecha_compra IS NOT NULL
+               AND fecha_compra <= (CURRENT_DATE - ($1 * INTERVAL '1 month'))
+             ORDER BY fecha_compra ASC
+             LIMIT $2`,
+            [m, lim]
+        );
+        return rows || [];
+    }
+
     // Insert asset retirement record.
     async remove(id, motivoBaja, certificadoBorrado) {
         if (this.useSupabase) {

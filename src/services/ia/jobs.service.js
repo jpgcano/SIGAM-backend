@@ -213,6 +213,48 @@ class IaJobsService {
         }
     }
 
+    // IA-OBSOLESCENCIA: Generate alerts for assets older than N months.
+    async generateObsolescenceAlerts({
+        months = 48,
+        limit = 50,
+        tipoAlerta = 'ACTIVO_OBSOLESCENTE'
+    } = {}) {
+        const m = normalizePositiveInt(months, { min: 1, max: 2400, defaultValue: 48 });
+        const lim = normalizePositiveInt(limit, { min: 1, max: 500, defaultValue: 50 });
+
+        try {
+            const candidates = await this.assetModel.findObsolescenceCandidates({ months: m, limit: lim });
+            let createdAlerts = 0;
+            let skippedExistingAlerts = 0;
+
+            for (const a of candidates) {
+                const ensured = await this.alertaModel.ensurePendingByTipoAndActivo(tipoAlerta, a.id_activo);
+                if (ensured.created) createdAlerts += 1;
+                else skippedExistingAlerts += 1;
+            }
+
+            const result = {
+                months: m,
+                limit: lim,
+                tipo_alerta: tipoAlerta,
+                candidatos: candidates.length,
+                alertas_creadas: createdAlerts,
+                alertas_ya_existentes: skippedExistingAlerts
+            };
+
+            this.logJobSuccess('IA-OBSOLESCENCIA', {
+                candidatos: result.candidatos,
+                alertas_creadas: result.alertas_creadas,
+                alertas_ya_existentes: result.alertas_ya_existentes
+            });
+
+            return result;
+        } catch (error) {
+            this.logJobError('IA-OBSOLESCENCIA', error);
+            throw error;
+        }
+    }
+
     // Re-run external IA for ticket classification and priority.
     async reprocessTicketsExternal({
         limit = 20,

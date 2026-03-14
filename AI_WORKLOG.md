@@ -745,3 +745,19 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `pnpm test` (ok, 85/85).
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Alertas de obsolescencia de activos
+- Rama: feature/users-rbac
+- Objetivo: generar alertas para activos con antiguedad mayor a N meses.
+- Cambios:
+  - `src/models/Asset.js` - `findObsolescenceCandidates`.
+  - `src/services/ia/jobs.service.js` - `generateObsolescenceAlerts`.
+  - `src/controllers/iaJobs.controller.js` - handler de obsolescencia.
+  - `src/routes/iaJobs.routes.js` - endpoint `/api/jobs/ia/activos/obsolescencia`.
+  - `src/config/permissions.js` - permiso `ia_jobs.obsolescence_alerts`.
+  - `test/ia.obsolescence.test.js` - cobertura de job.
+- Evidencia:
+  - `pnpm test` (ok, 88/88).
+- Commit(s):
+  - pendiente

@@ -106,6 +106,7 @@ export const PERMISSIONS = {
     ia_jobs: {
         purchase_suggestions: roles('Analista', 'Gerente'),
         disposal_suggestions: roles('Analista', 'Gerente'),
+        obsolescence_alerts: roles('Gerente'),
         ticket_reprocess: roles('Gerente'),
         preventive_maintenance: roles('Analista', 'Gerente')
     }
