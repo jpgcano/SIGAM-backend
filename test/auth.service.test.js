@@ -7,6 +7,12 @@ function createUserModelStub(user) {
     return {
         async findByEmail() {
             return user;
+        },
+        async registerLoginSuccess() {
+            return null;
+        },
+        async registerLoginFailure() {
+            return null;
         }
     };
 }
@@ -56,7 +62,11 @@ test('AuthService.login falla cuando la password es incorrecta', async () => {
 
     await assert.rejects(
         () => service.login('carlos@acme.com', 'incorrecta'),
-        /Credenciales inválidas/i
+        (err) => {
+            assert.equal(err?.status, 401);
+            assert.match(String(err?.message || ''), /Credenciales inválidas/i);
+            return true;
+        }
     );
 });
 

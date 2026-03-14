@@ -35,6 +35,43 @@ router.get('/:id/historial',
     assetController.getHistory
 );
 
+// GET /activos/:id/asignaciones — historial de asignaciones
+router.get('/:id/asignaciones',
+    authMiddleware,
+    permit('assets', 'read'),
+    assetController.getAssignments
+);
+
+// POST /activos/:id/asignar — asignar activo a usuario
+router.post('/:id/asignar',
+    authMiddleware,
+    permit('assets', 'assign'),
+    validateRequired(['id_usuario']),
+    assetController.assign
+);
+
+// PATCH /activos/asignaciones/:id_asignacion/fin — desasignar
+router.patch('/asignaciones/:id_asignacion/fin',
+    authMiddleware,
+    permit('assets', 'assign'),
+    assetController.unassign
+);
+
+// GET /activos/:id/documentos — documentos adjuntos
+router.get('/:id/documentos',
+    authMiddleware,
+    permit('assets', 'read'),
+    assetController.getDocumentos
+);
+
+// POST /activos/:id/documentos — agregar documento
+router.post('/:id/documentos',
+    authMiddleware,
+    permit('assets', 'update'),
+    validateRequired(['nombre', 'url']),
+    assetController.addDocumento
+);
+
 // POST /activos — crear activo
 // Create asset (required fields validated).
 router.post('/',

@@ -31,9 +31,12 @@ CREATE OR REPLACE VIEW vw_tickets_operacion AS
 SELECT
     t.id_ticket,
     t.fecha_creacion,
+    t.fecha_cierre,
     t.estado,
     t.prioridad_ia,
     t.clasificacion_nlp,
+    t.tipo_ticket,
+    ct.nombre AS categoria_ticket,
     t.descripcion,
     a.serial AS activo_serial,
     ur.nombre AS usuario_reporta,
@@ -44,6 +47,7 @@ SELECT
 FROM TICKETS t
 LEFT JOIN ACTIVOS a ON a.id_activo = t.id_activo
 LEFT JOIN USUARIOS ur ON ur.id_usuario = t.id_usuario_reporta
+LEFT JOIN CATEGORIAS_TICKET ct ON ct.id_categoria_ticket = t.id_categoria_ticket
 LEFT JOIN ORDENES_MANTENIMIENTO om ON om.id_ticket = t.id_ticket
 LEFT JOIN USUARIOS ut ON ut.id_usuario = om.id_usuario_tecnico;
 

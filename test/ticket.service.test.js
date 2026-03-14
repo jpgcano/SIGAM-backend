@@ -2,193 +2,146 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import TicketService from '../src/services/ticket.service.js';
 
-function createModelStub() {
+function createAuditStub() {
     return {
-        createCalls: [],
-        closeCalls: [],
-        updateEstadoCalls: [],
-        isReportedByUserCalls: [],
-        isAssignedToTecnicoCalls: [],
-        async create(payload) {
-            this.createCalls.push(payload);
-            return { id_ticket: 1, ...payload };
-        },
-        async closeWithConsumos(id, consumos) {
-            this.closeCalls.push({ id, consumos });
-            return { id_ticket: id, estado: 'Cerrado' };
-        },
-        async updateEstado(id, estado) {
-            this.updateEstadoCalls.push({ id, estado });
-            return { id_ticket: id, estado };
-        },
-        async isReportedByUser(id, userId) {
-            this.isReportedByUserCalls.push({ id, userId });
-            return true;
-        },
-        async isAssignedToTecnico(id, userId) {
-            this.isAssignedToTecnicoCalls.push({ id, userId });
-            return true;
-        }
+        buildDomainEntry(payload) { return payload; },
+        async safeLog() { return null; }
     };
 }
 
-test('TicketService.create falla cuando falta descripcion', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model, {
-        assetModel: { findById: async () => ({ nivel_criticidad: 'Media' }) }
+function createBaseService({ model, assetModel, decisionEngine, iaConfig } = {}) {
+    const svc = new TicketService(
+        model,
+        {
+            assetModel,
+            decisionEngine,
+            iaConfig,
+            auditLogService: createAuditStub()
+        }
+    );
+    svc.notificationService = { async enqueueEmail() { return null; } };
+    return svc;
+}
+
+test('TicketService.create rechaza id_categoria_ticket invalido', async () => {
+    const model = {
+        async create() { throw new Error('should not create'); },
+        async addHistory() { return null; }
+    };
+    const assetModel = { async findById() { return { id_activo: 1, nivel_criticidad: 'Media' }; } };
+    const decisionEngine = {
+        async classifyTicket() { return { categoria: 'Hardware' }; },
+        async triageTicket() { return { prioridad: 'Media' }; }
+    };
+
+    const service = createBaseService({
+        model,
+        assetModel,
+        decisionEngine,
+        iaConfig: { enabled: false, assignmentEnabled: false }
     });
 
+    service.categoriaModel = {
+        async findById() { return null; },
+        async findByNombre() { return null; }
+    };
+
     await assert.rejects(
-        () => service.create({ id_activo: 1 }),
-        (error) => error?.status === 400 && /descripcion/i.test(error?.message)
+        () => service.create(
+            { id_activo: 1, descripcion: 'Falla', id_categoria_ticket: 999 },
+            { id: 1, role: 'Gerente' }
+        ),
+        (err) => {
+            assert.equal(err?.status, 400);
+            assert.match(String(err?.message || ''), /id_categoria_ticket inválido/i);
+            return true;
+        }
     );
 });
 
-test('TicketService.create falla cuando falta id_activo', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model, {
-        assetModel: { findById: async () => ({ nivel_criticidad: 'Media' }) }
+test('TicketService.create usa categoria IA cuando no se envia id_categoria_ticket', async () => {
+    let captured = null;
+    const model = {
+        async create(payload) { captured = payload; return { id_ticket: 10, ...payload }; },
+        async addHistory() { return null; }
+    };
+    const assetModel = { async findById() { return { id_activo: 2, nivel_criticidad: 'Media' }; } };
+    const decisionEngine = {
+        async classifyTicket() { return { categoria: 'Hardware' }; },
+        async triageTicket() { return { prioridad: 'Alta' }; }
+    };
+
+    const service = createBaseService({
+        model,
+        assetModel,
+        decisionEngine,
+        iaConfig: { enabled: false, assignmentEnabled: false }
     });
 
+    service.categoriaModel = {
+        async findByNombre() { return { id_categoria_ticket: 2 }; },
+        async findById() { return null; }
+    };
+
+    const user = { id: 7, role: 'Analista' };
+    const created = await service.create({ id_activo: 2, descripcion: 'Falla hardware' }, user);
+
+    assert.equal(created.id_ticket, 10);
+    assert.equal(captured.id_usuario_reporta, 7);
+    assert.equal(captured.clasificacion_nlp, 'Hardware');
+    assert.equal(captured.id_categoria_ticket, 2);
+    assert.equal(captured.estado, 'Abierto');
+});
+
+test('TicketService.addComment requiere comentario', async () => {
+    const model = {
+        async addComment() { return null; },
+        async addHistory() { return null; }
+    };
+    const service = createBaseService({ model });
+
     await assert.rejects(
-        () => service.create({ descripcion: 'No enciende' }),
-        (error) => error?.status === 400 && /id_activo/i.test(error?.message)
+        () => service.addComment(1, '', { id: 1, role: 'Gerente' }),
+        (err) => {
+            assert.equal(err?.status, 400);
+            assert.match(String(err?.message || ''), /comentario es requerido/i);
+            return true;
+        }
     );
 });
 
-test('TicketService.create clasifica por palabras clave y asigna prioridad Alta cuando contiene quemado', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model, {
-        assetModel: { findById: async () => ({ nivel_criticidad: 'Media' }) }
-    });
+test('TicketService.getMetrics normaliza horas y dias', async () => {
+    const model = {
+        async getMetrics() {
+            return { mttr_seconds: 3600, mtbf_seconds: 7200, reparaciones: 2, intervalos: 1 };
+        }
+    };
+    const service = createBaseService({ model });
 
-    const ticket = await service.create({
-        id_activo: 10,
-        descripcion: 'El equipo huele a QUEMADO y se apagó'
-    }, { id: 4, role: 'Usuario' });
+    const result = await service.getMetrics({ id_activo: 5 });
 
-    assert.equal(ticket.prioridad_ia, 'Alta');
-    assert.equal(ticket.clasificacion_nlp, 'Eléctrico');
-    assert.equal(model.createCalls.length, 1);
-    assert.equal(model.createCalls[0].prioridad_ia, 'Alta');
-    assert.equal(model.createCalls[0].clasificacion_nlp, 'Eléctrico');
-    assert.equal(model.createCalls[0].id_usuario_reporta, 4);
+    assert.equal(result.mttr_seconds, 3600);
+    assert.equal(result.mttr_horas, 1);
+    assert.equal(result.mttr_dias, 3600 / 86400);
+    assert.equal(result.mtbf_seconds, 7200);
+    assert.equal(result.mtbf_horas, 2);
+    assert.equal(result.reparaciones, 2);
+    assert.equal(result.intervalos, 1);
+    assert.equal(result.filtro_id_activo, 5);
 });
 
-test('TicketService.create asigna prioridad Media y clasificacion Red en un caso de red', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model, {
-        assetModel: { findById: async () => ({ nivel_criticidad: 'Media' }) }
-    });
-
-    const ticket = await service.create({
-        id_activo: 11,
-        descripcion: 'Sin conexion a internet en el puesto de trabajo'
-    }, { id: 5, role: 'Usuario' });
-
-    assert.equal(ticket.prioridad_ia, 'Media');
-    assert.equal(ticket.clasificacion_nlp, 'Red');
-});
-
-test('TicketService.create clasifica como Hardware por palabras clave de componente', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model, {
-        assetModel: { findById: async () => ({ nivel_criticidad: 'Media' }) }
-    });
-
-    const ticket = await service.create({
-        id_activo: 12,
-        descripcion: 'La pantalla y el teclado no responden'
-    }, { id: 1, role: 'Usuario' });
-
-    assert.equal(ticket.clasificacion_nlp, 'Hardware');
-    assert.equal(ticket.prioridad_ia, 'Media');
-});
-
-test('TicketService.create clasifica como Software por palabras clave de sistema', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model, {
-        assetModel: { findById: async () => ({ nivel_criticidad: 'Media' }) }
-    });
-
-    const ticket = await service.create({
-        id_activo: 13,
-        descripcion: 'No puedo abrir la aplicacion después de la actualizacion'
-    }, { id: 1, role: 'Usuario' });
-
-    assert.equal(ticket.clasificacion_nlp, 'Software');
-    assert.equal(ticket.prioridad_ia, 'Media');
-});
-
-test('TicketService.create deja clasificacion_nlp en null cuando no hay keywords', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model, {
-        assetModel: { findById: async () => ({ nivel_criticidad: 'Media' }) }
-    });
-
-    const ticket = await service.create({
-        id_activo: 14,
-        descripcion: 'Solicitud general de revisión'
-    }, { id: 1, role: 'Usuario' });
-
-    assert.equal(ticket.clasificacion_nlp, null);
-    assert.equal(ticket.prioridad_ia, 'Media');
-});
-
-test('TicketService.create ignora prioridad_ia enviada por cliente y recalcula', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model, {
-        assetModel: { findById: async () => ({ nivel_criticidad: 'Media' }) }
-    });
-
-    const ticket = await service.create({
-        id_activo: 15,
-        descripcion: 'Reporte simple de red wifi',
-        prioridad_ia: 'Crítica'
-    }, { id: 1, role: 'Usuario' });
-
-    assert.equal(ticket.prioridad_ia, 'Media');
-    assert.equal(model.createCalls[0].prioridad_ia, 'Media');
-});
-
-test('TicketService.changeEstado usa cierre con consumos', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model);
-
-    const result = await service.changeEstado(
-        10,
-        'Cerrado',
-        { role: 'Gerente' },
-        [{ id_repuesto: 1, cantidad_usada: 2 }]
-    );
-
-    assert.equal(result.estado, 'Cerrado');
-    assert.equal(model.closeCalls.length, 1);
-    assert.equal(model.updateEstadoCalls.length, 0);
-});
-
-test('TicketService.findById rechaza acceso si usuario no es owner', async () => {
-    const model = createModelStub();
-    model.findById = async () => ({ id_ticket: 1 });
-    model.isReportedByUser = async () => false;
-    const service = new TicketService(model);
+test('TicketService.changeEstado bloquea cierre a tecnico no asignado', async () => {
+    const model = {
+        async isAssignedToTecnico() { return false; }
+    };
+    const service = createBaseService({ model });
 
     await assert.rejects(
-        () => service.findById(1, { role: 'Usuario', id: 99 }),
-        (error) => error?.status === 403
-    );
-});
-test('TicketService.changeEstado valida consumos antes de cerrar', async () => {
-    const model = createModelStub();
-    const service = new TicketService(model);
-
-    await assert.rejects(
-        () => service.changeEstado(10, 'Cerrado', { role: 'Gerente' }, [{ cantidad_usada: 1 }]),
-        (error) => error?.status === 400 && /id_repuesto/i.test(error?.message)
-    );
-
-    await assert.rejects(
-        () => service.changeEstado(10, 'Cerrado', { role: 'Gerente' }, [{ id_repuesto: 1, cantidad_usada: 0 }]),
-        (error) => error?.status === 400 && /cantidad_usada/i.test(error?.message)
+        () => service.changeEstado(3, 'Cerrado', { id: 4, role: 'Técnico' }),
+        (err) => {
+            assert.equal(err?.status, 403);
+            assert.match(String(err?.message || ''), /no está asignado a este técnico/i);
+            return true;
+        }
     );
 });

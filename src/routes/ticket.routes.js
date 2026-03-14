@@ -27,6 +27,11 @@ router.get('/:id', authMiddleware, permit('tickets', 'read'), ctrl.getById);
 
 // Suggestions based on asset history.
 router.get('/:id/suggestions', authMiddleware, permit('tickets', 'suggestions'), ctrl.getSuggestions);
+// Ticket comments.
+router.get('/:id/comentarios', authMiddleware, permit('tickets', 'read'), ctrl.getComments);
+router.post('/:id/comentarios', authMiddleware, permit('tickets', 'update'), ctrl.addComment);
+// Ticket history.
+router.get('/:id/historial', authMiddleware, permit('tickets', 'read'), ctrl.getHistory);
 
 // Create ticket (HU-05).
 router.post('/', authMiddleware, permit('tickets', 'create'), ctrl.create);
@@ -36,6 +41,8 @@ router.put('/:id', authMiddleware, permit('tickets', 'update'), ctrl.update);
 
 // Change state with business validations.
 router.patch('/:id/estado', authMiddleware, permit('tickets', 'change_estado'), ctrl.changeEstado);
+// Assign ticket to technician.
+router.post('/:id/asignar', authMiddleware, permit('tickets', 'assign'), ctrl.assign);
 
 // Delete ticket.
 router.delete('/:id', authMiddleware, permit('tickets', 'delete'), ctrl.remove);

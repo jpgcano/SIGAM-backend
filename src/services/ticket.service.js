@@ -1,18 +1,24 @@
 import AssetModel from '../models/Asset.js';
+import UserModel from '../models/User.js';
+import CategoriaTicketModel from '../models/categoriaTicket.js';
 import { getIaConfig } from '../config/ia.js';
 import DecisionEngine from './ia/DecisionEngine.js';
 import TicketSuggestionEngine from './ia/TicketSuggestionEngine.js';
 import AuditLogService from './auditLog.service.js';
+import NotificationService from './notification.service.js';
 
 // Tickets service: classification, triage, assignment, and audit logging.
 class TicketService {
     constructor(model, { assetModel, iaConfig, decisionEngine, auditLogService } = {}) {
         this.model = model;
         this.assetModel = assetModel || new AssetModel();
+        this.userModel = new UserModel();
+        this.categoriaModel = new CategoriaTicketModel();
         this.iaConfig = iaConfig || getIaConfig();
         this.decisionEngine = decisionEngine || new DecisionEngine(this.iaConfig);
         this.suggestionEngine = new TicketSuggestionEngine({ maxSuggestions: 3 });
         this.auditLogService = auditLogService || new AuditLogService();
+        this.notificationService = new NotificationService();
     }
     static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
@@ -68,6 +74,12 @@ class TicketService {
             descripcion: payload.descripcion
         });
         const categoria = clasificacion?.categoria ?? null;
+        const categoriaRow = payload?.id_categoria_ticket
+            ? await this.categoriaModel.findById(payload.id_categoria_ticket)
+            : (categoria ? await this.categoriaModel.findByNombre(categoria) : null);
+        if (payload?.id_categoria_ticket && !categoriaRow) {
+            throw { status: 400, message: 'id_categoria_ticket inválido' };
+        }
 
         const triage = await this.decisionEngine.triageTicket({
             descripcion: payload.descripcion,
@@ -81,6 +93,8 @@ class TicketService {
             ...payload,
             id_usuario_reporta: user.id,
             clasificacion_nlp: categoria,
+            id_categoria_ticket: categoriaRow?.id_categoria_ticket ?? null,
+            tipo_ticket: payload?.tipo_ticket || 'Correctivo',
             prioridad_ia: prioridad,
             clasificacion_metodo: clasificacion?.metodo || null,
             clasificacion_confidence: clasificacion?.confidence ?? null,
@@ -91,6 +105,13 @@ class TicketService {
         };
 
         const created = await this.model.create(normalizedPayload);
+
+        await this.model.addHistory({
+            id_ticket: created?.id_ticket,
+            id_usuario: user.id,
+            cambio: 'CREADO',
+            detalle: 'Ticket creado'
+        });
 
         this.auditLogService.safeLog(
             this.auditLogService.buildDomainEntry({
@@ -134,6 +155,14 @@ class TicketService {
                 metadata: { id_usuario_tecnico: tecnico.id_usuario }
             })
         );
+        if (tecnico?.email) {
+            await this.notificationService.enqueueEmail({
+                tipo: 'TICKET_ASIGNADO',
+                destinatario: tecnico.email,
+                asunto: `Ticket asignado #${created.id_ticket}`,
+                cuerpo: `Se te asignó el ticket ${created.id_ticket}.`
+            });
+        }
         return {
             ...hydrated,
             id_usuario_tecnico: tecnico.id_usuario,
@@ -168,6 +197,12 @@ class TicketService {
                     payload_after: updated
                 })
             );
+            await this.model.addHistory({
+                id_ticket: id,
+                id_usuario: user?.id ?? null,
+                cambio: 'ACTUALIZADO',
+                detalle: 'Ticket actualizado'
+            });
             return updated;
         }
         const before = typeof this.model.findById === 'function'
@@ -186,6 +221,12 @@ class TicketService {
                 payload_after: t
             })
         );
+        await this.model.addHistory({
+            id_ticket: id,
+            id_usuario: user?.id ?? null,
+            cambio: 'ACTUALIZADO',
+            detalle: 'Ticket actualizado'
+        });
         return t;
     }
 
@@ -220,6 +261,12 @@ class TicketService {
                 }
             }
             const closed = await this.model.closeWithConsumos(id, consumos);
+            await this.model.addHistory({
+                id_ticket: id,
+                id_usuario: user?.id ?? null,
+                cambio: 'CERRADO',
+                detalle: 'Ticket cerrado con consumos'
+            });
             this.auditLogService.safeLog(
                 this.auditLogService.buildDomainEntry({
                     actor: user,
@@ -235,7 +282,8 @@ class TicketService {
             return closed;
         }
 
-        const t = await this.model.updateEstado(id, estado);
+        const fechaCierre = estado === 'Cerrado' ? new Date() : null;
+        const t = await this.model.updateEstado(id, estado, fechaCierre);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
         this.auditLogService.safeLog(
             this.auditLogService.buildDomainEntry({
@@ -248,7 +296,94 @@ class TicketService {
                 payload_after: t
             })
         );
+        await this.model.addHistory({
+            id_ticket: id,
+            id_usuario: user?.id ?? null,
+            cambio: estado === 'Cerrado' ? 'CERRADO' : 'ESTADO',
+            detalle: `Estado actualizado a ${estado}`
+        });
+        const core = await this.model.findCoreById(id);
+        const reporter = core?.id_usuario_reporta ? await this.userModel.findById(core.id_usuario_reporta) : null;
+        if (reporter?.email) {
+            const tipo = estado === 'Cerrado' ? 'TICKET_CERRADO' : 'TICKET_ESTADO';
+            const asunto = estado === 'Cerrado' ? `Ticket cerrado #${id}` : `Actualización de ticket #${id}`;
+            const cuerpo = estado === 'Cerrado'
+                ? `Tu ticket ${id} fue cerrado.`
+                : `Tu ticket ${id} cambió a estado ${estado}.`;
+            await this.notificationService.enqueueEmail({
+                tipo,
+                destinatario: reporter.email,
+                asunto,
+                cuerpo
+            });
+        }
         return t;
+    }
+
+    async addComment(id_ticket, comentario, user, auditContext) {
+        if (!comentario) throw { status: 400, message: 'comentario es requerido' };
+        await this.ensureAccess(id_ticket, user);
+        const created = await this.model.addComment({ id_ticket, id_usuario: user?.id ?? null, comentario });
+        await this.model.addHistory({
+            id_ticket,
+            id_usuario: user?.id ?? null,
+            cambio: 'COMENTARIO',
+            detalle: 'Comentario agregado'
+        });
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor: user,
+                context: auditContext,
+                entidad: 'TICKET',
+                entidad_id: id_ticket,
+                accion: 'TICKET_COMMENT',
+                payload_after: created
+            })
+        );
+        return created;
+    }
+
+    async listComments(id_ticket, user) {
+        await this.ensureAccess(id_ticket, user);
+        return this.model.listComments(id_ticket);
+    }
+
+    async listHistory(id_ticket, user) {
+        await this.ensureAccess(id_ticket, user);
+        return this.model.listHistory(id_ticket);
+    }
+
+    async assignToTechnician(id_ticket, id_usuario_tecnico, user, auditContext) {
+        if (!id_usuario_tecnico) throw { status: 400, message: 'id_usuario_tecnico es requerido' };
+        await this.ensureAccess(id_ticket, user);
+        const assigned = await this.model.assignToTechnician(id_ticket, id_usuario_tecnico);
+        await this.model.addHistory({
+            id_ticket,
+            id_usuario: user?.id ?? null,
+            cambio: 'ASIGNADO',
+            detalle: `Asignado a tecnico ${id_usuario_tecnico}`
+        });
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor: user,
+                context: auditContext,
+                entidad: 'TICKET',
+                entidad_id: id_ticket,
+                accion: 'TICKET_ASSIGN',
+                payload_after: assigned,
+                metadata: { id_usuario_tecnico }
+            })
+        );
+        const tecnico = await this.userModel.findById(id_usuario_tecnico);
+        if (tecnico?.email) {
+            await this.notificationService.enqueueEmail({
+                tipo: 'TICKET_ASIGNADO',
+                destinatario: tecnico.email,
+                asunto: `Ticket asignado #${id_ticket}`,
+                cuerpo: `Se te asignó el ticket ${id_ticket}.`
+            });
+        }
+        return assigned;
     }
 
     // Delete ticket with audit trail.

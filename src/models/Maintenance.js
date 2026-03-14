@@ -79,11 +79,12 @@ class MaintenanceModel extends BaseModel {
     }
 
     // Create a maintenance order with optional fields.
-    async create({ id_ticket, id_usuario_tecnico, diagnostico, fecha_inicio, fecha_fin, checklist_seguridad }) {
+    async create({ id_ticket, id_usuario_tecnico, diagnostico, acciones_realizadas, fecha_inicio, fecha_fin, checklist_seguridad }) {
         return this.dbCreate('ordenes_mantenimiento', {
             id_ticket,
             id_usuario_tecnico,
             diagnostico,
+            acciones_realizadas,
             fecha_inicio: fecha_inicio || null,
             fecha_fin: fecha_fin || null,
             checklist_seguridad: checklist_seguridad ?? false
@@ -91,9 +92,10 @@ class MaintenanceModel extends BaseModel {
     }
 
     // Update a maintenance order by id.
-    async update(id, { diagnostico, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico }) {
+    async update(id, { diagnostico, acciones_realizadas, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico }) {
         return this.dbUpdate('ordenes_mantenimiento', 'id_orden', id, {
             diagnostico,
+            acciones_realizadas,
             fecha_inicio,
             fecha_fin,
             checklist_seguridad,
@@ -102,9 +104,10 @@ class MaintenanceModel extends BaseModel {
     }
 
     // Update a maintenance order using the linked ticket id.
-    async updateByTicketId(id_ticket, { diagnostico, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico }) {
+    async updateByTicketId(id_ticket, { diagnostico, acciones_realizadas, fecha_inicio, fecha_fin, checklist_seguridad, id_usuario_tecnico }) {
         return this.dbUpdate('ordenes_mantenimiento', 'id_ticket', id_ticket, {
             diagnostico,
+            acciones_realizadas,
             fecha_inicio,
             fecha_fin,
             checklist_seguridad,

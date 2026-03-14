@@ -61,6 +61,21 @@ class UserController {
         }
     }
 
+    // Update basic user info.
+    async update(req, res, next) {
+        try {
+            const user = await this.userService.update(
+                req.params.id,
+                req.body,
+                req.user,
+                buildAuditContext(req)
+            );
+            res.json(user);
+        } catch (error) {
+            next(error);
+        }
+    }
+
     // Reset password for an existing user.
     async resetPassword(req, res, next) {
         try {

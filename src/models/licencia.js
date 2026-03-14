@@ -70,6 +70,47 @@ class LicenciaModel extends BaseModel {
     async revocarAsignacion(id_asignacion) {
         return this.dbRemove('asignacion_licencias', 'id_asignacion', id_asignacion);
     }
+
+    async findExpiring(days = 30) {
+        const d = Number(days);
+        const safeDays = Number.isInteger(d) && d > 0 ? d : 30;
+        if (this.useSupabase) {
+            const limitDate = new Date();
+            limitDate.setDate(limitDate.getDate() + safeDays);
+            const { data, error } = await this.supabase
+                .from('licencias')
+                .select('*')
+                .lte('fecha_expiracion', limitDate.toISOString().split('T')[0]);
+            if (error) throw error;
+            return data || [];
+        }
+        const { rows } = await this.query(
+            `SELECT * FROM licencias
+             WHERE fecha_expiracion IS NOT NULL
+              AND fecha_expiracion <= (CURRENT_DATE + ($1 * INTERVAL '1 day'))`,
+            [safeDays]
+        );
+        return rows || [];
+    }
+
+    async hasAssignment({ id_licencia, id_usuario, id_activo }) {
+        if (this.useSupabase) {
+            let q = this.supabase.from('asignacion_licencias').select('id_asignacion').eq('id_licencia', id_licencia);
+            if (id_usuario) q = q.eq('id_usuario', id_usuario);
+            if (id_activo) q = q.eq('id_activo', id_activo);
+            const { data, error } = await q.limit(1);
+            if (error) throw error;
+            return Array.isArray(data) && data.length > 0;
+        }
+        const { rows } = await this.query(
+            `SELECT 1 FROM asignacion_licencias
+             WHERE id_licencia = $1
+               AND (($2::int IS NOT NULL AND id_usuario = $2::int) OR ($3::int IS NOT NULL AND id_activo = $3::int))
+             LIMIT 1`,
+            [id_licencia, id_usuario ?? null, id_activo ?? null]
+        );
+        return rows.length > 0;
+    }
 }
 
 export default LicenciaModel;

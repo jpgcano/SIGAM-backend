@@ -80,7 +80,8 @@ BEGIN
     END IF;
 
     UPDATE TICKETS
-    SET estado = p_estado_ticket
+    SET estado = p_estado_ticket,
+        fecha_cierre = CASE WHEN p_estado_ticket = 'Cerrado' THEN NOW() ELSE fecha_cierre END
     WHERE id_ticket = v_ticket_id;
 
     INSERT INTO CONSUMO_REPUESTOS (id_orden, id_repuesto, cantidad_usada)
