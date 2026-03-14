@@ -576,6 +576,18 @@ Respuesta: lista de logs.
 **GET /api/auditoria/:id**  
 Respuesta: log de auditoria.
 
+### 9.14.1 Alertas
+**GET /api/alertas** (Analista, Gerente, Auditor)  
+Filtros: `estado`, `tipo`, `id_activo`, `id_repuesto`, `limit`, `offset`.  
+Respuesta: lista de alertas.
+
+**PATCH /api/alertas/:id/estado** (Analista, Gerente)  
+Request:
+```
+{ "estado": "Resuelta" }
+```
+Respuesta: alerta actualizada.
+
 ### 9.15 Jobs IA
 **POST /api/jobs/ia/repuestos/sugerencias**  
 Request:
