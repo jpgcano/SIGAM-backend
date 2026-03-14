@@ -80,7 +80,18 @@ class MetricsModel extends BaseModel {
 
         return buildMetrics(rows);
     }
+
+    async getSummaryMetrics() {
+        const { rows } = await this.query(
+            `SELECT
+                (SELECT COUNT(*) FROM activos) AS total_activos,
+                (SELECT COUNT(*) FROM ordenes_mantenimiento WHERE fecha_fin IS NULL) AS activos_en_mantenimiento,
+                (SELECT COUNT(*) FROM tickets WHERE estado IN ('Abierto','Asignado','En Proceso')) AS tickets_abiertos,
+                (SELECT COUNT(*) FROM tickets WHERE estado IN ('Resuelto','Cerrado')) AS tickets_cerrados,
+                (SELECT COALESCE(SUM(cantidad_usada),0) FROM consumo_repuestos) AS consumo_repuestos`
+        );
+        return rows[0];
+    }
 }
 
 export default MetricsModel;
-

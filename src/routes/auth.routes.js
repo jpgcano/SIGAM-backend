@@ -26,6 +26,9 @@ const loginLimiter = rateLimit({
 router.post('/register', validateRequired(['nombre', 'email', 'password']), authController.register);
 // Public login: rate limited and required fields validated.
 router.post('/login', loginLimiter, validateRequired(['email', 'password']), authController.login);
+// Public password reset flow.
+router.post('/forgot-password', validateRequired(['email']), authController.requestPasswordReset);
+router.post('/reset-password', validateRequired(['token', 'password']), authController.resetPassword);
 
 // Protected endpoints to validate role permissions.
 router.get('/admin-panel', authMiddleware, permit('auth', 'admin_panel'), (req, res) => {

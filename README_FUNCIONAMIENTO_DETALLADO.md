@@ -1,4 +1,4 @@
-﻿# SIGAM Backend - Documento Detallado de Funcionamiento (Maximo Detalle)
+# SIGAM Backend - Documento Detallado de Funcionamiento (Maximo Detalle)
 
 Este documento esta pensado para sustentacion y estudio profundo del backend SIGAM. Incluye arquitectura, reglas, endpoints, ejemplos de request/response, flujos y pruebas. No modifica el README principal.
 

@@ -3,9 +3,11 @@ import AlertaModel from '../../models/alerta.js';
 import AssetModel from '../../models/Asset.js';
 import TicketModel from '../../models/Ticket.js';
 import MaintenanceModel from '../../models/Maintenance.js';
+import CategoriaTicketModel from '../../models/categoriaTicket.js';
 import { getIaConfig } from '../../config/ia.js';
 import OpenAIProvider from './providers/OpenAIProvider.js';
 import AuditLogService from '../auditLog.service.js';
+import NotificationService from '../notification.service.js';
 
 // Coerce values to numbers with a fallback.
 function toNumber(value, defaultValue = 0) {
@@ -30,8 +32,10 @@ class IaJobsService {
         this.assetModel = assetModel || new AssetModel();
         this.ticketModel = ticketModel || new TicketModel();
         this.maintenanceModel = maintenanceModel || new MaintenanceModel();
+        this.categoriaTicketModel = new CategoriaTicketModel();
         this.iaConfig = iaConfig || getIaConfig();
         this.auditLogService = auditLogService || new AuditLogService();
+        this.notificationService = new NotificationService();
         this.openAiProvider = openAiProvider || new OpenAIProvider({
             apiKey: this.iaConfig.openAiApiKey,
             model: this.iaConfig.openAiModel,
@@ -336,6 +340,7 @@ class IaJobsService {
             let skippedNoTechnician = 0;
             const created = [];
 
+            const categoriaHardware = await this.categoriaTicketModel.findByNombre('Hardware');
             for (const a of candidates) {
                 considered += 1;
                 const alreadyOpen = await this.ticketModel.hasOpenPreventiveTicket(a.id_activo);
@@ -359,6 +364,8 @@ class IaJobsService {
                     descripcion: `Mantenimiento preventivo programado (intervalo ${interval} días)`,
                     prioridad_ia: criticidad === 'Crítica' ? 'Alta' : 'Media',
                     clasificacion_nlp: 'Hardware',
+                    id_categoria_ticket: categoriaHardware?.id_categoria_ticket ?? null,
+                    tipo_ticket: 'Preventivo',
                     estado: 'Abierto',
                     clasificacion_metodo: 'rules_v1',
                     prioridad_metodo: 'rules_v1',
@@ -383,6 +390,15 @@ class IaJobsService {
                     tecnico_asignado: tecnico.nombre,
                     fecha_inicio: scheduledAt
                 });
+
+                if (tecnico?.email) {
+                    await this.notificationService.enqueueEmail({
+                        tipo: 'MANTENIMIENTO_PROGRAMADO',
+                        destinatario: tecnico.email,
+                        asunto: `Mantenimiento programado #${ticket.id_ticket}`,
+                        cuerpo: `Se programó mantenimiento preventivo para el activo ${a.id_activo} (ticket ${ticket.id_ticket})`
+                    });
+                }
             }
 
             const result = {

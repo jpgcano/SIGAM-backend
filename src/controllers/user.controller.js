@@ -6,8 +6,11 @@ class UserController {
         this.userService = userService;
         this.getAll = this.getAll.bind(this);
         this.create = this.create.bind(this);
+        this.update = this.update.bind(this);
         this.updateRole = this.updateRole.bind(this);
         this.resetPassword = this.resetPassword.bind(this);
+        this.updateEstado = this.updateEstado.bind(this);
+        this.remove = this.remove.bind(this);
     }
 
     async getAll(req, res, next) {
@@ -44,6 +47,21 @@ class UserController {
         }
     }
 
+    // Update basic user info.
+    async update(req, res, next) {
+        try {
+            const user = await this.userService.update(
+                req.params.id,
+                req.body,
+                req.user,
+                buildAuditContext(req)
+            );
+            res.json(user);
+        } catch (error) {
+            next(error);
+        }
+    }
+
     // Reset password for an existing user.
     async resetPassword(req, res, next) {
         try {
@@ -54,6 +72,35 @@ class UserController {
                 buildAuditContext(req)
             );
             res.json({ message: 'Password actualizado', user });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Activate/deactivate user.
+    async updateEstado(req, res, next) {
+        try {
+            const user = await this.userService.updateEstado(
+                req.params.id,
+                req.body?.activo,
+                req.user,
+                buildAuditContext(req)
+            );
+            res.json(user);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Remove an existing user.
+    async remove(req, res, next) {
+        try {
+            const result = await this.userService.remove(
+                req.params.id,
+                req.user,
+                buildAuditContext(req)
+            );
+            res.json(result);
         } catch (error) {
             next(error);
         }

@@ -7,6 +7,43 @@ class AssetModel extends BaseModel {
         return this.dbFindAll('vw_activos_detalle', 'id_activo');
     }
 
+    async findAllFiltered({ categoria, sede, piso, sala } = {}) {
+        if (this.useSupabase) {
+            let query = this.supabase.from('vw_activos_detalle').select('*');
+            if (categoria) query = query.eq('nombre_categoria', categoria);
+            if (sede) query = query.eq('sede', sede);
+            if (piso) query = query.eq('piso', piso);
+            if (sala) query = query.eq('sala', sala);
+            const { data, error } = await query.order('id_activo', { ascending: true });
+            if (error) throw error;
+            return data;
+        }
+        const filters = [];
+        const params = [];
+        if (categoria) {
+            params.push(categoria);
+            filters.push(`nombre_categoria = $${params.length}`);
+        }
+        if (sede) {
+            params.push(sede);
+            filters.push(`sede = $${params.length}`);
+        }
+        if (piso) {
+            params.push(piso);
+            filters.push(`piso = $${params.length}`);
+        }
+        if (sala) {
+            params.push(sala);
+            filters.push(`sala = $${params.length}`);
+        }
+        const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+        const { rows } = await this.query(
+            `SELECT * FROM vw_activos_detalle ${where} ORDER BY id_activo ASC`,
+            params
+        );
+        return rows;
+    }
+
     // Read asset detail by id.
     async findById(id) {
         return this.dbFindById('vw_activos_detalle', 'id_activo', id);
@@ -154,12 +191,20 @@ class AssetModel extends BaseModel {
                     borrado_seguro: certificadoBorrado
                 }).select().single();
             if (error) throw error;
+            await this.supabase
+                .from('activos')
+                .update({ estado_activo: false })
+                .eq('id_activo', id);
             return data;
         }
         const { rows } = await this.query(
             `INSERT INTO bajas_activos (id_activo, fecha_baja, motivo, borrado_seguro)
              VALUES ($1, CURRENT_DATE, $2, $3) RETURNING *`,
             [id, motivoBaja, certificadoBorrado]
+        );
+        await this.query(
+            `UPDATE activos SET estado_activo = FALSE WHERE id_activo = $1`,
+            [id]
         );
         return rows[0];
     }
@@ -196,6 +241,82 @@ class AssetModel extends BaseModel {
             [id_activo, tipo_evento, detalle]
         );
         return rows[0];
+    }
+
+    // Assign asset to user (close previous assignment).
+    async assignToUser(id_activo, id_usuario) {
+        if (this.useSupabase) {
+            await this.supabase
+                .from('asignacion_activos')
+                .update({ activo: false, fecha_fin: new Date().toISOString().split('T')[0] })
+                .eq('id_activo', id_activo)
+                .eq('activo', true);
+            const { data, error } = await this.supabase
+                .from('asignacion_activos')
+                .insert({ id_activo, id_usuario, activo: true })
+                .select('*')
+                .single();
+            if (error) throw error;
+            return data;
+        }
+        await this.query(
+            `UPDATE asignacion_activos
+             SET activo = FALSE, fecha_fin = CURRENT_DATE
+             WHERE id_activo = $1 AND activo = TRUE`,
+            [id_activo]
+        );
+        const { rows } = await this.query(
+            `INSERT INTO asignacion_activos (id_activo, id_usuario, activo)
+             VALUES ($1, $2, TRUE) RETURNING *`,
+            [id_activo, id_usuario]
+        );
+        return rows[0];
+    }
+
+    async unassign(id_asignacion) {
+        return this.dbUpdate('asignacion_activos', 'id_asignacion', id_asignacion, {
+            activo: false,
+            fecha_fin: new Date()
+        });
+    }
+
+    async getAssignments(id_activo) {
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('asignacion_activos')
+                .select('*, usuarios(nombre, email)')
+                .eq('id_activo', id_activo)
+                .order('fecha_asignacion', { ascending: false });
+            if (error) throw error;
+            return data;
+        }
+        const { rows } = await this.query(
+            `SELECT aa.*, u.nombre AS usuario_nombre, u.email AS usuario_email
+             FROM asignacion_activos aa
+             LEFT JOIN usuarios u ON u.id_usuario = aa.id_usuario
+             WHERE aa.id_activo = $1
+             ORDER BY aa.fecha_asignacion DESC`,
+            [id_activo]
+        );
+        return rows;
+    }
+
+    async addDocumento({ id_activo, nombre, tipo, url }) {
+        return this.dbCreate('documentos_activo', { id_activo, nombre, tipo, url });
+    }
+
+    async getDocumentos(id_activo) {
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('documentos_activo')
+                .select('*')
+                .eq('id_activo', id_activo)
+                .order('fecha_subida', { ascending: false });
+            if (error) throw error;
+            return data;
+        }
+        return this.dbFindAll('documentos_activo', 'fecha_subida', 'DESC', '*')
+            .then((rows) => rows.filter((r) => Number(r.id_activo) === Number(id_activo)));
     }
 
     // Candidates for preventive maintenance based on interval.

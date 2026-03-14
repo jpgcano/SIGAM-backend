@@ -10,5 +10,6 @@ const ctrl = new MetricsController(new MetricsService(new MetricsModel()));
 
 // GET /metricas/operacion
 router.get('/operacion', authMiddleware, permit('metrics', 'operacion'), ctrl.getOperational);
+router.get('/resumen', authMiddleware, permit('metrics', 'resumen'), ctrl.getSummary);
 
 export default router;

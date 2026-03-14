@@ -8,7 +8,7 @@ class UserModel extends BaseModel {
             'usuarios',
             'email',
             email,
-            ['id_usuario', 'nombre', 'email', 'password_hash', 'rol']
+            ['id_usuario', 'nombre', 'email', 'password_hash', 'rol', 'activo', 'ultimo_acceso', 'intentos_fallidos', 'bloqueado_hasta']
         );
     }
 
@@ -17,7 +17,7 @@ class UserModel extends BaseModel {
             'usuarios',
             'id_usuario',
             'ASC',
-            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion', 'activo', 'ultimo_acceso']
         );
     }
 
@@ -27,7 +27,7 @@ class UserModel extends BaseModel {
             'usuarios',
             'id_usuario',
             id,
-            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion', 'activo', 'ultimo_acceso']
         );
     }
 
@@ -46,7 +46,7 @@ class UserModel extends BaseModel {
             'id_usuario',
             id,
             { nombre, email, rol },
-            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion', 'activo', 'ultimo_acceso']
         );
     }
 
@@ -56,7 +56,7 @@ class UserModel extends BaseModel {
             'id_usuario',
             id,
             { rol },
-            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion', 'activo', 'ultimo_acceso']
         );
     }
 
@@ -66,8 +66,84 @@ class UserModel extends BaseModel {
             'id_usuario',
             id,
             { password_hash: passwordHash },
-            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion', 'activo', 'ultimo_acceso']
         );
+    }
+
+    async updateBasic(id, { nombre, email }) {
+        return this.dbUpdate(
+            'usuarios',
+            'id_usuario',
+            id,
+            { nombre, email },
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion', 'activo', 'ultimo_acceso']
+        );
+    }
+
+    async updateActive(id, activo) {
+        return this.dbUpdate(
+            'usuarios',
+            'id_usuario',
+            id,
+            { activo },
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion', 'activo', 'ultimo_acceso']
+        );
+    }
+
+    async registerLoginSuccess(id) {
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('usuarios')
+                .update({ ultimo_acceso: new Date().toISOString(), intentos_fallidos: 0, bloqueado_hasta: null })
+                .eq('id_usuario', id)
+                .select('*')
+                .single();
+            if (error) throw error;
+            return data;
+        }
+        const { rows } = await this.query(
+            `UPDATE usuarios
+             SET ultimo_acceso = NOW(), intentos_fallidos = 0, bloqueado_hasta = NULL
+             WHERE id_usuario = $1
+             RETURNING *`,
+            [id]
+        );
+        return rows[0] || null;
+    }
+
+    async registerLoginFailure(id, maxAttempts, blockMinutes) {
+        if (this.useSupabase) {
+            const { data: user, error: userError } = await this.supabase
+                .from('usuarios')
+                .select('intentos_fallidos')
+                .eq('id_usuario', id)
+                .single();
+            if (userError) throw userError;
+            const attempts = Number(user?.intentos_fallidos || 0) + 1;
+            const blocked = attempts >= maxAttempts
+                ? new Date(Date.now() + blockMinutes * 60 * 1000).toISOString()
+                : null;
+            const { data, error } = await this.supabase
+                .from('usuarios')
+                .update({ intentos_fallidos: attempts, bloqueado_hasta: blocked })
+                .eq('id_usuario', id)
+                .select('*')
+                .single();
+            if (error) throw error;
+            return data;
+        }
+        const { rows } = await this.query(
+            `UPDATE usuarios
+             SET intentos_fallidos = intentos_fallidos + 1,
+                 bloqueado_hasta = CASE
+                     WHEN intentos_fallidos + 1 >= $2 THEN NOW() + ($3 * INTERVAL '1 minute')
+                     ELSE bloqueado_hasta
+                 END
+             WHERE id_usuario = $1
+             RETURNING *`,
+            [id, maxAttempts, blockMinutes]
+        );
+        return rows[0] || null;
     }
 
     async remove(id) {

@@ -1,15 +1,29 @@
 import AuditLogService from './auditLog.service.js';
+import NotificationService from './notification.service.js';
 
 // Service layer for spare parts and inventory adjustments.
 class RepuestoService {
     constructor(model, auditLogService = new AuditLogService()) {
         this.model = model;
         this.auditLogService = auditLogService;
+        this.notificationService = new NotificationService();
     }
     // List all spare parts.
     findAll() { return this.model.findAll(); }
     // List spare parts below minimum stock.
-    findBajoStock() { return this.model.findBajoStock(); }
+    async findBajoStock() {
+        const rows = await this.model.findBajoStock();
+        const adminEmail = process.env.NOTIFY_ADMIN_EMAIL;
+        if (adminEmail && rows?.length) {
+            await this.notificationService.enqueueEmail({
+                tipo: 'INVENTARIO_BAJO',
+                destinatario: adminEmail,
+                asunto: 'Repuestos en bajo stock',
+                cuerpo: `Repuestos bajo stock: ${rows.map((r) => r.nombre).join(', ')}`
+            });
+        }
+        return rows;
+    }
     // Fetch a spare part by id and validate existence.
     async findById(id) {
         const r = await this.model.findById(id);

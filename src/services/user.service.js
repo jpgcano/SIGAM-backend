@@ -70,6 +70,28 @@ class UserService {
         return updated;
     }
 
+    // Update basic user fields (nombre, email).
+    async update(id, payload, actor, auditContext) {
+        const before = await this.userModel.findById(id);
+        if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
+        const updated = await this.userModel.updateBasic(id, {
+            nombre: payload?.nombre,
+            email: payload?.email
+        });
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'USUARIO',
+                entidad_id: id,
+                accion: 'USUARIO_UPDATE',
+                payload_before: before,
+                payload_after: updated
+            })
+        );
+        return updated;
+    }
+
     // Reset password for a user and log the action.
     async resetPassword(id, newPassword, actor, auditContext) {
         if (!newPassword) throw { status: 400, message: 'password es requerido' };
@@ -89,6 +111,46 @@ class UserService {
             })
         );
         return updated;
+    }
+
+    // Activate/deactivate user.
+    async updateEstado(id, activo, actor, auditContext) {
+        if (activo === undefined) throw { status: 400, message: 'activo es requerido' };
+        const before = await this.userModel.findById(id);
+        if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
+        const updated = await this.userModel.updateActive(id, !!activo);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'USUARIO',
+                entidad_id: id,
+                accion: 'USUARIO_ACTIVATE',
+                payload_before: before,
+                payload_after: updated,
+                metadata: { activo: !!activo }
+            })
+        );
+        return updated;
+    }
+
+    // Remove user and log the action.
+    async remove(id, actor, auditContext) {
+        const before = await this.userModel.findById(id);
+        if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
+        const removed = await this.userModel.updateActive(id, false);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'USUARIO',
+                entidad_id: id,
+                accion: 'USUARIO_DELETE',
+                payload_before: before,
+                payload_after: removed
+            })
+        );
+        return removed;
     }
 }
 

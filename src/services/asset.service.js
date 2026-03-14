@@ -1,10 +1,14 @@
 import AuditLogService from './auditLog.service.js';
+import UserModel from '../models/User.js';
+import NotificationService from './notification.service.js';
 
 // Assets service: business rules, normalization, and audit logging.
 class AssetService {
     constructor(assetModel, auditLogService = new AuditLogService()) {
         this.assetModel = assetModel;
         this.auditLogService = auditLogService;
+        this.userModel = new UserModel();
+        this.notificationService = new NotificationService();
     }
 
     // Generate unique QR code for assets.
@@ -39,8 +43,10 @@ class AssetService {
         return { ...asset, fecha_obsolescencia };
     }
 
-    async findAll() {
-        const assets = await this.assetModel.findAll();
+    async findAll(filters = {}) {
+        const assets = (filters && (filters.categoria || filters.sede || filters.piso || filters.sala))
+            ? await this.assetModel.findAllFiltered(filters)
+            : await this.assetModel.findAll();
         return Array.isArray(assets)
             ? assets.map((asset) => AssetService.withObsolescence(asset))
             : assets;
@@ -142,6 +148,70 @@ class AssetService {
     // Asset history entries.
     async getHistory(id) {
         return this.assetModel.getHistory(id);
+    }
+
+    async assignToUser(id_activo, id_usuario, actor, auditContext) {
+        if (!id_usuario) throw { status: 400, message: 'id_usuario es requerido' };
+        const result = await this.assetModel.assignToUser(id_activo, id_usuario);
+        const user = await this.userModel.findById(id_usuario);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'ACTIVO',
+                entidad_id: id_activo,
+                accion: 'ACTIVO_ASSIGN',
+                payload_after: result,
+                metadata: { id_usuario }
+            })
+        );
+        if (user?.email) {
+            await this.notificationService.enqueueEmail({
+                tipo: 'ACTIVO_ASIGNADO',
+                destinatario: user.email,
+                asunto: `Activo asignado #${id_activo}`,
+                cuerpo: `Se te asignó el activo ${id_activo}.`
+            });
+        }
+        return result;
+    }
+
+    async unassign(id_asignacion, actor, auditContext) {
+        const result = await this.assetModel.unassign(id_asignacion);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'ACTIVO',
+                entidad_id: id_asignacion,
+                accion: 'ACTIVO_UNASSIGN',
+                payload_after: result
+            })
+        );
+        return result;
+    }
+
+    getAssignments(id_activo) {
+        return this.assetModel.getAssignments(id_activo);
+    }
+
+    async addDocumento(payload, actor, auditContext) {
+        const created = await this.assetModel.addDocumento(payload);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'ACTIVO',
+                entidad_id: payload?.id_activo,
+                accion: 'ACTIVO_DOCUMENT',
+                payload_after: created
+            })
+        );
+        return created;
+    }
+
+    getDocumentos(id_activo) {
+        return this.assetModel.getDocumentos(id_activo);
     }
 }
 

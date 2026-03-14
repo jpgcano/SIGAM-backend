@@ -20,5 +20,11 @@ router.post('/', authMiddleware, permit('software', 'create'), validateRequired(
 router.put('/:id', authMiddleware, permit('software', 'update'), ctrl.update);
 // Delete a software entry.
 router.delete('/:id', authMiddleware, permit('software', 'delete'), ctrl.remove);
+// Assign software to asset.
+router.post('/:id/asignar', authMiddleware, permit('software', 'update'), validateRequired(['id_activo']), ctrl.assignToAsset);
+// List software by asset.
+router.get('/activo/:id_activo', authMiddleware, permit('software', 'read'), ctrl.listByActivo);
+// Remove software from asset.
+router.delete('/:id/activo/:id_activo', authMiddleware, permit('software', 'update'), ctrl.removeFromAsset);
 
 export default router;

@@ -716,3 +716,47 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - revision manual de servicios y controladores actualizados.
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Tickets primero - cobertura de pruebas de servicio
+- Rama: feature/docs-api (sin cambios de rama; repo ya estaba con cambios previos)
+- Objetivo: aumentar cobertura minima del modulo de tickets (creacion con categoria, validaciones, metricas, cierre por tecnico).
+- Cambios:
+  - `test/ticket.service.test.js` - tests de TicketService (categoria IA, validaciones, metricas, acceso tecnico).
+- Decisiones tecnicas: uso de stubs para modelos y audit log para aislar logica de servicio.
+- Pendiente: revisar fallas existentes en `pnpm test` (audit, auth, ia7) antes de declarar suite verde.
+- Riesgos/Bloqueos: N/A
+- Evidencia:
+  - `node --test test/ticket.service.test.js` (ok).
+  - `pnpm test` reporto 4 fallas: `test/audit.domain.secondary.test.js`, `test/auth.service.test.js`, `test/ia7.preventive-maintenance.test.js`, `test/ticket.service.test.js` (luego corregido).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Estabilizar pruebas existentes (audit/auth)
+- Rama: feature/docs-api
+- Objetivo: corregir fallas de stubs en tests de auditoria y auth.
+- Cambios:
+  - `test/audit.domain.secondary.test.js` - stub agregado `hasAssignment`.
+  - `test/auth.service.test.js` - stub agregado `registerLoginSuccess`/`registerLoginFailure` y asserts adaptados a errores por objeto.
+- Pendiente: resolver falla en `test/ia7.preventive-maintenance.test.js` (requiere revisar `planIA.md` antes de tocar IA).
+- Riesgos/Bloqueos: falta `planIA.md` en repo actual.
+- Evidencia:
+  - `node --test test/audit.domain.secondary.test.js` (ok).
+  - `node --test test/auth.service.test.js` (ok).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: IA plan y estabilizacion IA-7
+- Rama: feature/docs-api
+- Objetivo: crear `planIA.md` y evitar dependencia a DB real en prueba IA-7.
+- Cambios:
+  - `planIA.md` - lineamientos de IA, asignacion automatica y sugerencias.
+  - `test/ia7.preventive-maintenance.test.js` - stub de `categoriaTicketModel` para evitar acceso a DB.
+- Evidencia:
+  - `node --test test/ia7.preventive-maintenance.test.js` (ok).
+- Evidencia adicional:
+  - `pnpm test` (ok, 32/32).
+- Commit(s):
+  - pendiente
