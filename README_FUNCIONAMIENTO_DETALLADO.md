@@ -166,7 +166,7 @@ HTTP Request
 ## 9) Endpoints por modulo (uso y respuesta esperada)
 
 ### 9.1 Convenciones generales
-- Base URL: `http://localhost:4000`
+- Base URL: `https://sigam-backend.vercel.app`
 - Header de autenticacion:
 ```
 Authorization: Bearer <token>
@@ -335,6 +335,7 @@ Respuesta:
 
 ### 9.7 Activos
 **GET /api/activos**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).  
 Respuesta: lista de activos.
 
 **GET /api/activos/:id**  
@@ -572,6 +573,12 @@ Respuesta:
 Respuesta:
 ```
 { "total_activos": 0, "activos_en_mantenimiento": 0, "tickets_abiertos": 0, "tickets_cerrados": 0, "consumo_repuestos": 0 }
+```
+
+**GET /api/metricas/latencia**  
+Respuesta:
+```
+{ "latency_ms": 0 }
 ```
 
 ### 9.14 Auditoria
