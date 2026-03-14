@@ -790,3 +790,16 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `pnpm test` (ok, 83/83).
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Reportes y metricas (tests + docs)
+- Rama: feature/reportes-metricas
+- Objetivo: asegurar endpoints de reportes/metricas y documentacion.
+- Cambios:
+  - `test/report.routes.test.js` - cobertura endpoints reportes.
+  - `test/metrics.routes.test.js` - cobertura endpoints metricas.
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - documentacion de /api/metricas/resumen y /api/reportes/*.
+- Evidencia:
+  - `pnpm test` (ok, 85/85).
+- Commit(s):
+  - pendiente

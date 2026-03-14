@@ -568,6 +568,12 @@ Respuesta:
 { "mttr_seconds": 0, "mttr_horas": 0, "mttr_dias": 0, "mtbf_seconds": 0, "mtbf_horas": 0, "mtbf_dias": 0 }
 ```
 
+**GET /api/metricas/resumen**  
+Respuesta:
+```
+{ "total_activos": 0, "activos_en_mantenimiento": 0, "tickets_abiertos": 0, "tickets_cerrados": 0, "consumo_repuestos": 0 }
+```
+
 ### 9.14 Auditoria
 **GET /api/auditoria**  
 Filtros: `from`, `to`, `entidad`, `entidad_id`, `accion`, `status`, `id_usuario_actor`, `limit`, `offset`.
@@ -575,6 +581,25 @@ Respuesta: lista de logs.
 
 **GET /api/auditoria/:id**  
 Respuesta: log de auditoria.
+
+### 9.14.2 Reportes
+**GET /api/reportes/activos**  
+Respuesta: lista de activos (con filtros opcionales `categoria`, `sede`, `piso`, `sala`).
+
+**GET /api/reportes/tickets**  
+Respuesta: lista de tickets.
+
+**GET /api/reportes/mantenimientos**  
+Respuesta: lista de ordenes.
+
+**GET /api/reportes/licencias**  
+Respuesta: lista de licencias.
+
+**GET /api/reportes/inventario**  
+Respuesta: lista de repuestos.
+
+**GET /api/reportes/consumo-repuestos**  
+Respuesta: consumo agregado de repuestos.
 
 ### 9.14.1 Alertas
 **GET /api/alertas** (Analista, Gerente, Auditor)  
