@@ -10,11 +10,17 @@ class AssetController {
         this.update = this.update.bind(this);
         this.remove = this.remove.bind(this);
         this.getHistory = this.getHistory.bind(this);
+        this.assign = this.assign.bind(this);
+        this.unassign = this.unassign.bind(this);
+        this.getAssignments = this.getAssignments.bind(this);
+        this.addDocumento = this.addDocumento.bind(this);
+        this.getDocumentos = this.getDocumentos.bind(this);
     }
 
     async getAll(req, res, next) {
         try {
-            const assets = await this.assetService.findAll();
+            const { categoria, sede, piso, sala } = req.query || {};
+            const assets = await this.assetService.findAll({ categoria, sede, piso, sala });
             res.json(assets);
         } catch (error) { next(error); }
     }
@@ -63,6 +69,54 @@ class AssetController {
         try {
             const history = await this.assetService.getHistory(req.params.id);
             res.json(history);
+        } catch (error) { next(error); }
+    }
+
+    // Assign asset to user.
+    async assign(req, res, next) {
+        try {
+            const result = await this.assetService.assignToUser(
+                req.params.id,
+                req.body?.id_usuario,
+                req.user,
+                buildAuditContext(req)
+            );
+            res.json(result);
+        } catch (error) { next(error); }
+    }
+
+    // Unassign asset.
+    async unassign(req, res, next) {
+        try {
+            const result = await this.assetService.unassign(
+                req.params.id_asignacion,
+                req.user,
+                buildAuditContext(req)
+            );
+            res.json(result);
+        } catch (error) { next(error); }
+    }
+
+    async getAssignments(req, res, next) {
+        try {
+            res.json(await this.assetService.getAssignments(req.params.id));
+        } catch (error) { next(error); }
+    }
+
+    async addDocumento(req, res, next) {
+        try {
+            const created = await this.assetService.addDocumento(
+                { id_activo: req.params.id, nombre: req.body?.nombre, tipo: req.body?.tipo, url: req.body?.url },
+                req.user,
+                buildAuditContext(req)
+            );
+            res.status(201).json(created);
+        } catch (error) { next(error); }
+    }
+
+    async getDocumentos(req, res, next) {
+        try {
+            res.json(await this.assetService.getDocumentos(req.params.id));
         } catch (error) { next(error); }
     }
 }

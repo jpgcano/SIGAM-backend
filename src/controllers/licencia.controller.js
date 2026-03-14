@@ -5,7 +5,7 @@ class LicenciaController {
     constructor(service) {
         this.service = service;
         // Bind methods for Express handlers.
-        ['getAll','getById','create','update','remove','asignar','getAsignaciones','revocarAsignacion']
+        ['getAll','getById','create','update','remove','asignar','getAsignaciones','revocarAsignacion','getAlertasVencimiento']
             .forEach(m => this[m] = this[m].bind(this));
     }
     // List all licenses.
@@ -44,6 +44,13 @@ class LicenciaController {
         try {
             await this.service.revocarAsignacion(req.params.id_asignacion, req.user, buildAuditContext(req));
             res.json({ message: 'Asignación revocada' });
+        } catch (e) { next(e); }
+    }
+
+    async getAlertasVencimiento(req, res, next) {
+        try {
+            const dias = Number(req.query?.dias || 30);
+            res.json(await this.service.generarAlertasVencimiento({ dias }));
         } catch (e) { next(e); }
     }
 }

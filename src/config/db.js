@@ -20,6 +20,9 @@ class SupabaseAdapter {
         }
         this.client = createClient(process.env.SUPABASE_URL, supabaseKey);
         const keyLabel = process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon';
+        if (keyLabel === 'anon' && process.env.NODE_ENV === 'production') {
+            console.warn('Supabase en production usando anon key; revisa RLS/permiso o configura SUPABASE_SERVICE_ROLE_KEY');
+        }
         console.log(`Base de datos: Supabase (${keyLabel})`);
         return this.client;
     }

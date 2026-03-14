@@ -15,7 +15,11 @@ CREATE TABLE IF NOT EXISTS USUARIOS (
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     rol VARCHAR(50) NOT NULL,
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    ultimo_acceso TIMESTAMP,
+    intentos_fallidos INT NOT NULL DEFAULT 0,
+    bloqueado_hasta TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS UBICACIONES (
@@ -40,7 +44,10 @@ CREATE TABLE IF NOT EXISTS PROVEEDORES (
 CREATE TABLE IF NOT EXISTS SOFTWARE (
     id_software SERIAL PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL,
-    fabricante VARCHAR(100)
+    fabricante VARCHAR(100),
+    version VARCHAR(100),
+    proveedor VARCHAR(150),
+    fecha_compra DATE
 );
 
 CREATE TABLE IF NOT EXISTS REPUESTOS (
@@ -84,6 +91,14 @@ CREATE TABLE IF NOT EXISTS LICENCIAS (
     CONSTRAINT chk_licencias_asientos CHECK (asientos_totales > 0)
 );
 
+CREATE TABLE IF NOT EXISTS CATEGORIAS_TICKET (
+    id_categoria_ticket SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL,
+    descripcion TEXT,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS TICKETS (
     id_ticket SERIAL PRIMARY KEY,
     id_activo INT REFERENCES ACTIVOS(id_activo),
@@ -91,18 +106,22 @@ CREATE TABLE IF NOT EXISTS TICKETS (
     descripcion TEXT NOT NULL,
     prioridad_ia VARCHAR(50),
     clasificacion_nlp VARCHAR(100),
+    id_categoria_ticket INT REFERENCES categorias_ticket(id_categoria_ticket),
     clasificacion_metodo VARCHAR(80),
     clasificacion_confidence NUMERIC(4,3),
     clasificacion_rationale TEXT,
     prioridad_metodo VARCHAR(80),
     prioridad_rationale TEXT,
     estado VARCHAR(50) DEFAULT 'Abierto',
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_cierre TIMESTAMP,
+    tipo_ticket VARCHAR(50) NOT NULL DEFAULT 'Correctivo'
     ,
     CONSTRAINT chk_tickets_prioridad CHECK (prioridad_ia IS NULL OR prioridad_ia IN ('Baja', 'Media', 'Alta', 'Crítica')),
     CONSTRAINT chk_tickets_clasificacion CHECK (clasificacion_nlp IS NULL OR clasificacion_nlp IN ('Hardware', 'Software', 'Red', 'Eléctrico')),
     CONSTRAINT chk_tickets_clasificacion_confidence CHECK (clasificacion_confidence IS NULL OR (clasificacion_confidence >= 0 AND clasificacion_confidence <= 1)),
-    CONSTRAINT chk_tickets_estado CHECK (estado IN ('Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado'))
+    CONSTRAINT chk_tickets_estado CHECK (estado IN ('Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado')),
+    CONSTRAINT chk_tickets_tipo CHECK (tipo_ticket IN ('Correctivo', 'Preventivo'))
 );
 
 -- =========================================================================
@@ -152,6 +171,7 @@ CREATE TABLE IF NOT EXISTS ORDENES_MANTENIMIENTO (
     id_ticket INT UNIQUE REFERENCES TICKETS(id_ticket),
     id_usuario_tecnico INT REFERENCES USUARIOS(id_usuario),
     diagnostico TEXT,
+    acciones_realizadas TEXT,
     fecha_inicio TIMESTAMP,
     fecha_fin TIMESTAMP,
     checklist_seguridad BOOLEAN DEFAULT FALSE,
@@ -171,8 +191,74 @@ CREATE TABLE IF NOT EXISTS ALERTAS (
     tipo VARCHAR(100) NOT NULL,
     id_activo INT REFERENCES ACTIVOS(id_activo),
     id_repuesto INT REFERENCES REPUESTOS(id_repuesto),
+    id_licencia INT REFERENCES LICENCIAS(id_licencia),
     estado VARCHAR(50) DEFAULT 'Pendiente',
     fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS TICKET_COMENTARIOS (
+    id_comentario SERIAL PRIMARY KEY,
+    id_ticket INT REFERENCES TICKETS(id_ticket),
+    id_usuario INT REFERENCES USUARIOS(id_usuario),
+    comentario TEXT NOT NULL,
+    fecha_comentario TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS TICKET_HISTORIAL (
+    id_historial SERIAL PRIMARY KEY,
+    id_ticket INT REFERENCES TICKETS(id_ticket),
+    id_usuario INT REFERENCES USUARIOS(id_usuario),
+    cambio VARCHAR(100) NOT NULL,
+    detalle TEXT,
+    fecha_evento TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ASIGNACION_ACTIVOS (
+    id_asignacion SERIAL PRIMARY KEY,
+    id_activo INT REFERENCES ACTIVOS(id_activo),
+    id_usuario INT REFERENCES USUARIOS(id_usuario),
+    fecha_asignacion DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_fin DATE,
+    activo BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS DOCUMENTOS_ACTIVO (
+    id_documento SERIAL PRIMARY KEY,
+    id_activo INT REFERENCES ACTIVOS(id_activo),
+    nombre VARCHAR(200) NOT NULL,
+    tipo VARCHAR(100),
+    url TEXT NOT NULL,
+    fecha_subida TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS SOFTWARE_ACTIVOS (
+    id_software_activo SERIAL PRIMARY KEY,
+    id_software INT REFERENCES SOFTWARE(id_software),
+    id_activo INT REFERENCES ACTIVOS(id_activo),
+    version_instalada VARCHAR(100),
+    fecha_instalacion DATE DEFAULT CURRENT_DATE,
+    UNIQUE (id_software, id_activo)
+);
+
+CREATE TABLE IF NOT EXISTS PASSWORD_RESETS (
+    id_reset SERIAL PRIMARY KEY,
+    id_usuario INT REFERENCES USUARIOS(id_usuario),
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS NOTIFICACIONES (
+    id_notificacion SERIAL PRIMARY KEY,
+    tipo VARCHAR(100) NOT NULL,
+    destinatario VARCHAR(200) NOT NULL,
+    asunto VARCHAR(200) NOT NULL,
+    cuerpo TEXT NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+    error TEXT,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_envio TIMESTAMP
 );
 
 -- =========================================================================

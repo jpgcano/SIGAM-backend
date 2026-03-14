@@ -1,4 +1,4 @@
-﻿# SIGAM Backend - Documento Detallado de Funcionamiento (Maximo Detalle)
+# SIGAM Backend - Documento Detallado de Funcionamiento (Maximo Detalle)
 
 Este documento esta pensado para sustentacion y estudio profundo del backend SIGAM. Incluye arquitectura, reglas, endpoints, ejemplos de request/response, flujos y pruebas. No modifica el README principal.
 
@@ -224,7 +224,7 @@ Respuesta:
 [{ "id_usuario": 1, "nombre": "...", "email": "...", "rol": "Analista", "fecha_creacion": "..." }]
 ```
 
-**POST /api/usuarios** (Gerente)
+**POST /api/usuarios** (Gerente, Analista)
 Request:
 ```
 { "nombre": "Ana", "email": "ana@sigam.com", "password": "Password1", "rol": "Analista" }
@@ -232,6 +232,17 @@ Request:
 Respuesta:
 ```
 { "id_usuario": 1, "nombre": "Ana", "email": "ana@sigam.com", "rol": "Analista", "fecha_creacion": "..." }
+```
+Nota: Analista solo puede crear roles `Usuario` o `Técnico`.
+
+**PATCH /api/usuarios/:id** (Gerente, Analista)
+Request:
+```
+{ "nombre": "Ana Perez", "email": "ana.perez@sigam.com" }
+```
+Respuesta:
+```
+{ "id_usuario": 1, "nombre": "Ana Perez", "email": "ana.perez@sigam.com", "rol": "Analista", "fecha_creacion": "..." }
 ```
 
 **PATCH /api/usuarios/:id/rol** (Gerente)
@@ -244,7 +255,7 @@ Respuesta:
 { "id_usuario": 1, "nombre": "...", "email": "...", "rol": "Técnico", "fecha_creacion": "..." }
 ```
 
-**PATCH /api/usuarios/:id/password** (Gerente)
+**PATCH /api/usuarios/:id/password** (Gerente, Tecnico, Usuario)
 Request:
 ```
 { "password": "NuevaClave123" }
@@ -252,6 +263,13 @@ Request:
 Respuesta:
 ```
 { "message": "Password actualizado", "user": { "id_usuario": 1, "nombre": "...", "email": "...", "rol": "..." } }
+```
+Nota: Tecnico solo puede cambiar contraseña de usuarios con rol `Usuario`. Usuario solo puede cambiar su propia contraseña.
+
+**DELETE /api/usuarios/:id** (Gerente)
+Respuesta:
+```
+{ "id_usuario": 1, "nombre": "...", "email": "..." }
 ```
 
 ### 9.4 Ubicaciones
@@ -359,7 +377,8 @@ Respuesta:
 Respuesta: lista de tickets.
 
 **GET /api/tickets/:id**  
-Respuesta: ticket.
+Query opcional: `suggestions=true` para incluir sugerencias.  
+Respuesta: ticket (y sugerencias si se solicita).
 
 **GET /api/tickets/activo/:id_activo**  
 Respuesta: tickets del activo.
@@ -549,6 +568,12 @@ Respuesta:
 { "mttr_seconds": 0, "mttr_horas": 0, "mttr_dias": 0, "mtbf_seconds": 0, "mtbf_horas": 0, "mtbf_dias": 0 }
 ```
 
+**GET /api/metricas/resumen**  
+Respuesta:
+```
+{ "total_activos": 0, "activos_en_mantenimiento": 0, "tickets_abiertos": 0, "tickets_cerrados": 0, "consumo_repuestos": 0 }
+```
+
 ### 9.14 Auditoria
 **GET /api/auditoria**  
 Filtros: `from`, `to`, `entidad`, `entidad_id`, `accion`, `status`, `id_usuario_actor`, `limit`, `offset`.
@@ -556,6 +581,37 @@ Respuesta: lista de logs.
 
 **GET /api/auditoria/:id**  
 Respuesta: log de auditoria.
+
+### 9.14.2 Reportes
+**GET /api/reportes/activos**  
+Respuesta: lista de activos (con filtros opcionales `categoria`, `sede`, `piso`, `sala`).
+
+**GET /api/reportes/tickets**  
+Respuesta: lista de tickets.
+
+**GET /api/reportes/mantenimientos**  
+Respuesta: lista de ordenes.
+
+**GET /api/reportes/licencias**  
+Respuesta: lista de licencias.
+
+**GET /api/reportes/inventario**  
+Respuesta: lista de repuestos.
+
+**GET /api/reportes/consumo-repuestos**  
+Respuesta: consumo agregado de repuestos.
+
+### 9.14.1 Alertas
+**GET /api/alertas** (Analista, Gerente, Auditor)  
+Filtros: `estado`, `tipo`, `id_activo`, `id_repuesto`, `limit`, `offset`.  
+Respuesta: lista de alertas.
+
+**PATCH /api/alertas/:id/estado** (Analista, Gerente)  
+Request:
+```
+{ "estado": "Resuelta" }
+```
+Respuesta: alerta actualizada.
 
 ### 9.15 Jobs IA
 **POST /api/jobs/ia/repuestos/sugerencias**  
@@ -571,6 +627,13 @@ Request:
 { "windowDays": 365, "thresholdPct": 0.6 }
 ```
 Respuesta: sugerencias de baja y alertas creadas.
+
+**POST /api/jobs/ia/activos/obsolescencia**  
+Request:
+```
+{ "months": 48, "limit": 50 }
+```
+Respuesta: activos candidatos y alertas creadas.
 
 **POST /api/jobs/ia/tickets/reprocess**  
 Request:

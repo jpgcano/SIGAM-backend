@@ -72,6 +72,45 @@ class SoftwareService {
         );
         return s;
     }
+
+    async assignToAsset(payload, actor, auditContext) {
+        if (!payload?.id_software || !payload?.id_activo) {
+            throw { status: 400, message: 'id_software e id_activo son requeridos' };
+        }
+        const created = await this.model.assignToAsset(payload);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'SOFTWARE',
+                entidad_id: payload.id_software,
+                accion: 'SOFTWARE_ASSIGN',
+                payload_after: created,
+                metadata: { id_activo: payload.id_activo }
+            })
+        );
+        return created;
+    }
+
+    listByActivo(id_activo) {
+        return this.model.listByActivo(id_activo);
+    }
+
+    async removeFromAsset(id_software, id_activo, actor, auditContext) {
+        const removed = await this.model.removeFromAsset(id_software, id_activo);
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor,
+                context: auditContext,
+                entidad: 'SOFTWARE',
+                entidad_id: id_software,
+                accion: 'SOFTWARE_UNASSIGN',
+                payload_after: removed,
+                metadata: { id_activo }
+            })
+        );
+        return removed;
+    }
 }
 
 export default SoftwareService;

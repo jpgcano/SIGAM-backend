@@ -12,6 +12,7 @@ const ctrl = new LicenciaController(new LicenciaService(new LicenciaModel()));
 
 // List licenses.
 router.get('/', authMiddleware, permit('licencias', 'list'), ctrl.getAll);
+router.get('/alertas/vencimiento', authMiddleware, permit('licencias', 'list'), ctrl.getAlertasVencimiento);
 // Fetch a license by id.
 router.get('/:id', authMiddleware, permit('licencias', 'read'), ctrl.getById);
 // List assignments for a license.

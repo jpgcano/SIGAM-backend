@@ -24,6 +24,14 @@ router.post(
     ctrl.generateDisposalSuggestions
 );
 
+// Generate obsolescence alerts for assets.
+router.post(
+    '/activos/obsolescencia',
+    authMiddleware,
+    permit('ia_jobs', 'obsolescence_alerts'),
+    ctrl.generateObsolescenceAlerts
+);
+
 // Reprocess tickets for IA classification and priority.
 router.post(
     '/tickets/reprocess',

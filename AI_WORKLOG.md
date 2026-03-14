@@ -716,3 +716,90 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - revision manual de servicios y controladores actualizados.
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Usuarios y permisos (RBAC) + endpoint delete
+- Rama: feature/users-rbac
+- Objetivo: agregar endpoint delete, reglas RBAC para crear/actualizar/reset password y tests.
+- Cambios:
+  - `src/config/permissions.js` - permisos users create/update/reset/delete.
+  - `src/routes/user.routes.js` - endpoints update y delete.
+  - `src/controllers/user.controller.js` - update y remove.
+  - `src/services/user.service.js` - reglas RBAC en create/reset/update/remove.
+  - `src/models/User.js` - `updateBasic`.
+  - `test/user.service.test.js` - cobertura nuevas reglas.
+- Evidencia:
+  - `pnpm test` (ok, 87/87).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Tickets IA - sugerencias al consultar
+- Rama: feature/users-rbac
+- Objetivo: permitir incluir sugerencias al consultar un ticket.
+- Cambios:
+  - `planIA.md` - lineamientos IA para tickets.
+  - `src/controllers/ticket.controller.js` - soporte `?suggestions=true` en GET /api/tickets/:id.
+  - `test/ticket.controller.test.js` - cobertura de sugerencias.
+- Evidencia:
+  - `pnpm test` (ok, 85/85).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Alertas de obsolescencia de activos
+- Rama: feature/users-rbac
+- Objetivo: generar alertas para activos con antiguedad mayor a N meses.
+- Cambios:
+  - `src/models/Asset.js` - `findObsolescenceCandidates`.
+  - `src/services/ia/jobs.service.js` - `generateObsolescenceAlerts`.
+  - `src/controllers/iaJobs.controller.js` - handler de obsolescencia.
+  - `src/routes/iaJobs.routes.js` - endpoint `/api/jobs/ia/activos/obsolescencia`.
+  - `src/config/permissions.js` - permiso `ia_jobs.obsolescence_alerts`.
+  - `test/ia.obsolescence.test.js` - cobertura de job.
+- Evidencia:
+  - `pnpm test` (ok, 88/88).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Documentacion API usuarios/tickets/jobs
+- Rama: feature/users-rbac
+- Objetivo: actualizar README con nuevos permisos y endpoints.
+- Cambios:
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - roles usuarios, update/delete, sugerencias en ticket y obsolescencia.
+- Evidencia:
+  - `pnpm test` (ok, 88/88).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Alertas API (listado/estado)
+- Rama: feature/alertas-reportes
+- Objetivo: exponer endpoints de alertas para panel de reportes.
+- Cambios:
+  - `src/models/alerta.js` - listado y update estado.
+  - `src/services/alerta.service.js` - capa de servicio y auditoria.
+  - `src/controllers/alerta.controller.js` - handlers.
+  - `src/routes/alerta.routes.js` - endpoints.
+  - `src/config/permissions.js` - permisos alertas.
+  - `src/app.js` - ruta `/api/alertas`.
+  - `test/alerta.service.test.js` - cobertura basica.
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - documentacion alertas.
+- Evidencia:
+  - `pnpm test` (ok, 83/83).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Reportes y metricas (tests + docs)
+- Rama: feature/reportes-metricas
+- Objetivo: asegurar endpoints de reportes/metricas y documentacion.
+- Cambios:
+  - `test/report.routes.test.js` - cobertura endpoints reportes.
+  - `test/metrics.routes.test.js` - cobertura endpoints metricas.
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - documentacion de /api/metricas/resumen y /api/reportes/*.
+- Evidencia:
+  - `pnpm test` (ok, 85/85).
+- Commit(s):
+  - pendiente

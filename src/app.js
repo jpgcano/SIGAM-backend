@@ -24,6 +24,10 @@ import ubicacionRoutes from './routes/ubicacion.routes.js';
 import licenciaRoutes from './routes/licencia.routes.js';
 import softwareRoutes from './routes/software.routes.js';
 import iaJobsRoutes from './routes/iaJobs.routes.js';
+import categoriaTicketRoutes from './routes/categoriaTicket.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import reportRoutes from './routes/report.routes.js';
+import alertRoutes from './routes/alerta.routes.js';
 
 const app = express();
 
@@ -68,6 +72,10 @@ app.use('/api/licencias', licenciaRoutes);
 app.use('/api/software', softwareRoutes);
 app.use('/api/jobs/ia', iaJobsRoutes);
 app.use('/api/auditoria', auditLogRoutes);
+app.use('/api/tickets/categorias', categoriaTicketRoutes);
+app.use('/api/notificaciones', notificationRoutes);
+app.use('/api/reportes', reportRoutes);
+app.use('/api/alertas', alertRoutes);
 
 // Error handler
 app.use(errorMiddleware);

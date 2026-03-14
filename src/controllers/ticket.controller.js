@@ -4,7 +4,7 @@ import buildAuditContext from '../utils/auditContext.js';
 class TicketController {
     constructor(service) {
         this.service = service;
-        ['getAll','getById','getByActivo','getAssigned','getMetrics','getSuggestions','create','update','changeEstado','remove']
+        ['getAll','getById','getByActivo','getAssigned','getMetrics','getSuggestions','create','update','changeEstado','remove','addComment','getComments','getHistory','assign']
             .forEach(m => this[m] = this[m].bind(this));
     }
     // List tickets.
@@ -13,7 +13,16 @@ class TicketController {
     }
     // Read ticket by id with access checks.
     async getById(req, res, next) {
-        try { res.json(await this.service.findById(req.params.id, req.user)); } catch (e) { next(e); }
+        try {
+            const ticket = await this.service.findById(req.params.id, req.user);
+            const includeSuggestions = String(req.query?.suggestions || '').toLowerCase() === 'true';
+            if (!includeSuggestions) {
+                res.json(ticket);
+                return;
+            }
+            const data = await this.service.getSuggestions(req.params.id, req.user);
+            res.json({ ...ticket, suggestions: data?.suggestions || [] });
+        } catch (e) { next(e); }
     }
     // Tickets for a given asset.
     async getByActivo(req, res, next) {
@@ -73,6 +82,32 @@ class TicketController {
         try {
             await this.service.remove(req.params.id, req.user, buildAuditContext(req));
             res.json({ message: 'Ticket eliminado' });
+        } catch (e) { next(e); }
+    }
+
+    // Add comment to ticket.
+    async addComment(req, res, next) {
+        try {
+            const created = await this.service.addComment(req.params.id, req.body?.comentario, req.user, buildAuditContext(req));
+            res.status(201).json(created);
+        } catch (e) { next(e); }
+    }
+
+    // List ticket comments.
+    async getComments(req, res, next) {
+        try { res.json(await this.service.listComments(req.params.id, req.user)); } catch (e) { next(e); }
+    }
+
+    // List ticket history.
+    async getHistory(req, res, next) {
+        try { res.json(await this.service.listHistory(req.params.id, req.user)); } catch (e) { next(e); }
+    }
+
+    // Assign ticket to technician.
+    async assign(req, res, next) {
+        try {
+            const assigned = await this.service.assignToTechnician(req.params.id, req.body?.id_usuario_tecnico, req.user, buildAuditContext(req));
+            res.json(assigned);
         } catch (e) { next(e); }
     }
 }

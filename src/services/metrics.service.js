@@ -6,6 +6,10 @@ class MetricsService {
     getOperationalMetrics() {
         return this.model.getOperationalMetrics();
     }
+
+    getSummaryMetrics() {
+        return this.model.getSummaryMetrics();
+    }
 }
 
 export default MetricsService;
