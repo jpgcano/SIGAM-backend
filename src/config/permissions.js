@@ -67,6 +67,10 @@ export const PERMISSIONS = {
     reportes: {
         list: roles('Analista', 'Gerente', 'Auditor')
     },
+    alertas: {
+        list: roles('Analista', 'Gerente', 'Auditor'),
+        update: roles('Analista', 'Gerente')
+    },
     categorias_ticket: {
         list: roles('Analista', 'Técnico', 'Gerente', 'Auditor'),
         create: roles('Gerente'),

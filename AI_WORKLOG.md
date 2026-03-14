@@ -772,3 +772,21 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `pnpm test` (ok, 88/88).
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Alertas API (listado/estado)
+- Rama: feature/alertas-reportes
+- Objetivo: exponer endpoints de alertas para panel de reportes.
+- Cambios:
+  - `src/models/alerta.js` - listado y update estado.
+  - `src/services/alerta.service.js` - capa de servicio y auditoria.
+  - `src/controllers/alerta.controller.js` - handlers.
+  - `src/routes/alerta.routes.js` - endpoints.
+  - `src/config/permissions.js` - permisos alertas.
+  - `src/app.js` - ruta `/api/alertas`.
+  - `test/alerta.service.test.js` - cobertura basica.
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - documentacion alertas.
+- Evidencia:
+  - `pnpm test` (ok, 83/83).
+- Commit(s):
+  - pendiente
