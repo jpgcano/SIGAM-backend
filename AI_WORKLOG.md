@@ -716,3 +716,19 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - revision manual de servicios y controladores actualizados.
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Usuarios y permisos (RBAC) + endpoint delete
+- Rama: feature/users-rbac
+- Objetivo: agregar endpoint delete, reglas RBAC para crear/actualizar/reset password y tests.
+- Cambios:
+  - `src/config/permissions.js` - permisos users create/update/reset/delete.
+  - `src/routes/user.routes.js` - endpoints update y delete.
+  - `src/controllers/user.controller.js` - update y remove.
+  - `src/services/user.service.js` - reglas RBAC en create/reset/update/remove.
+  - `src/models/User.js` - `updateBasic`.
+  - `test/user.service.test.js` - cobertura nuevas reglas.
+- Evidencia:
+  - `pnpm test` (ok, 85/85).
+- Commit(s):
+  - pendiente

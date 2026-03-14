@@ -70,6 +70,16 @@ class UserModel extends BaseModel {
         );
     }
 
+    async updateBasic(id, { nombre, email }) {
+        return this.dbUpdate(
+            'usuarios',
+            'id_usuario',
+            id,
+            { nombre, email },
+            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion']
+        );
+    }
+
     async remove(id) {
         return this.dbRemove(
             'usuarios',
