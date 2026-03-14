@@ -62,7 +62,8 @@ export const PERMISSIONS = {
     },
     metrics: {
         operacion: roles('Analista', 'Gerente', 'Auditor'),
-        resumen: roles('Analista', 'Gerente', 'Auditor')
+        resumen: roles('Analista', 'Gerente', 'Auditor'),
+        latencia: roles('Analista', 'Gerente', 'Auditor')
     },
     reportes: {
         list: roles('Analista', 'Gerente', 'Auditor')

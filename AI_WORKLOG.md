@@ -803,3 +803,23 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `pnpm test` (ok, 85/85).
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Paginacion activos + latencia BD
+- Rama: pendiente
+- Objetivo: limitar resultados en /api/activos y exponer latencia DB.
+- Cambios:
+  - `src/controllers/asset.controller.js` - agrega `limit`/`offset` en listados.
+  - `src/services/asset.service.js` - validacion de paginacion.
+  - `src/models/Asset.js` - LIMIT/OFFSET y rango Supabase.
+  - `src/models/metrics.js` - medicion de latencia DB.
+  - `src/controllers/metrics.controller.js` - endpoint latencia.
+  - `src/services/metrics.service.js` - capa de servicio.
+  - `src/routes/metrics.routes.js` - ruta `/latencia`.
+  - `src/config/permissions.js` - permiso `metrics.latencia`.
+  - `test/metrics.routes.test.js` - cobertura nueva ruta.
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - docs paginacion y latencia.
+- Evidencia:
+  - `pnpm test` (ok, 85/85).
+- Commit(s):
+  - pendiente

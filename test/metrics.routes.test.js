@@ -8,7 +8,8 @@ function hasRoute(path, method) {
     );
 }
 
-test('Metrics routes exponen /operacion y /resumen', async () => {
+test('Metrics routes exponen /operacion, /resumen y /latencia', async () => {
     assert.ok(hasRoute('/operacion', 'get'));
     assert.ok(hasRoute('/resumen', 'get'));
+    assert.ok(hasRoute('/latencia', 'get'));
 });
