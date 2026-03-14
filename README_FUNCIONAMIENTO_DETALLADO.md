@@ -218,7 +218,8 @@ Respuesta:
 ```
 
 ### 9.3 Usuarios
-**GET /api/usuarios** (Gerente, Analista, Auditor)
+**GET /api/usuarios** (Gerente, Analista, Auditor)  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta:
 ```
 [{ "id_usuario": 1, "nombre": "...", "email": "...", "rol": "Analista", "fecha_creacion": "..." }]
@@ -375,6 +376,7 @@ Respuesta:
 
 ### 9.8 Tickets
 **GET /api/tickets**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: lista de tickets.
 
 **GET /api/tickets/:id**  
@@ -382,9 +384,11 @@ Query opcional: `suggestions=true` para incluir sugerencias.
 Respuesta: ticket (y sugerencias si se solicita).
 
 **GET /api/tickets/activo/:id_activo**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: tickets del activo.
 
 **GET /api/tickets/asignados/mis**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: tickets asignados al tecnico autenticado.
 
 **GET /api/tickets/metricas**  
@@ -430,12 +434,14 @@ Respuesta:
 
 ### 9.9 Mantenimientos
 **GET /api/mantenimientos**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: lista de ordenes.
 
 **GET /api/mantenimientos/:id**  
 Respuesta: orden.
 
 **GET /api/mantenimientos/tecnico/:id_tecnico**  
+Query opcional: `limit`, `offset` (por defecto `limit=100`, `offset=0`, max `limit=500`).
 Respuesta: ordenes del tecnico.
 
 **GET /api/mantenimientos/:id/consumos**  
@@ -682,12 +688,20 @@ Respuesta incluye segundos, horas y dias.
 - `403 Forbidden`: rol no autorizado.
 - `404 Not Found`: recurso inexistente.
 - `400 Bad Request`: campos requeridos faltantes o estado invalido.
+- `429 Too Many Requests`: demasiadas solicitudes (rate limit activo).
 
 ## 13) Casos de error concretos
 - Intentar cerrar ticket con tecnico no asignado -> `403`.
 - Enviar estado invalido en tickets -> `400`.
 - Crear mantenimiento sin `id_ticket` o `id_usuario_tecnico` -> `400`.
 - Registrar consumo sin `id_repuesto` o `cantidad_usada` -> `400`.
+
+## 13.1 Reglas front (obligatorias)
+- **Paginacion**: todas las listas grandes deben usar `limit` y `offset`. Ejemplo: `GET /api/activos?limit=50&offset=0`.
+- **Filtros**: si el usuario filtra por `categoria`, `sede`, `piso` o `sala`, incluirlos en la query para reducir carga.
+- **Rate limit**: si el API devuelve `429`, esperar (backoff) y mostrar mensaje; no reintentar en loop.
+- **Errores auth**: si `401`, detener reintentos y pedir login nuevamente.
+- **Refresh controlado**: evitar polling agresivo (no cada 1-2s); usar 10-30s o refresco manual.
 
 ## 14) Datos seed (referencia rapida)
 - Usuarios: 1..15

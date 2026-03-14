@@ -9,7 +9,10 @@ class TicketController {
     }
     // List tickets.
     async getAll(req, res, next) {
-        try { res.json(await this.service.findAll()); } catch (e) { next(e); }
+        try {
+            const { limit, offset } = req.query || {};
+            res.json(await this.service.findAll({ limit, offset }));
+        } catch (e) { next(e); }
     }
     // Read ticket by id with access checks.
     async getById(req, res, next) {
@@ -26,11 +29,17 @@ class TicketController {
     }
     // Tickets for a given asset.
     async getByActivo(req, res, next) {
-        try { res.json(await this.service.findByActivo(req.params.id_activo)); } catch (e) { next(e); }
+        try {
+            const { limit, offset } = req.query || {};
+            res.json(await this.service.findByActivo(req.params.id_activo, { limit, offset }));
+        } catch (e) { next(e); }
     }
     // Tickets assigned to current technician.
     async getAssigned(req, res, next) {
-        try { res.json(await this.service.findAssignedByTecnico(req.user.id)); } catch (e) { next(e); }
+        try {
+            const { limit, offset } = req.query || {};
+            res.json(await this.service.findAssignedByTecnico(req.user.id, { limit, offset }));
+        } catch (e) { next(e); }
     }
     // MTTR/MTBF metrics (optional filter by asset id).
     async getMetrics(req, res, next) {

@@ -12,13 +12,29 @@ class UserModel extends BaseModel {
         );
     }
 
-    async findAll() {
-        return this.dbFindAll(
-            'usuarios',
-            'id_usuario',
-            'ASC',
-            ['id_usuario', 'nombre', 'email', 'rol', 'fecha_creacion', 'activo', 'ultimo_acceso']
-        );
+    async findAll({ limit, offset } = {}) {
+        if (this.useSupabase) {
+            let query = this.supabase
+                .from('usuarios')
+                .select('id_usuario, nombre, email, rol, fecha_creacion, activo, ultimo_acceso')
+                .order('id_usuario', { ascending: true });
+            if (limit !== undefined && offset !== undefined) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            const { data, error } = await query;
+            if (error) throw error;
+            return data;
+        }
+        const params = [];
+        let sql = `SELECT id_usuario, nombre, email, rol, fecha_creacion, activo, ultimo_acceso
+                   FROM usuarios
+                   ORDER BY id_usuario ASC`;
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ' LIMIT $1 OFFSET $2';
+        }
+        const { rows } = await this.query(sql, params);
+        return rows;
     }
 
     // Find user by id (without password hash).
