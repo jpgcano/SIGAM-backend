@@ -51,6 +51,24 @@ function buildMetrics(rows) {
 }
 
 class MetricsModel extends BaseModel {
+    async getDbLatency() {
+        const start = process.hrtime.bigint();
+
+        if (this.useSupabase) {
+            const { error } = await this.supabase
+                .from('activos')
+                .select('id_activo', { head: true, count: 'exact' })
+                .limit(1);
+            if (error) throw error;
+        } else {
+            await this.query('SELECT 1');
+        }
+
+        const end = process.hrtime.bigint();
+        const latencyMs = Number(end - start) / 1e6;
+        return { latency_ms: Number(latencyMs.toFixed(2)) };
+    }
+
     async getOperationalMetrics() {
         if (this.useSupabase) {
             const { data, error } = await this.supabase

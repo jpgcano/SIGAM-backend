@@ -19,8 +19,8 @@ class AssetController {
 
     async getAll(req, res, next) {
         try {
-            const { categoria, sede, piso, sala } = req.query || {};
-            const assets = await this.assetService.findAll({ categoria, sede, piso, sala });
+            const { categoria, sede, piso, sala, limit, offset } = req.query || {};
+            const assets = await this.assetService.findAll({ categoria, sede, piso, sala, limit, offset });
             res.json(assets);
         } catch (error) { next(error); }
     }

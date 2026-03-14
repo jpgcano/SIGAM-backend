@@ -10,6 +10,10 @@ class MetricsService {
     getSummaryMetrics() {
         return this.model.getSummaryMetrics();
     }
+
+    getDbLatency() {
+        return this.model.getDbLatency();
+    }
 }
 
 export default MetricsService;

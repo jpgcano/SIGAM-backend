@@ -43,10 +43,26 @@ class AssetService {
         return { ...asset, fecha_obsolescencia };
     }
 
+    static normalizePagination({ limit, offset } = {}) {
+        const parsedLimit = limit === undefined ? 100 : Number(limit);
+        const parsedOffset = offset === undefined ? 0 : Number(offset);
+
+        if (!Number.isInteger(parsedLimit) || parsedLimit <= 0 || parsedLimit > 500) {
+            throw { status: 400, message: 'limit debe ser entero entre 1 y 500' };
+        }
+        if (!Number.isInteger(parsedOffset) || parsedOffset < 0 || parsedOffset > 1000000) {
+            throw { status: 400, message: 'offset debe ser entero >= 0' };
+        }
+
+        return { limit: parsedLimit, offset: parsedOffset };
+    }
+
     async findAll(filters = {}) {
-        const assets = (filters && (filters.categoria || filters.sede || filters.piso || filters.sala))
-            ? await this.assetModel.findAllFiltered(filters)
-            : await this.assetModel.findAll();
+        const { limit, offset } = AssetService.normalizePagination(filters);
+        const payload = { ...filters, limit, offset };
+        const assets = (payload && (payload.categoria || payload.sede || payload.piso || payload.sala))
+            ? await this.assetModel.findAllFiltered(payload)
+            : await this.assetModel.findAll(payload);
         return Array.isArray(assets)
             ? assets.map((asset) => AssetService.withObsolescence(asset))
             : assets;

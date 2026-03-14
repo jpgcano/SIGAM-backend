@@ -3,18 +3,39 @@
 // Assets model: DB access for assets and related history.
 class AssetModel extends BaseModel {
     // List assets with view-based details.
-    async findAll() {
-        return this.dbFindAll('vw_activos_detalle', 'id_activo');
+    async findAll({ limit, offset } = {}) {
+        if (this.useSupabase) {
+            let query = this.supabase.from('vw_activos_detalle').select('*');
+            query = query.order('id_activo', { ascending: true });
+            if (limit !== undefined && offset !== undefined) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            const { data, error } = await query;
+            if (error) throw error;
+            return data;
+        }
+        const params = [];
+        let sql = 'SELECT * FROM vw_activos_detalle ORDER BY id_activo ASC';
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ' LIMIT $1 OFFSET $2';
+        }
+        const { rows } = await this.query(sql, params);
+        return rows;
     }
 
-    async findAllFiltered({ categoria, sede, piso, sala } = {}) {
+    async findAllFiltered({ categoria, sede, piso, sala, limit, offset } = {}) {
         if (this.useSupabase) {
             let query = this.supabase.from('vw_activos_detalle').select('*');
             if (categoria) query = query.eq('nombre_categoria', categoria);
             if (sede) query = query.eq('sede', sede);
             if (piso) query = query.eq('piso', piso);
             if (sala) query = query.eq('sala', sala);
-            const { data, error } = await query.order('id_activo', { ascending: true });
+            query = query.order('id_activo', { ascending: true });
+            if (limit !== undefined && offset !== undefined) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            const { data, error } = await query;
             if (error) throw error;
             return data;
         }
@@ -37,10 +58,12 @@ class AssetModel extends BaseModel {
             filters.push(`sala = $${params.length}`);
         }
         const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
-        const { rows } = await this.query(
-            `SELECT * FROM vw_activos_detalle ${where} ORDER BY id_activo ASC`,
-            params
-        );
+        let sql = `SELECT * FROM vw_activos_detalle ${where} ORDER BY id_activo ASC`;
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ` LIMIT $${params.length - 1} OFFSET $${params.length}`;
+        }
+        const { rows } = await this.query(sql, params);
         return rows;
     }
 

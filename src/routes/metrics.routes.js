@@ -11,5 +11,6 @@ const ctrl = new MetricsController(new MetricsService(new MetricsModel()));
 // GET /metricas/operacion
 router.get('/operacion', authMiddleware, permit('metrics', 'operacion'), ctrl.getOperational);
 router.get('/resumen', authMiddleware, permit('metrics', 'resumen'), ctrl.getSummary);
+router.get('/latencia', authMiddleware, permit('metrics', 'latencia'), ctrl.getDbLatency);
 
 export default router;
