@@ -16,8 +16,25 @@ function normalizeRole(rol) {
 
 class TicketModel extends BaseModel {
     // List tickets using the operational view for consistent joins.
-    async findAll() {
-        return this.dbFindAll('vw_tickets_operacion', 'id_ticket', 'DESC');
+    async findAll({ limit, offset } = {}) {
+        if (this.useSupabase) {
+            let query = this.supabase.from('vw_tickets_operacion').select('*');
+            query = query.order('id_ticket', { ascending: false });
+            if (limit !== undefined && offset !== undefined) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            const { data, error } = await query;
+            if (error) throw error;
+            return data;
+        }
+        const params = [];
+        let sql = 'SELECT * FROM vw_tickets_operacion ORDER BY id_ticket DESC';
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ' LIMIT $1 OFFSET $2';
+        }
+        const { rows } = await this.query(sql, params);
+        return rows;
     }
 
     // Fetch a single ticket from the operational view.
@@ -46,21 +63,44 @@ class TicketModel extends BaseModel {
     }
 
     // List tickets for a specific asset.
-    async findByActivo(id_activo) {
+    async findByActivo(id_activo, { limit, offset } = {}) {
         if (this.useSupabase) {
-            const { data, error } = await this.supabase
+            let query = this.supabase
                 .from('vw_tickets_operacion')
                 .select('*')
                 .eq('id_activo', id_activo)
                 .order('id_ticket', { ascending: false });
+            if (limit !== undefined && offset !== undefined) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            const { data, error } = await query;
             if (error) throw error;
             return data;
         }
-        const { rows } = await this.query(
-            'SELECT * FROM vw_tickets_operacion WHERE id_activo = $1 ORDER BY id_ticket DESC',
-            [id_activo]
-        );
+        const params = [id_activo];
+        let sql = 'SELECT * FROM vw_tickets_operacion WHERE id_activo = $1 ORDER BY id_ticket DESC';
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ' LIMIT $2 OFFSET $3';
+        }
+        const { rows } = await this.query(sql, params);
         return rows;
+    }
+
+    // Tickets assigned to a technician (via maintenance orders).
+    async findAssignedByTecnico(id_tecnico, { limit, offset } = {}) {
+        const params = [id_tecnico];
+        let sql = `SELECT t.*
+                   FROM vw_tickets_operacion t
+                   JOIN ordenes_mantenimiento om ON om.id_ticket = t.id_ticket
+                   WHERE om.id_usuario_tecnico = $1
+                   ORDER BY t.id_ticket DESC`;
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ' LIMIT $2 OFFSET $3';
+        }
+        const { rows } = await this.query(sql, params);
+        return rows || [];
     }
 
     // Get recent resolved tickets on the same asset for similarity checks.

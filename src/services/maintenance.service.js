@@ -1,6 +1,7 @@
 import AuditLogService from './auditLog.service.js';
 import AssetModel from '../models/Asset.js';
 import TicketModel from '../models/Ticket.js';
+import { normalizePagination } from '../utils/pagination.js';
 
 // Service layer for maintenance orders and related domain logic.
 class MaintenanceService {
@@ -14,8 +15,9 @@ class MaintenanceService {
     static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
     // List all maintenance orders.
-    async findAll() {
-        const rows = await this.model.findAll();
+    async findAll({ limit, offset } = {}) {
+        const pagination = normalizePagination({ limit, offset, defaultLimit: 100, maxLimit: 500 });
+        const rows = await this.model.findAll(pagination);
         return Array.isArray(rows) ? rows.map(this.#withDuration) : rows;
     }
 
@@ -27,8 +29,9 @@ class MaintenanceService {
     }
 
     // List maintenance orders by technician.
-    async findByTecnico(id_tecnico) {
-        const rows = await this.model.findByTecnico(id_tecnico);
+    async findByTecnico(id_tecnico, { limit, offset } = {}) {
+        const pagination = normalizePagination({ limit, offset, defaultLimit: 100, maxLimit: 500 });
+        const rows = await this.model.findByTecnico(id_tecnico, pagination);
         return Array.isArray(rows) ? rows.map(this.#withDuration) : rows;
     }
 

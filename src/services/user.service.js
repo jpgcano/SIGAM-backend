@@ -1,6 +1,7 @@
 import HashUtil from '../utils/hash.js';
 import { ALLOWED_ROLES_SET } from '../config/roles.js';
 import AuditLogService from './auditLog.service.js';
+import { normalizePagination } from '../utils/pagination.js';
 
 // Users service: business rules for user lifecycle.
 class UserService {
@@ -10,8 +11,9 @@ class UserService {
     }
 
     // List users (no auth checks here; handled by middleware).
-    async findAll() {
-        return this.userModel.findAll();
+    async findAll({ limit, offset } = {}) {
+        const pagination = normalizePagination({ limit, offset, defaultLimit: 100, maxLimit: 500 });
+        return this.userModel.findAll(pagination);
     }
 
     // Create user with hashed password and audit logs.

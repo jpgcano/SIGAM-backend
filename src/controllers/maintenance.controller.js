@@ -11,7 +11,10 @@ class MaintenanceController {
 
     // List all maintenance orders.
     async getAll(req, res, next) {
-        try { res.json(await this.service.findAll()); } catch (e) { next(e); }
+        try {
+            const { limit, offset } = req.query || {};
+            res.json(await this.service.findAll({ limit, offset }));
+        } catch (e) { next(e); }
     }
 
     // Get a maintenance order by id.
@@ -21,7 +24,10 @@ class MaintenanceController {
 
     // Get the technician calendar.
     async getByTecnico(req, res, next) {
-        try { res.json(await this.service.findByTecnico(req.params.id_tecnico)); } catch (e) { next(e); }
+        try {
+            const { limit, offset } = req.query || {};
+            res.json(await this.service.findByTecnico(req.params.id_tecnico, { limit, offset }));
+        } catch (e) { next(e); }
     }
 
     // Get spare parts consumption for a maintenance order.

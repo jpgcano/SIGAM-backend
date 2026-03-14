@@ -823,3 +823,24 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `pnpm test` (ok, 85/85).
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Paginacion en tickets/mantenimientos/usuarios
+- Rama: feature/paginacion-listas
+- Objetivo: evitar cargas completas en endpoints de listas.
+- Cambios:
+  - `src/utils/pagination.js` - normalizacion de `limit/offset`.
+  - `src/controllers/ticket.controller.js` - acepta paginacion.
+  - `src/services/ticket.service.js` - valida paginacion.
+  - `src/models/Ticket.js` - LIMIT/OFFSET y assigned tickets.
+  - `src/controllers/maintenance.controller.js` - acepta paginacion.
+  - `src/services/maintenance.service.js` - valida paginacion.
+  - `src/models/Maintenance.js` - LIMIT/OFFSET.
+  - `src/controllers/user.controller.js` - acepta paginacion.
+  - `src/services/user.service.js` - valida paginacion.
+  - `src/models/User.js` - LIMIT/OFFSET.
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - documentacion de paginacion.
+- Evidencia:
+  - `pnpm test` (ok, 85/85).
+- Commit(s):
+  - pendiente
