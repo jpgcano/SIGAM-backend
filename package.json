@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "packageManager": "pnpm@10.31.0",
   "engines": {
-    "node": "20.x"
+    "node": "24.14.0"
   },
   "type": "module",
   "main": "src/server.js",
