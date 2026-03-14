@@ -682,12 +682,20 @@ Respuesta incluye segundos, horas y dias.
 - `403 Forbidden`: rol no autorizado.
 - `404 Not Found`: recurso inexistente.
 - `400 Bad Request`: campos requeridos faltantes o estado invalido.
+- `429 Too Many Requests`: demasiadas solicitudes (rate limit activo).
 
 ## 13) Casos de error concretos
 - Intentar cerrar ticket con tecnico no asignado -> `403`.
 - Enviar estado invalido en tickets -> `400`.
 - Crear mantenimiento sin `id_ticket` o `id_usuario_tecnico` -> `400`.
 - Registrar consumo sin `id_repuesto` o `cantidad_usada` -> `400`.
+
+## 13.1 Reglas front (obligatorias)
+- **Paginacion**: todas las listas grandes deben usar `limit` y `offset`. Ejemplo: `GET /api/activos?limit=50&offset=0`.
+- **Filtros**: si el usuario filtra por `categoria`, `sede`, `piso` o `sala`, incluirlos en la query para reducir carga.
+- **Rate limit**: si el API devuelve `429`, esperar (backoff) y mostrar mensaje; no reintentar en loop.
+- **Errores auth**: si `401`, detener reintentos y pedir login nuevamente.
+- **Refresh controlado**: evitar polling agresivo (no cada 1-2s); usar 10-30s o refresco manual.
 
 ## 14) Datos seed (referencia rapida)
 - Usuarios: 1..15
