@@ -718,45 +718,57 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - pendiente
 
 ### 2026-03-14 - IA: Codex GPT-5
-- Issue: Tickets primero - cobertura de pruebas de servicio
-- Rama: feature/docs-api (sin cambios de rama; repo ya estaba con cambios previos)
-- Objetivo: aumentar cobertura minima del modulo de tickets (creacion con categoria, validaciones, metricas, cierre por tecnico).
+- Issue: Usuarios y permisos (RBAC) + endpoint delete
+- Rama: feature/users-rbac
+- Objetivo: agregar endpoint delete, reglas RBAC para crear/actualizar/reset password y tests.
 - Cambios:
-  - `test/ticket.service.test.js` - tests de TicketService (categoria IA, validaciones, metricas, acceso tecnico).
-- Decisiones tecnicas: uso de stubs para modelos y audit log para aislar logica de servicio.
-- Pendiente: revisar fallas existentes en `pnpm test` (audit, auth, ia7) antes de declarar suite verde.
-- Riesgos/Bloqueos: N/A
+  - `src/config/permissions.js` - permisos users create/update/reset/delete.
+  - `src/routes/user.routes.js` - endpoints update y delete.
+  - `src/controllers/user.controller.js` - update y remove.
+  - `src/services/user.service.js` - reglas RBAC en create/reset/update/remove.
+  - `src/models/User.js` - `updateBasic`.
+  - `test/user.service.test.js` - cobertura nuevas reglas.
 - Evidencia:
-  - `node --test test/ticket.service.test.js` (ok).
-  - `pnpm test` reporto 4 fallas: `test/audit.domain.secondary.test.js`, `test/auth.service.test.js`, `test/ia7.preventive-maintenance.test.js`, `test/ticket.service.test.js` (luego corregido).
+  - `pnpm test` (ok, 87/87).
 - Commit(s):
   - pendiente
 
 ### 2026-03-14 - IA: Codex GPT-5
-- Issue: Estabilizar pruebas existentes (audit/auth)
-- Rama: feature/docs-api
-- Objetivo: corregir fallas de stubs en tests de auditoria y auth.
+- Issue: Tickets IA - sugerencias al consultar
+- Rama: feature/users-rbac
+- Objetivo: permitir incluir sugerencias al consultar un ticket.
 - Cambios:
-  - `test/audit.domain.secondary.test.js` - stub agregado `hasAssignment`.
-  - `test/auth.service.test.js` - stub agregado `registerLoginSuccess`/`registerLoginFailure` y asserts adaptados a errores por objeto.
-- Pendiente: resolver falla en `test/ia7.preventive-maintenance.test.js` (requiere revisar `planIA.md` antes de tocar IA).
-- Riesgos/Bloqueos: falta `planIA.md` en repo actual.
+  - `planIA.md` - lineamientos IA para tickets.
+  - `src/controllers/ticket.controller.js` - soporte `?suggestions=true` en GET /api/tickets/:id.
+  - `test/ticket.controller.test.js` - cobertura de sugerencias.
 - Evidencia:
-  - `node --test test/audit.domain.secondary.test.js` (ok).
-  - `node --test test/auth.service.test.js` (ok).
+  - `pnpm test` (ok, 85/85).
 - Commit(s):
   - pendiente
 
 ### 2026-03-14 - IA: Codex GPT-5
-- Issue: IA plan y estabilizacion IA-7
-- Rama: feature/docs-api
-- Objetivo: crear `planIA.md` y evitar dependencia a DB real en prueba IA-7.
+- Issue: Alertas de obsolescencia de activos
+- Rama: feature/users-rbac
+- Objetivo: generar alertas para activos con antiguedad mayor a N meses.
 - Cambios:
-  - `planIA.md` - lineamientos de IA, asignacion automatica y sugerencias.
-  - `test/ia7.preventive-maintenance.test.js` - stub de `categoriaTicketModel` para evitar acceso a DB.
+  - `src/models/Asset.js` - `findObsolescenceCandidates`.
+  - `src/services/ia/jobs.service.js` - `generateObsolescenceAlerts`.
+  - `src/controllers/iaJobs.controller.js` - handler de obsolescencia.
+  - `src/routes/iaJobs.routes.js` - endpoint `/api/jobs/ia/activos/obsolescencia`.
+  - `src/config/permissions.js` - permiso `ia_jobs.obsolescence_alerts`.
+  - `test/ia.obsolescence.test.js` - cobertura de job.
 - Evidencia:
-  - `node --test test/ia7.preventive-maintenance.test.js` (ok).
-- Evidencia adicional:
-  - `pnpm test` (ok, 32/32).
+  - `pnpm test` (ok, 88/88).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Documentacion API usuarios/tickets/jobs
+- Rama: feature/users-rbac
+- Objetivo: actualizar README con nuevos permisos y endpoints.
+- Cambios:
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - roles usuarios, update/delete, sugerencias en ticket y obsolescencia.
+- Evidencia:
+  - `pnpm test` (ok, 88/88).
 - Commit(s):
   - pendiente

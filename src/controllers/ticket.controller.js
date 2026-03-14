@@ -13,7 +13,16 @@ class TicketController {
     }
     // Read ticket by id with access checks.
     async getById(req, res, next) {
-        try { res.json(await this.service.findById(req.params.id, req.user)); } catch (e) { next(e); }
+        try {
+            const ticket = await this.service.findById(req.params.id, req.user);
+            const includeSuggestions = String(req.query?.suggestions || '').toLowerCase() === 'true';
+            if (!includeSuggestions) {
+                res.json(ticket);
+                return;
+            }
+            const data = await this.service.getSuggestions(req.params.id, req.user);
+            res.json({ ...ticket, suggestions: data?.suggestions || [] });
+        } catch (e) { next(e); }
     }
     // Tickets for a given asset.
     async getByActivo(req, res, next) {

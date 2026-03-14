@@ -3,7 +3,8 @@ class IaJobsController {
     constructor(service) {
         this.service = service;
         // Bind methods for Express handlers.
-        ['generatePurchaseSuggestions', 'generateDisposalSuggestions', 'reprocessTicketsExternal', 'generatePreventiveMaintenance'].forEach((m) => (this[m] = this[m].bind(this)));
+        ['generatePurchaseSuggestions', 'generateDisposalSuggestions', 'generateObsolescenceAlerts', 'reprocessTicketsExternal', 'generatePreventiveMaintenance']
+            .forEach((m) => (this[m] = this[m].bind(this)));
     }
 
     // Generate purchase suggestions based on consumption windows.
@@ -23,6 +24,17 @@ class IaJobsController {
             const windowDays = req.body?.windowDays ?? req.query?.windowDays;
             const thresholdPct = req.body?.thresholdPct ?? req.query?.thresholdPct;
             res.json(await this.service.generateDisposalSuggestions({ windowDays, thresholdPct }));
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    // Generate obsolescence alerts for assets.
+    async generateObsolescenceAlerts(req, res, next) {
+        try {
+            const months = req.body?.months ?? req.query?.months;
+            const limit = req.body?.limit ?? req.query?.limit;
+            res.json(await this.service.generateObsolescenceAlerts({ months, limit }));
         } catch (e) {
             next(e);
         }

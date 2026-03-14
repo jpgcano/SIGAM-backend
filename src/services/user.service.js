@@ -20,6 +20,13 @@ class UserService {
         if (!ALLOWED_ROLES_SET.has(rol)) {
             throw { status: 400, message: `rol inválido: ${rol}` };
         }
+        const actorRole = actor?.role;
+        if (actorRole !== 'Gerente' && actorRole !== 'Analista') {
+            throw { status: 403, message: 'No autorizado para crear usuarios' };
+        }
+        if (actorRole === 'Analista' && rol !== 'Usuario' && rol !== 'Técnico') {
+            throw { status: 403, message: 'Analista solo puede crear usuarios o técnicos' };
+        }
         const passwordHash = await HashUtil.hashPassword(password);
         const created = await this.userModel.create({ nombre, email, passwordHash, rol });
         this.auditLogService.safeLog(
@@ -70,8 +77,11 @@ class UserService {
         return updated;
     }
 
-    // Update basic user fields (nombre, email).
+    // Update basic user fields.
     async update(id, payload, actor, auditContext) {
+        if (actor?.role !== 'Gerente' && actor?.role !== 'Analista') {
+            throw { status: 403, message: 'No autorizado para actualizar usuarios' };
+        }
         const before = await this.userModel.findById(id);
         if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
         const updated = await this.userModel.updateBasic(id, {
@@ -97,6 +107,15 @@ class UserService {
         if (!newPassword) throw { status: 400, message: 'password es requerido' };
         const before = await this.userModel.findById(id);
         if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
+        if (actor?.role === 'Usuario' && actor?.id !== before.id_usuario) {
+            throw { status: 403, message: 'Solo puedes cambiar tu propia contraseña' };
+        }
+        if (actor?.role === 'Técnico' && before.rol !== 'Usuario') {
+            throw { status: 403, message: 'Técnico solo puede cambiar contraseña de usuarios' };
+        }
+        if (actor?.role !== 'Gerente' && actor?.role !== 'Técnico' && actor?.role !== 'Usuario') {
+            throw { status: 403, message: 'No autorizado para cambiar contraseña' };
+        }
         const passwordHash = await HashUtil.hashPassword(newPassword);
         const updated = await this.userModel.updatePassword(id, passwordHash);
         this.auditLogService.safeLog(
@@ -113,32 +132,11 @@ class UserService {
         return updated;
     }
 
-    // Activate/deactivate user.
-    async updateEstado(id, activo, actor, auditContext) {
-        if (activo === undefined) throw { status: 400, message: 'activo es requerido' };
-        const before = await this.userModel.findById(id);
-        if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
-        const updated = await this.userModel.updateActive(id, !!activo);
-        this.auditLogService.safeLog(
-            this.auditLogService.buildDomainEntry({
-                actor,
-                context: auditContext,
-                entidad: 'USUARIO',
-                entidad_id: id,
-                accion: 'USUARIO_ACTIVATE',
-                payload_before: before,
-                payload_after: updated,
-                metadata: { activo: !!activo }
-            })
-        );
-        return updated;
-    }
-
     // Remove user and log the action.
     async remove(id, actor, auditContext) {
         const before = await this.userModel.findById(id);
         if (!before) throw { status: 404, message: `Usuario ${id} no encontrado` };
-        const removed = await this.userModel.updateActive(id, false);
+        const removed = await this.userModel.remove(id);
         this.auditLogService.safeLog(
             this.auditLogService.buildDomainEntry({
                 actor,

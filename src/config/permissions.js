@@ -22,12 +22,11 @@ export const PERMISSIONS = {
     },
     users: {
         list: roles('Gerente', 'Analista', 'Auditor'),
-        create: roles('Gerente'),
-        update: roles('Gerente'),
+        create: roles('Gerente', 'Analista'),
+        update: roles('Gerente', 'Analista'),
         update_role: roles('Gerente'),
-        reset_password: roles('Gerente'),
-        delete: roles('Gerente'),
-        activate: roles('Gerente')
+        reset_password: roles('Gerente', 'Técnico', 'Usuario'),
+        delete: roles('Gerente')
     },
     assets: {
         list: roles('Analista', 'Técnico', 'Gerente', 'Auditor'),
@@ -122,6 +121,7 @@ export const PERMISSIONS = {
     ia_jobs: {
         purchase_suggestions: roles('Analista', 'Gerente'),
         disposal_suggestions: roles('Analista', 'Gerente'),
+        obsolescence_alerts: roles('Gerente'),
         ticket_reprocess: roles('Gerente'),
         preventive_maintenance: roles('Analista', 'Gerente')
     }

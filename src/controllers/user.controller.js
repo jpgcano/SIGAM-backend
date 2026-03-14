@@ -9,7 +9,6 @@ class UserController {
         this.update = this.update.bind(this);
         this.updateRole = this.updateRole.bind(this);
         this.resetPassword = this.resetPassword.bind(this);
-        this.updateEstado = this.updateEstado.bind(this);
         this.remove = this.remove.bind(this);
     }
 
@@ -27,6 +26,21 @@ class UserController {
         try {
             const user = await this.userService.create(req.body, req.user, buildAuditContext(req));
             res.status(201).json(user);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Update basic user info.
+    async update(req, res, next) {
+        try {
+            const user = await this.userService.update(
+                req.params.id,
+                req.body,
+                req.user,
+                buildAuditContext(req)
+            );
+            res.json(user);
         } catch (error) {
             next(error);
         }
@@ -72,21 +86,6 @@ class UserController {
                 buildAuditContext(req)
             );
             res.json({ message: 'Password actualizado', user });
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    // Activate/deactivate user.
-    async updateEstado(req, res, next) {
-        try {
-            const user = await this.userService.updateEstado(
-                req.params.id,
-                req.body?.activo,
-                req.user,
-                buildAuditContext(req)
-            );
-            res.json(user);
         } catch (error) {
             next(error);
         }
