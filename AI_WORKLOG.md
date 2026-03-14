@@ -729,6 +729,19 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `src/models/User.js` - `updateBasic`.
   - `test/user.service.test.js` - cobertura nuevas reglas.
 - Evidencia:
+  - `pnpm test` (ok, 87/87).
+- Commit(s):
+  - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Tickets IA - sugerencias al consultar
+- Rama: feature/users-rbac
+- Objetivo: permitir incluir sugerencias al consultar un ticket.
+- Cambios:
+  - `planIA.md` - lineamientos IA para tickets.
+  - `src/controllers/ticket.controller.js` - soporte `?suggestions=true` en GET /api/tickets/:id.
+  - `test/ticket.controller.test.js` - cobertura de sugerencias.
+- Evidencia:
   - `pnpm test` (ok, 85/85).
 - Commit(s):
   - pendiente
