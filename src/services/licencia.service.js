@@ -1,10 +1,14 @@
 import AuditLogService from './auditLog.service.js';
+import NotificationService from './notification.service.js';
+import AlertaModel from '../models/alerta.js';
 
 // Service layer for software licenses and assignments.
 class LicenciaService {
-    constructor(model, auditLogService = new AuditLogService()) {
+    constructor(model, auditLogService = new AuditLogService(), notificationService = new NotificationService(), alertaModel = new AlertaModel()) {
         this.model = model;
         this.auditLogService = auditLogService;
+        this.notificationService = notificationService;
+        this.alertaModel = alertaModel;
     }
     // List all licenses.
     findAll() { return this.model.findAll(); }
@@ -68,6 +72,8 @@ class LicenciaService {
     }
     // Assign a license to a user or asset and log the assignment.
     async asignar(payload, actor, auditContext) {
+        const dup = await this.model.hasAssignment(payload);
+        if (dup) throw { status: 409, message: 'La licencia ya está asignada al mismo destino' };
         const assigned = await this.model.asignar(payload);
         this.auditLogService.safeLog(
             this.auditLogService.buildDomainEntry({
@@ -102,6 +108,25 @@ class LicenciaService {
             })
         );
         return r;
+    }
+
+    // Alert and notify expiring licenses.
+    async generarAlertasVencimiento({ dias = 30 } = {}) {
+        const expiring = await this.model.findExpiring(dias);
+        for (const lic of expiring) {
+            await this.alertaModel.ensurePendingByTipoAndLicencia('Licencia próxima a vencer', lic.id_licencia);
+        }
+        // Email notification to admins (if configured)
+        const adminEmail = process.env.NOTIFY_ADMIN_EMAIL;
+        if (adminEmail && expiring.length) {
+            await this.notificationService.enqueueEmail({
+                tipo: 'LICENCIAS_VENCIMIENTO',
+                destinatario: adminEmail,
+                asunto: 'Licencias próximas a vencer',
+                cuerpo: `Licencias próximas a vencer: ${expiring.map((l) => l.id_licencia).join(', ')}`
+            });
+        }
+        return expiring;
     }
 }
 export default LicenciaService;

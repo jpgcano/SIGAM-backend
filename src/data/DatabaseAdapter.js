@@ -31,7 +31,14 @@ function normalizeColumns(columns) {
 
 class DatabaseAdapter {
     constructor() {
-        this.mode = (process.env.DB_MODE || 'postgres').toLowerCase();
+        const rawMode = String(process.env.DB_MODE || '').trim().toLowerCase();
+        if (rawMode) {
+            this.mode = rawMode;
+        } else if (process.env.SUPABASE_URL) {
+            this.mode = 'supabase';
+        } else {
+            this.mode = 'postgres';
+        }
     }
 
     get isSupabase() {

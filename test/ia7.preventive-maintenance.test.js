@@ -63,6 +63,9 @@ test('IA-7 crea MP para candidato y programa fecha_inicio', async () => {
         alertaModel: {},
         iaConfig: { enabled: true, openAiApiKey: null, openAiModel: 'x', timeoutMs: 1, circuitBreaker: {} }
     });
+    service.categoriaTicketModel = {
+        async findByNombre() { return { id_categoria_ticket: 1 }; }
+    };
 
     const result = await service.generatePreventiveMaintenance({
         intervalDays: 180,
@@ -76,4 +79,3 @@ test('IA-7 crea MP para candidato y programa fecha_inicio', async () => {
     assert.equal(maintenanceModel.updates.length, 1);
     assert.equal(assetModel.histories.length, 1);
 });
-

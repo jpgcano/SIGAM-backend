@@ -94,7 +94,7 @@ class TicketModel extends BaseModel {
              FROM tickets
              WHERE id_activo = $1
                AND estado IN ('Abierto', 'Asignado', 'En Proceso')
-               AND descripcion ILIKE '%mantenimiento preventivo%'
+               AND (tipo_ticket = 'Preventivo' OR descripcion ILIKE '%mantenimiento preventivo%')
              LIMIT 1`,
             [id_activo]
         );
@@ -191,7 +191,7 @@ class TicketModel extends BaseModel {
         if (this.useSupabase) {
             const { data: users, error: usersError } = await this.supabase
                 .from('usuarios')
-                .select('id_usuario, nombre, rol');
+                .select('id_usuario, nombre, email, rol');
             if (usersError) throw usersError;
 
             const technicians = (users || []).filter((u) => SUPPORT_ROLES.has(normalizeRole(u.rol)));
@@ -217,7 +217,7 @@ class TicketModel extends BaseModel {
             for (const tech of technicians) {
                 const load = loadByTech.get(tech.id_usuario) || 0;
                 if (!selected || load < selected.carga_abierta || (load === selected.carga_abierta && tech.id_usuario < selected.id_usuario)) {
-                    selected = { id_usuario: tech.id_usuario, nombre: tech.nombre, carga_abierta: load };
+                    selected = { id_usuario: tech.id_usuario, nombre: tech.nombre, email: tech.email, carga_abierta: load };
                 }
             }
             return selected;
@@ -227,6 +227,7 @@ class TicketModel extends BaseModel {
             `SELECT
                 u.id_usuario,
                 u.nombre,
+                u.email,
                 COUNT(t.id_ticket) AS carga_abierta
              FROM usuarios u
              LEFT JOIN ordenes_mantenimiento om ON om.id_usuario_tecnico = u.id_usuario
@@ -234,7 +235,7 @@ class TicketModel extends BaseModel {
                 ON t.id_ticket = om.id_ticket
                AND t.estado IN ('Abierto', 'Asignado', 'En Proceso')
              WHERE lower(translate(u.rol, 'ÃÃ‰ÃÃ“ÃšÃ¡Ã©Ã­Ã³Ãº', 'AEIOUaeiou')) IN ('tecnico', 'soporte')
-             GROUP BY u.id_usuario, u.nombre
+             GROUP BY u.id_usuario, u.nombre, u.email
              ORDER BY COUNT(t.id_ticket) ASC, u.id_usuario ASC
              LIMIT 1`
         );
@@ -243,6 +244,7 @@ class TicketModel extends BaseModel {
         return {
             id_usuario: selected.id_usuario,
             nombre: selected.nombre,
+            email: selected.email,
             carga_abierta: Number(selected.carga_abierta) || 0
         };
     }
@@ -254,12 +256,15 @@ class TicketModel extends BaseModel {
         descripcion,
         prioridad_ia,
         clasificacion_nlp,
+        id_categoria_ticket,
         clasificacion_metodo,
         clasificacion_confidence,
         clasificacion_rationale,
         prioridad_metodo,
         prioridad_rationale,
-        estado = 'Abierto'
+        estado = 'Abierto',
+        tipo_ticket = 'Correctivo',
+        fecha_cierre = null
     }) {
         if (this.useSupabase) {
             const baseInsert = {
@@ -268,7 +273,10 @@ class TicketModel extends BaseModel {
                 descripcion,
                 prioridad_ia,
                 clasificacion_nlp,
-                estado
+                estado,
+                id_categoria_ticket,
+                tipo_ticket,
+                fecha_cierre
             };
 
             const fullInsert = {
@@ -308,25 +316,31 @@ class TicketModel extends BaseModel {
                 descripcion,
                 prioridad_ia,
                 clasificacion_nlp,
+                id_categoria_ticket,
                 clasificacion_metodo,
                 clasificacion_confidence,
                 clasificacion_rationale,
                 prioridad_metodo,
                 prioridad_rationale,
-                estado
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+                estado,
+                tipo_ticket,
+                fecha_cierre
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
             [
                 id_activo,
                 id_usuario_reporta,
                 descripcion,
                 prioridad_ia,
                 clasificacion_nlp,
+                id_categoria_ticket,
                 clasificacion_metodo,
                 clasificacion_confidence,
                 clasificacion_rationale,
                 prioridad_metodo,
                 prioridad_rationale,
-                estado
+                estado,
+                tipo_ticket,
+                fecha_cierre
             ]
         );
         return rows[0] || null;
@@ -362,13 +376,63 @@ class TicketModel extends BaseModel {
     }
 
     // Update core IA fields and ticket state.
-    async update(id, { prioridad_ia, clasificacion_nlp, estado }) {
-        return this.dbUpdate('tickets', 'id_ticket', id, { prioridad_ia, clasificacion_nlp, estado });
+    async update(id, { prioridad_ia, clasificacion_nlp, estado, id_categoria_ticket, tipo_ticket, fecha_cierre }) {
+        return this.dbUpdate('tickets', 'id_ticket', id, { prioridad_ia, clasificacion_nlp, estado, id_categoria_ticket, tipo_ticket, fecha_cierre });
     }
 
     // Update only the ticket state.
-    async updateEstado(id, estado) {
-        return this.dbUpdate('tickets', 'id_ticket', id, { estado });
+    async updateEstado(id, estado, fecha_cierre = null) {
+        return this.dbUpdate('tickets', 'id_ticket', id, { estado, fecha_cierre });
+    }
+
+    async addComment({ id_ticket, id_usuario, comentario }) {
+        return this.dbCreate('ticket_comentarios', { id_ticket, id_usuario, comentario });
+    }
+
+    async listComments(id_ticket) {
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('ticket_comentarios')
+                .select('*, usuarios(nombre)')
+                .eq('id_ticket', id_ticket)
+                .order('fecha_comentario', { ascending: false });
+            if (error) throw error;
+            return data;
+        }
+        const { rows } = await this.query(
+            `SELECT tc.*, u.nombre AS usuario_nombre
+             FROM ticket_comentarios tc
+             LEFT JOIN usuarios u ON u.id_usuario = tc.id_usuario
+             WHERE tc.id_ticket = $1
+             ORDER BY tc.fecha_comentario DESC`,
+            [id_ticket]
+        );
+        return rows;
+    }
+
+    async addHistory({ id_ticket, id_usuario, cambio, detalle }) {
+        return this.dbCreate('ticket_historial', { id_ticket, id_usuario, cambio, detalle });
+    }
+
+    async listHistory(id_ticket) {
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('ticket_historial')
+                .select('*, usuarios(nombre)')
+                .eq('id_ticket', id_ticket)
+                .order('fecha_evento', { ascending: false });
+            if (error) throw error;
+            return data;
+        }
+        const { rows } = await this.query(
+            `SELECT th.*, u.nombre AS usuario_nombre
+             FROM ticket_historial th
+             LEFT JOIN usuarios u ON u.id_usuario = th.id_usuario
+             WHERE th.id_ticket = $1
+             ORDER BY th.fecha_evento DESC`,
+            [id_ticket]
+        );
+        return rows;
     }
 
     // Check if a ticket was reported by a given user.
@@ -421,7 +485,7 @@ class TicketModel extends BaseModel {
                 ),
                 upd AS (
                     UPDATE tickets
-                    SET estado = 'Cerrado'
+                    SET estado = 'Cerrado', fecha_cierre = NOW()
                     WHERE id_ticket = $1 AND EXISTS (SELECT 1 FROM orden)
                     RETURNING *
                 )
@@ -465,7 +529,7 @@ class TicketModel extends BaseModel {
             }
 
             const updated = await client.query(
-                `UPDATE tickets SET estado = 'Cerrado' WHERE id_ticket = $1 RETURNING *`,
+                `UPDATE tickets SET estado = 'Cerrado', fecha_cierre = NOW() WHERE id_ticket = $1 RETURNING *`,
                 [id_ticket]
             );
             if (!updated.rows?.length) {

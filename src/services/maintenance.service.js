@@ -1,26 +1,36 @@
 import AuditLogService from './auditLog.service.js';
+import AssetModel from '../models/Asset.js';
+import TicketModel from '../models/Ticket.js';
 
 // Service layer for maintenance orders and related domain logic.
 class MaintenanceService {
-    constructor(model, auditLogService = new AuditLogService()) {
+    constructor(model, auditLogService = new AuditLogService(), assetModel = new AssetModel(), ticketModel = new TicketModel()) {
         this.model = model;
         this.auditLogService = auditLogService;
+        this.assetModel = assetModel;
+        this.ticketModel = ticketModel;
     }
     // Valid ticket states allowed when registering consumptions.
     static ESTADOS_VALIDOS = new Set(['Abierto', 'Asignado', 'En Proceso', 'Resuelto', 'Cerrado']);
 
     // List all maintenance orders.
-    findAll() { return this.model.findAll(); }
+    async findAll() {
+        const rows = await this.model.findAll();
+        return Array.isArray(rows) ? rows.map(this.#withDuration) : rows;
+    }
 
     // Fetch a maintenance order by id and validate existence.
     async findById(id) {
         const m = await this.model.findById(id);
         if (!m) throw { status: 404, message: `Orden ${id} no encontrada` };
-        return m;
+        return this.#withDuration(m);
     }
 
     // List maintenance orders by technician.
-    findByTecnico(id_tecnico) { return this.model.findByTecnico(id_tecnico); }
+    async findByTecnico(id_tecnico) {
+        const rows = await this.model.findByTecnico(id_tecnico);
+        return Array.isArray(rows) ? rows.map(this.#withDuration) : rows;
+    }
 
     // Create a maintenance order and emit audit log entry.
     create(payload, actor, auditContext) {
@@ -47,6 +57,16 @@ class MaintenanceService {
         const before = await this.model.findById(id);
         const m = await this.model.update(id, payload);
         if (!m) throw { status: 404, message: `Orden ${id} no encontrada` };
+        if (payload?.fecha_fin && !before?.fecha_fin) {
+            const ticket = await this.ticketModel.findCoreById(m.id_ticket);
+            if (ticket?.id_activo) {
+                await this.assetModel.addHistory(
+                    ticket.id_activo,
+                    'Mantenimiento',
+                    `Mantenimiento finalizado para ticket ${m.id_ticket}`
+                );
+            }
+        }
         this.auditLogService.safeLog(
             this.auditLogService.buildDomainEntry({
                 actor,
@@ -114,6 +134,14 @@ class MaintenanceService {
 
     // List all consumptions registered for a maintenance order.
     getConsumos(id_orden) { return this.model.getConsumos(id_orden); }
+
+    #withDuration(m) {
+        if (!m) return m;
+        const inicio = m.fecha_inicio ? new Date(m.fecha_inicio).getTime() : null;
+        const fin = m.fecha_fin ? new Date(m.fecha_fin).getTime() : null;
+        const duration_minutes = inicio && fin && fin >= inicio ? Math.round((fin - inicio) / 60000) : null;
+        return { ...m, duration_minutes };
+    }
 }
 
 export default MaintenanceService;

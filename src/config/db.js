@@ -11,11 +11,19 @@ class SupabaseAdapter {
 
     ensureClient() {
         if (this.client) return this.client;
-        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-            throw new Error('SUPABASE_URL y SUPABASE_ANON_KEY son requeridos en .env para usar Supabase');
+        if (!process.env.SUPABASE_URL) {
+            throw new Error('SUPABASE_URL es requerido en .env para usar Supabase');
         }
-        this.client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
-        console.log('Base de datos: Supabase');
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+        if (!supabaseKey) {
+            throw new Error('SUPABASE_SERVICE_ROLE_KEY o SUPABASE_ANON_KEY son requeridos en .env para usar Supabase');
+        }
+        this.client = createClient(process.env.SUPABASE_URL, supabaseKey);
+        const keyLabel = process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon';
+        if (keyLabel === 'anon' && process.env.NODE_ENV === 'production') {
+            console.warn('Supabase en production usando anon key; revisa RLS/permiso o configura SUPABASE_SERVICE_ROLE_KEY');
+        }
+        console.log(`Base de datos: Supabase (${keyLabel})`);
         return this.client;
     }
 

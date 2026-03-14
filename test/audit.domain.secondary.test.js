@@ -24,6 +24,7 @@ test('LicenciaService emite logs en create/update/remove/asignar/revocar', async
         async findById(id) { return { id_licencia: id, fecha_expiracion: '2026-01-01' }; },
         async update(id, payload) { return { id_licencia: id, ...payload }; },
         async remove(id) { return { id_licencia: id }; },
+        async hasAssignment() { return false; },
         async asignar(payload) { return { id_asignacion: 10, ...payload }; },
         async revocarAsignacion(id) { return { id_asignacion: id }; }
     };
