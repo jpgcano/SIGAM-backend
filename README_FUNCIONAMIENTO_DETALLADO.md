@@ -224,7 +224,7 @@ Respuesta:
 [{ "id_usuario": 1, "nombre": "...", "email": "...", "rol": "Analista", "fecha_creacion": "..." }]
 ```
 
-**POST /api/usuarios** (Gerente)
+**POST /api/usuarios** (Gerente, Analista)
 Request:
 ```
 { "nombre": "Ana", "email": "ana@sigam.com", "password": "Password1", "rol": "Analista" }
@@ -232,6 +232,17 @@ Request:
 Respuesta:
 ```
 { "id_usuario": 1, "nombre": "Ana", "email": "ana@sigam.com", "rol": "Analista", "fecha_creacion": "..." }
+```
+Nota: Analista solo puede crear roles `Usuario` o `Técnico`.
+
+**PATCH /api/usuarios/:id** (Gerente, Analista)
+Request:
+```
+{ "nombre": "Ana Perez", "email": "ana.perez@sigam.com" }
+```
+Respuesta:
+```
+{ "id_usuario": 1, "nombre": "Ana Perez", "email": "ana.perez@sigam.com", "rol": "Analista", "fecha_creacion": "..." }
 ```
 
 **PATCH /api/usuarios/:id/rol** (Gerente)
@@ -244,7 +255,7 @@ Respuesta:
 { "id_usuario": 1, "nombre": "...", "email": "...", "rol": "Técnico", "fecha_creacion": "..." }
 ```
 
-**PATCH /api/usuarios/:id/password** (Gerente)
+**PATCH /api/usuarios/:id/password** (Gerente, Tecnico, Usuario)
 Request:
 ```
 { "password": "NuevaClave123" }
@@ -252,6 +263,13 @@ Request:
 Respuesta:
 ```
 { "message": "Password actualizado", "user": { "id_usuario": 1, "nombre": "...", "email": "...", "rol": "..." } }
+```
+Nota: Tecnico solo puede cambiar contraseña de usuarios con rol `Usuario`. Usuario solo puede cambiar su propia contraseña.
+
+**DELETE /api/usuarios/:id** (Gerente)
+Respuesta:
+```
+{ "id_usuario": 1, "nombre": "...", "email": "..." }
 ```
 
 ### 9.4 Ubicaciones
@@ -359,7 +377,8 @@ Respuesta:
 Respuesta: lista de tickets.
 
 **GET /api/tickets/:id**  
-Respuesta: ticket.
+Query opcional: `suggestions=true` para incluir sugerencias.  
+Respuesta: ticket (y sugerencias si se solicita).
 
 **GET /api/tickets/activo/:id_activo**  
 Respuesta: tickets del activo.
@@ -571,6 +590,13 @@ Request:
 { "windowDays": 365, "thresholdPct": 0.6 }
 ```
 Respuesta: sugerencias de baja y alertas creadas.
+
+**POST /api/jobs/ia/activos/obsolescencia**  
+Request:
+```
+{ "months": 48, "limit": 50 }
+```
+Respuesta: activos candidatos y alertas creadas.
 
 **POST /api/jobs/ia/tickets/reprocess**  
 Request:

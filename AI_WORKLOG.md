@@ -761,3 +761,14 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `pnpm test` (ok, 88/88).
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Documentacion API usuarios/tickets/jobs
+- Rama: feature/users-rbac
+- Objetivo: actualizar README con nuevos permisos y endpoints.
+- Cambios:
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - roles usuarios, update/delete, sugerencias en ticket y obsolescencia.
+- Evidencia:
+  - `pnpm test` (ok, 88/88).
+- Commit(s):
+  - pendiente
