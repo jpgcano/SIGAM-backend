@@ -17,6 +17,15 @@ function normalizeRole(rol) {
 class TicketModel extends BaseModel {
     // Get cached suggestions for a ticket (if any).
     async getSuggestionsCache(id_ticket) {
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('ticket_sugerencias')
+                .select('sugerencias, updated_at, created_at')
+                .eq('id_ticket', id_ticket)
+                .maybeSingle();
+            if (error) throw error;
+            return data || null;
+        }
         const { rows } = await this.query(
             `SELECT sugerencias, updated_at, created_at
              FROM ticket_sugerencias
@@ -29,6 +38,20 @@ class TicketModel extends BaseModel {
 
     // Upsert suggestions cache for a ticket.
     async saveSuggestionsCache(id_ticket, sugerencias) {
+        const payload = {
+            id_ticket,
+            sugerencias: JSON.stringify(sugerencias || []),
+            updated_at: new Date().toISOString()
+        };
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('ticket_sugerencias')
+                .upsert(payload, { onConflict: 'id_ticket' })
+                .select('id_ticket, sugerencias, updated_at')
+                .single();
+            if (error) throw error;
+            return data || null;
+        }
         const { rows } = await this.query(
             `INSERT INTO ticket_sugerencias (id_ticket, sugerencias, updated_at)
              VALUES ($1, $2, NOW())
