@@ -53,20 +53,21 @@ class TicketService {
     async getSuggestions(id_ticket, user) {
         await this.ensureAccess(id_ticket, user);
 
-        const ticket = await this.model.findCoreById(id_ticket);
-        if (!ticket) throw { status: 404, message: `Ticket ${id_ticket} no encontrado` };
+        const cached = await this.model.getSuggestionsCache(id_ticket);
+        if (cached?.sugerencias) {
+            const ticket = await this.model.findCoreById(id_ticket);
+            let cachedSuggestions = cached.sugerencias;
+            if (typeof cachedSuggestions === 'string') {
+                try { cachedSuggestions = JSON.parse(cachedSuggestions); } catch { cachedSuggestions = []; }
+            }
+            return {
+                id_ticket,
+                id_activo: ticket?.id_activo ?? null,
+                suggestions: Array.isArray(cachedSuggestions) ? cachedSuggestions : []
+            };
+        }
 
-        const candidates = await this.model.findResolvedCandidatesByActivo({
-            id_activo: ticket.id_activo,
-            exclude_id_ticket: id_ticket,
-            limit: 12
-        });
-
-        return {
-            id_ticket,
-            id_activo: ticket.id_activo,
-            suggestions: this.suggestionEngine.suggest({ ticket, candidates })
-        };
+        return this.generateAndCacheSuggestions(id_ticket);
     }
 
     // Create ticket: classify and triage with IA rules, then optionally auto-assign.
@@ -137,6 +138,21 @@ class TicketService {
 
         if (!created?.id_ticket) return created;
 
+        // Generate suggestions immediately after ticket creation (best-effort).
+        this.generateAndCacheSuggestions(created.id_ticket, user).catch((error) => {
+            this.auditLogService.safeLog(
+                this.auditLogService.buildDomainEntry({
+                    actor: user,
+                    context: auditContext,
+                    entidad: 'JOB_IA',
+                    accion: 'JOB_IA_ERROR',
+                    status: 'ERROR',
+                    error,
+                    metadata: { job: 'TICKET_SUGGESTIONS', id_ticket: created.id_ticket }
+                })
+            );
+        });
+
         // Auto-assign if IA config allows and model supports it.
         if (!this.iaConfig.enabled || !this.iaConfig.assignmentEnabled) {
             return created;
@@ -177,6 +193,36 @@ class TicketService {
             ...hydrated,
             id_usuario_tecnico: tecnico.id_usuario,
             tecnico_asignado: tecnico.nombre
+        };
+    }
+
+    async generateAndCacheSuggestions(id_ticket, user = null) {
+        const ticket = await this.model.findCoreById(id_ticket);
+        if (!ticket) throw { status: 404, message: `Ticket ${id_ticket} no encontrado` };
+
+        const candidates = await this.model.findResolvedCandidatesByActivo({
+            id_activo: ticket.id_activo,
+            exclude_id_ticket: id_ticket,
+            limit: 12
+        });
+
+        const suggestions = this.suggestionEngine.suggest({ ticket, candidates });
+        await this.model.saveSuggestionsCache(id_ticket, suggestions);
+
+        this.auditLogService.safeLog(
+            this.auditLogService.buildDomainEntry({
+                actor: user,
+                context: null,
+                entidad: 'JOB_IA',
+                accion: 'JOB_IA_RUN',
+                metadata: { job: 'TICKET_SUGGESTIONS', id_ticket, total_sugerencias: suggestions.length }
+            })
+        );
+
+        return {
+            id_ticket,
+            id_activo: ticket.id_activo,
+            suggestions
         };
     }
 

@@ -844,3 +844,21 @@ Bitacora obligatoria para registrar el trabajo realizado por IA y evitar duplici
   - `pnpm test` (ok, 85/85).
 - Commit(s):
   - pendiente
+
+### 2026-03-14 - IA: Codex GPT-5
+- Issue: Automatizacion IA (disparadores + cron)
+- Rama: feature/ia-automatizacion
+- Objetivo: ejecutar tareas IA automaticamente y cachear sugerencias.
+- Cambios:
+  - `sql/14_ticket_sugerencias.sql` - tabla de cache de sugerencias.
+  - `src/models/Ticket.js` - cache de sugerencias.
+  - `src/services/ticket.service.js` - genera sugerencias al crear ticket.
+  - `src/middlewares/cronAuth.middleware.js` - auth para cron.
+  - `src/routes/iaCron.routes.js` - endpoints cron IA.
+  - `src/app.js` - ruta `/api/cron/ia`.
+  - `vercel.json` - schedules cron.
+  - `README_FUNCIONAMIENTO_DETALLADO.md` - docs de cron y cache.
+- Evidencia:
+  - `pnpm test` (ok, 85/85).
+- Commit(s):
+  - pendiente
