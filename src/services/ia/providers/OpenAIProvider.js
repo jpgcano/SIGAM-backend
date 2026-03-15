@@ -195,10 +195,11 @@ export default class OpenAIProvider {
                 'Genera soluciones sugeridas basadas en el ticket y en el historial.',
                 'Devuelve SOLO JSON válido y compacto con el siguiente esquema:',
                 '{ "suggestions": [',
-                '  { "titulo": string, "solucion": string, "pasos": string[], "ticket_id_origen": number|null, "confianza": number 0..1, "advertencias": string[] }',
+                '  { "titulo": string, "causa": string, "solucion": string, "pasos": string[], "ticket_id_origen": number|null, "confianza": number 0..1, "advertencias": string[] }',
                 '] }',
                 'Reglas estrictas:',
                 '- SIEMPRE incluye "solucion" y al menos 2 "pasos" por sugerencia.',
+                '- SIEMPRE incluye "causa" (si no se conoce, usar "Causa probable no confirmada").',
                 '- Usa ticket_id_origen solo si proviene de candidates; si no hay historial, usa null.',
                 '- Si falta información, propone pasos genéricos y añade advertencias claras.',
                 '- Máximo max_suggestions elementos.'

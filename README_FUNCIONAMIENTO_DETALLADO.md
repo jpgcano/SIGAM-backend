@@ -407,7 +407,7 @@ Nota: las sugerencias se generan automaticamente al crear el ticket y se guardan
 Si `IA_PROVIDER=external` e `IA_SUGGESTIONS_ENABLED=true`, el backend también consulta IA externa
 usando el ticket + historial para devolver soluciones sugeridas.
 Campos comunes por sugerencia:
-`titulo`, `solucion`, `pasos[]`, `advertencias[]`, `confianza`.
+`titulo`, `causa`, `solucion`, `pasos[]`, `advertencias[]`, `confianza`.
 
 **POST /api/tickets**  
 Request (requeridos: `id_activo`, `descripcion`):
