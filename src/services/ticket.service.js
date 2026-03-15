@@ -234,7 +234,9 @@ class TicketService {
             }
             const modelSuggestions = (iaResult?.suggestions || []).map((s) => {
                 const rawSolution = typeof s?.solucion === 'string' ? s.solucion.trim() : '';
+                const rawCause = typeof s?.causa === 'string' ? s.causa.trim() : '';
                 const fallbackSolution = `Solución sugerida basada en la descripción: ${ticket?.descripcion || 'sin descripción'}.`;
+                const fallbackCause = 'Causa probable no confirmada';
                 const pasos = Array.isArray(s?.pasos) ? s.pasos.filter(Boolean) : [];
                 const fallbackPasos = [
                     'Revisar síntomas y validar el estado del activo.',
@@ -246,6 +248,7 @@ class TicketService {
                 }
                 return {
                     titulo: s?.titulo ?? 'Solución sugerida',
+                    causa: rawCause || fallbackCause,
                     solucion: rawSolution || fallbackSolution,
                     pasos: pasos.length ? pasos : fallbackPasos,
                     advertencias,
@@ -256,6 +259,7 @@ class TicketService {
             if (!iaSuggestions.length && iaWarning) {
                 iaSuggestions.push({
                     titulo: 'Sugerencia generada por fallback',
+                    causa: 'Causa probable no confirmada',
                     solucion: `Solución sugerida basada en la descripción: ${ticket?.descripcion || 'sin descripción'}.`,
                     pasos: [
                         'Revisar síntomas y validar el estado del activo.',
