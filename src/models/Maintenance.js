@@ -10,7 +10,7 @@ class MaintenanceModel extends BaseModel {
                 .from('ordenes_mantenimiento')
                 .select(`
                     *,
-                    tickets(id_ticket, descripcion, estado),
+                    tickets(id_ticket, id_activo, id_usuario_reporta, descripcion, estado, prioridad_ia, clasificacion_nlp, tipo_ticket, fecha_creacion, fecha_cierre),
                     usuarios(nombre)
                 `)
                 .order('id_orden', { ascending: false });
@@ -22,10 +22,25 @@ class MaintenanceModel extends BaseModel {
             return data;
         }
         const params = [];
-        let sql = `SELECT om.*, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado,
+        let sql = `SELECT
+                        om.*,
+                        t.id_activo AS ticket_id_activo,
+                        t.id_usuario_reporta AS ticket_id_usuario_reporta,
+                        t.descripcion AS ticket_descripcion,
+                        t.estado AS ticket_estado,
+                        t.clasificacion_nlp AS ticket_clasificacion_nlp,
+                        t.prioridad_ia AS ticket_prioridad_ia,
+                        t.tipo_ticket AS ticket_tipo,
+                        t.fecha_creacion AS ticket_fecha_creacion,
+                        t.fecha_cierre AS ticket_fecha_cierre,
+                        a.serial AS asset_serial,
+                        a.modelo AS asset_modelo,
+                        a.estado_activo AS asset_estado_activo,
+                        a.nivel_criticidad AS asset_nivel_criticidad,
                         u.nombre AS tecnico_nombre
                    FROM ordenes_mantenimiento om
                    LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
+                   LEFT JOIN activos a ON a.id_activo = t.id_activo
                    LEFT JOIN usuarios u ON u.id_usuario = om.id_usuario_tecnico
                    ORDER BY om.id_orden DESC`;
         if (limit !== undefined && offset !== undefined) {
@@ -43,7 +58,7 @@ class MaintenanceModel extends BaseModel {
                 .from('ordenes_mantenimiento')
                 .select(`
                     *,
-                    tickets(id_ticket, descripcion, estado, prioridad_ia),
+                    tickets(id_ticket, id_activo, id_usuario_reporta, descripcion, estado, prioridad_ia, clasificacion_nlp, tipo_ticket, fecha_creacion, fecha_cierre),
                     usuarios(nombre)
                 `)
                 .eq('id_orden', id)
@@ -52,10 +67,25 @@ class MaintenanceModel extends BaseModel {
             return data || null;
         }
         const { rows } = await this.query(
-            `SELECT om.*, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado,
-                    t.prioridad_ia, u.nombre AS tecnico_nombre
+            `SELECT
+                om.*,
+                t.id_activo AS ticket_id_activo,
+                t.id_usuario_reporta AS ticket_id_usuario_reporta,
+                t.descripcion AS ticket_descripcion,
+                t.estado AS ticket_estado,
+                t.clasificacion_nlp AS ticket_clasificacion_nlp,
+                t.prioridad_ia AS ticket_prioridad_ia,
+                t.tipo_ticket AS ticket_tipo,
+                t.fecha_creacion AS ticket_fecha_creacion,
+                t.fecha_cierre AS ticket_fecha_cierre,
+                a.serial AS asset_serial,
+                a.modelo AS asset_modelo,
+                a.estado_activo AS asset_estado_activo,
+                a.nivel_criticidad AS asset_nivel_criticidad,
+                u.nombre AS tecnico_nombre
              FROM ordenes_mantenimiento om
              LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
+             LEFT JOIN activos a ON a.id_activo = t.id_activo
              LEFT JOIN usuarios u ON u.id_usuario = om.id_usuario_tecnico
              WHERE om.id_orden = $1`,
             [id]
@@ -68,7 +98,7 @@ class MaintenanceModel extends BaseModel {
         if (this.useSupabase) {
             let query = this.supabase
                 .from('ordenes_mantenimiento')
-                .select('*, tickets(descripcion, estado, prioridad_ia)')
+                .select('*, tickets(id_ticket, id_activo, id_usuario_reporta, descripcion, estado, prioridad_ia, clasificacion_nlp, tipo_ticket, fecha_creacion, fecha_cierre)')
                 .eq('id_usuario_tecnico', id_tecnico)
                 .order('id_orden', { ascending: false });
             if (limit !== undefined && offset !== undefined) {
@@ -79,10 +109,26 @@ class MaintenanceModel extends BaseModel {
             return data;
         }
         const params = [id_tecnico];
-        let sql = `SELECT om.*, t.descripcion AS ticket_descripcion,
-                        t.estado AS ticket_estado, t.prioridad_ia
+        let sql = `SELECT
+                        om.*,
+                        t.id_activo AS ticket_id_activo,
+                        t.id_usuario_reporta AS ticket_id_usuario_reporta,
+                        t.descripcion AS ticket_descripcion,
+                        t.estado AS ticket_estado,
+                        t.clasificacion_nlp AS ticket_clasificacion_nlp,
+                        t.prioridad_ia AS ticket_prioridad_ia,
+                        t.tipo_ticket AS ticket_tipo,
+                        t.fecha_creacion AS ticket_fecha_creacion,
+                        t.fecha_cierre AS ticket_fecha_cierre,
+                        a.serial AS asset_serial,
+                        a.modelo AS asset_modelo,
+                        a.estado_activo AS asset_estado_activo,
+                        a.nivel_criticidad AS asset_nivel_criticidad,
+                        u.nombre AS tecnico_nombre
                    FROM ordenes_mantenimiento om
                    LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
+                   LEFT JOIN activos a ON a.id_activo = t.id_activo
+                   LEFT JOIN usuarios u ON u.id_usuario = om.id_usuario_tecnico
                    WHERE om.id_usuario_tecnico = $1
                    ORDER BY om.id_orden DESC`;
         if (limit !== undefined && offset !== undefined) {
