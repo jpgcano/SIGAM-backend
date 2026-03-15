@@ -62,6 +62,7 @@ app.use('/api/auth', authRoutes);
 // Recursos
 app.use('/api/usuarios', userRoutes);
 app.use('/api/activos', assetRoutes);
+app.use('/api/tickets/categorias', categoriaTicketRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/mantenimientos', maintenanceRoutes);
 app.use('/api/metricas', metricsRoutes);
@@ -74,7 +75,6 @@ app.use('/api/software', softwareRoutes);
 app.use('/api/jobs/ia', iaJobsRoutes);
 app.use('/api/cron/ia', iaCronRoutes);
 app.use('/api/auditoria', auditLogRoutes);
-app.use('/api/tickets/categorias', categoriaTicketRoutes);
 app.use('/api/notificaciones', notificationRoutes);
 app.use('/api/reportes', reportRoutes);
 app.use('/api/alertas', alertRoutes);
