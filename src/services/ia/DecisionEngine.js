@@ -62,7 +62,8 @@ export default class DecisionEngine {
             try {
                 const r = await this.external.suggestSolutions({ ticket, activo, candidates, maxSuggestions });
                 if (Array.isArray(r?.suggestions)) return r;
-            } catch {
+            } catch (err) {
+                console.warn('IA suggestions failed:', err?.message || err);
                 // fallback
             }
         }
