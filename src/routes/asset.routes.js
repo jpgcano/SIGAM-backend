@@ -2,6 +2,14 @@ import express from 'express';
 import AssetController from '../controllers/asset.controller.js';
 import AssetService from '../services/asset.service.js';
 import AssetModel from '../models/Asset.js';
+import TicketService from '../services/ticket.service.js';
+import TicketModel from '../models/Ticket.js';
+import MaintenanceService from '../services/maintenance.service.js';
+import MaintenanceModel from '../models/Maintenance.js';
+import LicenciaService from '../services/licencia.service.js';
+import LicenciaModel from '../models/licencia.js';
+import RepuestoService from '../services/repuesto.service.js';
+import RepuestoModel from '../models/repuesto.js';
 import authMiddleware from '../middlewares/auth.middleware.js';
 import permit from '../middlewares/permit.middleware.js';
 import { validateRequired } from '../middlewares/validate.middleware.js';
@@ -9,7 +17,12 @@ import { validateRequired } from '../middlewares/validate.middleware.js';
 // Assets module routes: CRUD + history.
 const router = express.Router();
 // Controller wiring with service + model dependencies.
-const assetController = new AssetController(new AssetService(new AssetModel()));
+const assetController = new AssetController(new AssetService(new AssetModel()), {
+    ticketService: new TicketService(new TicketModel()),
+    maintenanceService: new MaintenanceService(new MaintenanceModel()),
+    licenciaService: new LicenciaService(new LicenciaModel()),
+    repuestoService: new RepuestoService(new RepuestoModel())
+});
 
 // GET /activos — listar todos (con detalle de vista)
 // List assets (view includes joined detail data).
@@ -33,6 +46,41 @@ router.get('/:id/historial',
     authMiddleware,
     permit('assets', 'history'),
     assetController.getHistory
+);
+
+// GET /activos/:id/hoja-vida â€” alias de historial
+router.get('/:id/hoja-vida',
+    authMiddleware,
+    permit('assets', 'history'),
+    assetController.getHistory
+);
+
+// GET /activos/:id/tickets â€” tickets del activo
+router.get('/:id/tickets',
+    authMiddleware,
+    permit('tickets', 'by_activo'),
+    assetController.getTickets
+);
+
+// GET /activos/:id/mantenimientos â€” ordenes de mantenimiento del activo
+router.get('/:id/mantenimientos',
+    authMiddleware,
+    permit('maintenance', 'list'),
+    assetController.getMantenimientos
+);
+
+// GET /activos/:id/piezas â€” repuestos consumidos por el activo
+router.get('/:id/piezas',
+    authMiddleware,
+    permit('maintenance', 'consumos'),
+    assetController.getPiezas
+);
+
+// GET /activos/:id/licencias â€” licencias asignadas al activo
+router.get('/:id/licencias',
+    authMiddleware,
+    permit('licencias', 'list'),
+    assetController.getLicencias
 );
 
 // GET /activos/:id/asignaciones — historial de asignaciones

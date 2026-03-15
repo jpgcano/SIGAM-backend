@@ -93,6 +93,8 @@ class LicenciaService {
     }
     // List assignments for a license.
     getAsignaciones(id) { return this.model.getAsignaciones(id); }
+    // List license assignments for a specific asset.
+    findByActivo(id_activo) { return this.model.findByActivo(id_activo); }
     // Revoke a license assignment and log the change.
     async revocarAsignacion(id, actor, auditContext) {
         const r = await this.model.revocarAsignacion(id);

@@ -111,6 +111,29 @@ class LicenciaModel extends BaseModel {
         );
         return rows.length > 0;
     }
+
+    // List license assignments for a specific asset.
+    async findByActivo(id_activo) {
+        const { rows } = await this.query(
+            `SELECT al.*,
+                    l.id_licencia AS licencia_id,
+                    l.id_software,
+                    l.clave_producto,
+                    l.fecha_expiracion,
+                    l.asientos_totales,
+                    s.nombre AS software_nombre,
+                    s.fabricante AS software_fabricante,
+                    s.version AS software_version,
+                    s.proveedor AS software_proveedor
+             FROM asignacion_licencias al
+             LEFT JOIN licencias l ON l.id_licencia = al.id_licencia
+             LEFT JOIN software s ON s.id_software = l.id_software
+             WHERE al.id_activo = $1
+             ORDER BY al.id_asignacion DESC`,
+            [id_activo]
+        );
+        return rows || [];
+    }
 }
 
 export default LicenciaModel;

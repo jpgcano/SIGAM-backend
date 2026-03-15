@@ -2,14 +2,22 @@ import buildAuditContext from '../utils/auditContext.js';
 
 // Assets controller: HTTP layer for assets and history.
 class AssetController {
-    constructor(assetService) {
+    constructor(assetService, { ticketService, maintenanceService, licenciaService, repuestoService } = {}) {
         this.assetService = assetService;
+        this.ticketService = ticketService;
+        this.maintenanceService = maintenanceService;
+        this.licenciaService = licenciaService;
+        this.repuestoService = repuestoService;
         this.getAll = this.getAll.bind(this);
         this.getById = this.getById.bind(this);
         this.create = this.create.bind(this);
         this.update = this.update.bind(this);
         this.remove = this.remove.bind(this);
         this.getHistory = this.getHistory.bind(this);
+        this.getTickets = this.getTickets.bind(this);
+        this.getMantenimientos = this.getMantenimientos.bind(this);
+        this.getPiezas = this.getPiezas.bind(this);
+        this.getLicencias = this.getLicencias.bind(this);
         this.assign = this.assign.bind(this);
         this.unassign = this.unassign.bind(this);
         this.getAssignments = this.getAssignments.bind(this);
@@ -69,6 +77,36 @@ class AssetController {
         try {
             const history = await this.assetService.getHistory(req.params.id);
             res.json(history);
+        } catch (error) { next(error); }
+    }
+
+    // Tickets linked to asset.
+    async getTickets(req, res, next) {
+        try {
+            const { limit, offset } = req.query || {};
+            res.json(await this.ticketService.findByActivo(req.params.id, { limit, offset }));
+        } catch (error) { next(error); }
+    }
+
+    // Maintenance orders linked to asset.
+    async getMantenimientos(req, res, next) {
+        try {
+            const { limit, offset } = req.query || {};
+            res.json(await this.maintenanceService.findByActivo(req.params.id, { limit, offset }));
+        } catch (error) { next(error); }
+    }
+
+    // Spare parts consumed on asset-related maintenance.
+    async getPiezas(req, res, next) {
+        try {
+            res.json(await this.repuestoService.findConsumosByActivo(req.params.id));
+        } catch (error) { next(error); }
+    }
+
+    // Licenses assigned to the asset.
+    async getLicencias(req, res, next) {
+        try {
+            res.json(await this.licenciaService.findByActivo(req.params.id));
         } catch (error) { next(error); }
     }
 
