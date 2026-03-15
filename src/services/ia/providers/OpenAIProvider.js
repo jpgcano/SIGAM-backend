@@ -77,6 +77,38 @@ export default class OpenAIProvider {
         };
     }
 
+    // Suggest solutions using the external provider.
+    async suggestSolutions({ ticket, activo, candidates, maxSuggestions = 3 }) {
+        const payload = {
+            ticket: {
+                id_ticket: ticket?.id_ticket ?? null,
+                descripcion: ticket?.descripcion ?? null,
+                clasificacion_nlp: ticket?.clasificacion_nlp ?? null,
+                prioridad_ia: ticket?.prioridad_ia ?? null,
+                estado: ticket?.estado ?? null
+            },
+            activo: activo || null,
+            candidates: (Array.isArray(candidates) ? candidates : [])
+                .slice(0, 5)
+                .map((c) => ({
+                    id_ticket: c?.id_ticket ?? null,
+                    descripcion: c?.descripcion ?? null,
+                    clasificacion_nlp: c?.clasificacion_nlp ?? null,
+                    prioridad_ia: c?.prioridad_ia ?? null,
+                    estado: c?.estado ?? null,
+                    diagnostico: c?.diagnostico ?? null,
+                    acciones_realizadas: c?.acciones_realizadas ?? null
+                })),
+            max_suggestions: maxSuggestions
+        };
+
+        const result = await this.#callSuggestions(payload);
+        return {
+            suggestions: Array.isArray(result?.suggestions) ? result.suggestions : [],
+            metodo: this.name
+        };
+    }
+
     // Execute a raw call to OpenAI and parse JSON output.
     async #call(payload) {
         if (!this.isAvailable()) {
@@ -124,6 +156,77 @@ export default class OpenAIProvider {
 
             const data = await res.json();
 
+            const text =
+                data?.output_text ??
+                data?.output?.[0]?.content?.find((c) => c?.type === 'output_text')?.text ??
+                null;
+
+            const parsed = text ? safeJsonParse(text) : null;
+            if (!parsed || typeof parsed !== 'object') {
+                this.recordFailure();
+                throw new Error('OpenAI devolvió un formato no parseable');
+            }
+
+            this.recordSuccess();
+            return parsed;
+        } catch (err) {
+            if (String(err?.name) === 'AbortError') {
+                this.recordFailure();
+                throw new Error('OpenAI timeout');
+            }
+            throw err;
+        } finally {
+            clearTimeout(t);
+        }
+    }
+
+    // Execute a suggestions call to OpenAI and parse JSON output.
+    async #callSuggestions(payload) {
+        if (!this.isAvailable()) {
+            throw new Error('OpenAI provider no disponible (circuit breaker abierto o apiKey ausente)');
+        }
+
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), this.timeoutMs);
+
+        try {
+            const system = [
+                'Eres un asistente técnico de mantenimiento.',
+                'Genera soluciones sugeridas basadas en el ticket y en el historial.',
+                'Devuelve SOLO JSON válido y compacto con el siguiente esquema:',
+                '{ "suggestions": [',
+                '  { "titulo": string, "solucion": string, "pasos": string[], "ticket_id_origen": number|null, "confianza": number 0..1, "advertencias": string[] }',
+                '] }',
+                'Reglas:',
+                '- Usa ticket_id_origen solo si proviene de candidates; si no hay historial, usa null.',
+                '- No inventes datos; si falta información, propone pasos genéricos y marca advertencias.',
+                '- Máximo max_suggestions elementos.'
+            ].join('\n');
+
+            const res = await fetch('https://api.openai.com/v1/responses', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    input: [
+                        { role: 'system', content: system },
+                        { role: 'user', content: JSON.stringify(payload) }
+                    ],
+                    text: { format: { type: 'json_object' } }
+                }),
+                signal: controller.signal
+            });
+
+            if (!res.ok) {
+                const msg = await res.text().catch(() => '');
+                this.recordFailure();
+                throw new Error(`OpenAI error HTTP ${res.status}: ${msg.slice(0, 200)}`);
+            }
+
+            const data = await res.json();
             const text =
                 data?.output_text ??
                 data?.output?.[0]?.content?.find((c) => c?.type === 'output_text')?.text ??

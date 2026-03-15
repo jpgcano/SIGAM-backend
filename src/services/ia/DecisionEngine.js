@@ -51,4 +51,22 @@ export default class DecisionEngine {
 
         return this.rules.triageTicket({ descripcion, categoria, criticidadActivo });
     }
+
+    // Suggest solutions using external IA when available.
+    async suggestSolutions({ ticket, activo, candidates, maxSuggestions }) {
+        if (!this.config.enabled || !this.config.suggestionsEnabled) {
+            return null;
+        }
+
+        if (this.config.provider === 'external' && this.external.isAvailable()) {
+            try {
+                const r = await this.external.suggestSolutions({ ticket, activo, candidates, maxSuggestions });
+                if (Array.isArray(r?.suggestions)) return r;
+            } catch {
+                // fallback
+            }
+        }
+
+        return null;
+    }
 }
