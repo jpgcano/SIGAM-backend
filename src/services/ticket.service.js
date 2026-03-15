@@ -211,6 +211,14 @@ class TicketService {
         const historical = this.suggestionEngine.suggest({ ticket, candidates });
         const iaMax = Number.isInteger(this.iaConfig?.suggestionsMax) ? this.iaConfig.suggestionsMax : 3;
         let iaSuggestions = [];
+        const derivedFromHistory = (historical || []).map((h) => ({
+            titulo: h?.descripcion || 'Solución basada en historial',
+            solucion: h?.solucion || h?.diagnostico || 'Solución basada en historial.',
+            pasos: [],
+            advertencias: ['Derivado de ticket similar.'],
+            confianza: Number.isFinite(h?.score) ? h.score : null
+        }));
+        iaSuggestions = iaSuggestions.concat(derivedFromHistory);
         let iaWarning = null;
 
         if (this.iaConfig?.suggestionsEnabled) {
@@ -224,7 +232,7 @@ class TicketService {
             if (!iaResult) {
                 iaWarning = 'IA no disponible o sin respuesta.';
             }
-            iaSuggestions = (iaResult?.suggestions || []).map((s) => {
+            const modelSuggestions = (iaResult?.suggestions || []).map((s) => {
                 const rawSolution = typeof s?.solucion === 'string' ? s.solucion.trim() : '';
                 const fallbackSolution = `Solución sugerida basada en la descripción: ${ticket?.descripcion || 'sin descripción'}.`;
                 const pasos = Array.isArray(s?.pasos) ? s.pasos.filter(Boolean) : [];
@@ -237,54 +245,32 @@ class TicketService {
                     advertencias.unshift('IA no devolvió solución; se aplicó fallback.');
                 }
                 return {
-                    id_ticket: s?.ticket_id_origen ?? null,
-                    descripcion: s?.titulo ?? null,
-                    clasificacion_nlp: ticket?.clasificacion_nlp ?? null,
-                    prioridad_ia: ticket?.prioridad_ia ?? null,
-                    estado: 'Sugerido',
-                    fecha_creacion: null,
-                    diagnostico: null,
-                    acciones_realizadas: null,
+                    titulo: s?.titulo ?? 'Solución sugerida',
                     solucion: rawSolution || fallbackSolution,
                     pasos: pasos.length ? pasos : fallbackPasos,
                     advertencias,
-                    fuente: 'ia',
-                    score: Number.isFinite(s?.confianza) ? s.confianza : null,
-                    matched_keywords: []
+                    confianza: Number.isFinite(s?.confianza) ? s.confianza : null
                 };
             });
+            iaSuggestions = modelSuggestions;
             if (!iaSuggestions.length && iaWarning) {
                 iaSuggestions.push({
-                    id_ticket: null,
-                    descripcion: 'Sugerencia generada por fallback',
-                    clasificacion_nlp: ticket?.clasificacion_nlp ?? null,
-                    prioridad_ia: ticket?.prioridad_ia ?? null,
-                    estado: 'Sugerido',
-                    fecha_creacion: null,
-                    diagnostico: null,
-                    acciones_realizadas: null,
+                    titulo: 'Sugerencia generada por fallback',
                     solucion: `Solución sugerida basada en la descripción: ${ticket?.descripcion || 'sin descripción'}.`,
                     pasos: [
                         'Revisar síntomas y validar el estado del activo.',
                         'Aplicar procedimiento estándar según la categoría del ticket.'
                     ],
                     advertencias: [iaWarning, 'Se usó fallback por falta de respuesta de IA.'],
-                    fuente: 'ia',
-                    score: null,
-                    matched_keywords: []
+                    confianza: null
                 });
             }
         }
 
         const maxTotal = Math.max(this.suggestionEngine.maxSuggestions, iaMax);
-        let suggestions = [...historical];
-        if (iaSuggestions.length) {
-            if (suggestions.length >= maxTotal) {
-                const keep = Math.max(maxTotal - iaSuggestions.length, 0);
-                suggestions = suggestions.slice(0, keep).concat(iaSuggestions.slice(0, maxTotal));
-            } else {
-                suggestions = suggestions.concat(iaSuggestions.slice(0, maxTotal - suggestions.length));
-            }
+        let suggestions = iaSuggestions.slice(0, maxTotal);
+        if (!suggestions.length) {
+            suggestions = derivedFromHistory.slice(0, maxTotal);
         }
 
         await this.model.saveSuggestionsCache(id_ticket, suggestions);
