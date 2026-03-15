@@ -63,6 +63,7 @@ export default class TicketSuggestionEngine {
                     diagnostico,
                     acciones_realizadas: acciones,
                     solucion,
+                    fuente: 'historico',
                     score,
                     matched_keywords: [...baseKeywords].filter((k) => keywords.has(k)).slice(0, 12)
                 };

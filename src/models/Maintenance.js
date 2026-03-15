@@ -130,6 +130,33 @@ class MaintenanceModel extends BaseModel {
         });
     }
 
+    // Upsert a maintenance order by ticket id (create if missing).
+    async upsertByTicketId(id_ticket, payload) {
+        if (this.useSupabase) {
+            const { data, error } = await this.supabase
+                .from('ordenes_mantenimiento')
+                .select('id_orden')
+                .eq('id_ticket', id_ticket)
+                .maybeSingle();
+            if (error) throw error;
+            if (data?.id_orden) {
+                return this.update(data.id_orden, payload);
+            }
+            return this.create({ id_ticket, ...payload });
+        }
+        const { rows } = await this.query(
+            `SELECT id_orden
+             FROM ordenes_mantenimiento
+             WHERE id_ticket = $1
+             LIMIT 1`,
+            [id_ticket]
+        );
+        if (rows?.[0]?.id_orden) {
+            return this.update(rows[0].id_orden, payload);
+        }
+        return this.create({ id_ticket, ...payload });
+    }
+
     // Remove a maintenance order.
     async remove(id) {
         return this.dbRemove('ordenes_mantenimiento', 'id_orden', id);

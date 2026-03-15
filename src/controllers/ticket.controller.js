@@ -81,7 +81,11 @@ class TicketController {
                     req.body?.estado,
                     req.user,
                     req.body?.consumos,
-                    buildAuditContext(req)
+                    buildAuditContext(req),
+                    {
+                        diagnostico: req.body?.diagnostico,
+                        acciones_realizadas: req.body?.acciones_realizadas
+                    }
                 )
             );
         } catch (e) { next(e); }

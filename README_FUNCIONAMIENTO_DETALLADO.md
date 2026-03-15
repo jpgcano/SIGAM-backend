@@ -404,6 +404,10 @@ Respuesta:
 { "id_ticket": 1, "id_activo": 1, "suggestions": [ ... ] }
 ```
 Nota: las sugerencias se generan automaticamente al crear el ticket y se guardan en cache.
+Si `IA_PROVIDER=external` e `IA_SUGGESTIONS_ENABLED=true`, el backend también consulta IA externa
+usando el ticket + historial para devolver soluciones sugeridas.
+Campos comunes por sugerencia:
+`id_ticket`, `descripcion`, `solucion`, `pasos[]`, `advertencias[]`, `fuente` (`historico`|`ia`), `score/confianza`.
 
 **POST /api/tickets**  
 Request (requeridos: `id_activo`, `descripcion`):
@@ -423,9 +427,15 @@ Respuesta: ticket actualizado.
 **PATCH /api/tickets/:id/estado**  
 Request:
 ```
-{ "estado": "Cerrado", "consumos": [ { "id_repuesto": 1, "cantidad_usada": 2 } ] }
+{
+  "estado": "Cerrado",
+  "consumos": [ { "id_repuesto": 1, "cantidad_usada": 2 } ],
+  "diagnostico": "Causa y solución aplicada",
+  "acciones_realizadas": "Pasos ejecutados por el técnico"
+}
 ```
 Respuesta: ticket actualizado/cerrado.
+Nota: `diagnostico` y `acciones_realizadas` se guardan en `ordenes_mantenimiento` del ticket.
 
 **DELETE /api/tickets/:id**  
 Respuesta:

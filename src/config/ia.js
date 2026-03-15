@@ -19,6 +19,8 @@ export function getIaConfig() {
         provider: provider === 'external' ? 'external' : 'rules',
         assignmentEnabled: parseBool(process.env.IA_ASSIGNMENT_ENABLED, true),
         timeoutMs: parseIntEnv(process.env.IA_TIMEOUT_MS, 2500),
+        suggestionsEnabled: parseBool(process.env.IA_SUGGESTIONS_ENABLED, true),
+        suggestionsMax: parseIntEnv(process.env.IA_SUGGESTIONS_MAX, 3),
         openAiApiKey: process.env.API_IA || null,
         openAiModel: process.env.IA_MODEL || 'gpt-4o-mini',
         circuitBreaker: {
@@ -27,4 +29,3 @@ export function getIaConfig() {
         }
     };
 }
-

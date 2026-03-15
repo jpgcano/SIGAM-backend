@@ -1,6 +1,7 @@
 import AssetModel from '../models/Asset.js';
 import UserModel from '../models/User.js';
 import CategoriaTicketModel from '../models/categoriaTicket.js';
+import MaintenanceModel from '../models/Maintenance.js';
 import { getIaConfig } from '../config/ia.js';
 import DecisionEngine from './ia/DecisionEngine.js';
 import TicketSuggestionEngine from './ia/TicketSuggestionEngine.js';
@@ -15,6 +16,7 @@ class TicketService {
         this.assetModel = assetModel || new AssetModel();
         this.userModel = new UserModel();
         this.categoriaModel = new CategoriaTicketModel();
+        this.maintenanceModel = new MaintenanceModel();
         this.iaConfig = iaConfig || getIaConfig();
         this.decisionEngine = decisionEngine || new DecisionEngine(this.iaConfig);
         this.suggestionEngine = new TicketSuggestionEngine({ maxSuggestions: 3 });
@@ -206,7 +208,47 @@ class TicketService {
             limit: 12
         });
 
-        const suggestions = this.suggestionEngine.suggest({ ticket, candidates });
+        const historical = this.suggestionEngine.suggest({ ticket, candidates });
+        const iaMax = Number.isInteger(this.iaConfig?.suggestionsMax) ? this.iaConfig.suggestionsMax : 3;
+        let iaSuggestions = [];
+
+        if (this.iaConfig?.suggestionsEnabled) {
+            const activo = await this.assetModel.findById(ticket.id_activo).catch(() => null);
+            const iaResult = await this.decisionEngine.suggestSolutions({
+                ticket,
+                activo,
+                candidates,
+                maxSuggestions: iaMax
+            });
+            iaSuggestions = (iaResult?.suggestions || []).map((s) => ({
+                id_ticket: s?.ticket_id_origen ?? null,
+                descripcion: s?.titulo ?? null,
+                clasificacion_nlp: ticket?.clasificacion_nlp ?? null,
+                prioridad_ia: ticket?.prioridad_ia ?? null,
+                estado: 'Sugerido',
+                fecha_creacion: null,
+                diagnostico: null,
+                acciones_realizadas: null,
+                solucion: s?.solucion ?? null,
+                pasos: Array.isArray(s?.pasos) ? s.pasos : [],
+                advertencias: Array.isArray(s?.advertencias) ? s.advertencias : [],
+                fuente: 'ia',
+                score: Number.isFinite(s?.confianza) ? s.confianza : null,
+                matched_keywords: []
+            }));
+        }
+
+        const maxTotal = Math.max(this.suggestionEngine.maxSuggestions, iaMax);
+        let suggestions = [...historical];
+        if (iaSuggestions.length) {
+            if (suggestions.length >= maxTotal) {
+                const keep = Math.max(maxTotal - iaSuggestions.length, 0);
+                suggestions = suggestions.slice(0, keep).concat(iaSuggestions.slice(0, maxTotal));
+            } else {
+                suggestions = suggestions.concat(iaSuggestions.slice(0, maxTotal - suggestions.length));
+            }
+        }
+
         await this.model.saveSuggestionsCache(id_ticket, suggestions);
 
         this.auditLogService.safeLog(
@@ -215,7 +257,13 @@ class TicketService {
                 context: null,
                 entidad: 'JOB_IA',
                 accion: 'JOB_IA_RUN',
-                metadata: { job: 'TICKET_SUGGESTIONS', id_ticket, total_sugerencias: suggestions.length }
+                metadata: {
+                    job: 'TICKET_SUGGESTIONS',
+                    id_ticket,
+                    total_sugerencias: suggestions.length,
+                    historico: historical.length,
+                    ia: iaSuggestions.length
+                }
             })
         );
 
@@ -230,10 +278,22 @@ class TicketService {
     async update(id, payload, user, auditContext) {
         await this.ensureAccess(id, user);
         if (payload?.estado !== undefined) {
-            await this.changeEstado(id, payload.estado, user, payload?.consumos, auditContext);
+            await this.changeEstado(
+                id,
+                payload.estado,
+                user,
+                payload?.consumos,
+                auditContext,
+                {
+                    diagnostico: payload?.diagnostico,
+                    acciones_realizadas: payload?.acciones_realizadas
+                }
+            );
             const updateData = { ...payload };
             delete updateData.estado;
             delete updateData.consumos;
+            delete updateData.diagnostico;
+            delete updateData.acciones_realizadas;
             if (Object.keys(updateData).length === 0) {
                 const current = await this.model.findById(id);
                 if (!current) throw { status: 404, message: `Ticket ${id} no encontrado` };
@@ -287,7 +347,7 @@ class TicketService {
     }
 
     // Change state with validation and optional consumos handling.
-    async changeEstado(id, estado, user, consumos, auditContext) {
+    async changeEstado(id, estado, user, consumos, auditContext, solucion = {}) {
         if (!estado) throw { status: 400, message: 'estado es requerido' };
         if (!TicketService.ESTADOS_VALIDOS.has(estado)) {
             throw { status: 400, message: `estado inválido: ${estado}` };
@@ -306,6 +366,19 @@ class TicketService {
             }
         }
 
+        const diagnostico = solucion?.diagnostico ?? null;
+        const acciones_realizadas = solucion?.acciones_realizadas ?? null;
+        const hasSolution = Boolean(diagnostico || acciones_realizadas);
+        const persistSolution = async () => {
+            if (!hasSolution) return;
+            await this.maintenanceModel.upsertByTicketId(id, {
+                diagnostico,
+                acciones_realizadas,
+                fecha_fin: new Date(),
+                id_usuario_tecnico: user?.id ?? null
+            });
+        };
+
         if (estado === 'Cerrado' && Array.isArray(consumos) && consumos.length) {
             for (const item of consumos) {
                 if (!item?.id_repuesto) {
@@ -317,6 +390,7 @@ class TicketService {
                 }
             }
             const closed = await this.model.closeWithConsumos(id, consumos);
+            await persistSolution();
             await this.model.addHistory({
                 id_ticket: id,
                 id_usuario: user?.id ?? null,
@@ -341,6 +415,9 @@ class TicketService {
         const fechaCierre = estado === 'Cerrado' ? new Date() : null;
         const t = await this.model.updateEstado(id, estado, fechaCierre);
         if (!t) throw { status: 404, message: `Ticket ${id} no encontrado` };
+        if (estado === 'Cerrado') {
+            await persistSolution();
+        }
         this.auditLogService.safeLog(
             this.auditLogService.buildDomainEntry({
                 actor: user,
