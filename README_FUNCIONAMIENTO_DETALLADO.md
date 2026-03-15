@@ -403,6 +403,7 @@ Respuesta:
 ```
 { "id_ticket": 1, "id_activo": 1, "suggestions": [ ... ] }
 ```
+Nota: las sugerencias se generan automaticamente al crear el ticket y se guardan en cache.
 
 **POST /api/tickets**  
 Request (requeridos: `id_activo`, `descripcion`):
@@ -661,6 +662,18 @@ Request:
 { "intervalDays": 180, "scheduleOffsetDays": 1, "limit": 20 }
 ```
 Respuesta: resumen de tickets preventivos creados.
+
+#### 9.15.1 Cron IA (ejecucion automatica)
+Estas rutas se invocan por cron (Vercel) y requieren header `x-cron-secret`.
+- `POST /api/cron/ia/tickets/reprocess`
+- `POST /api/cron/ia/repuestos/sugerencias`
+- `POST /api/cron/ia/activos/baja-sugerida`
+- `POST /api/cron/ia/activos/obsolescencia`
+- `POST /api/cron/ia/mantenimientos/preventivos`
+
+Configurar en `.env` o variables de entorno:
+- `CRON_SECRET` (obligatorio)
+Nota: los horarios de cron en Vercel usan UTC.
 
 ## 10) Metricas MTTR y MTBF
 - MTTR: promedio de `(fecha_fin - fecha_inicio)` en ordenes de mantenimiento asociadas a tickets `Resuelto` o `Cerrado`.
