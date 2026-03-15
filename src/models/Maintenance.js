@@ -93,6 +93,24 @@ class MaintenanceModel extends BaseModel {
         return rows;
     }
 
+    // List maintenance orders for a specific asset.
+    async findByActivo(id_activo, { limit, offset } = {}) {
+        const params = [id_activo];
+        let sql = `SELECT om.*, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado,
+                        t.prioridad_ia, t.id_activo, u.nombre AS tecnico_nombre
+                   FROM ordenes_mantenimiento om
+                   LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
+                   LEFT JOIN usuarios u ON u.id_usuario = om.id_usuario_tecnico
+                   WHERE t.id_activo = $1
+                   ORDER BY om.id_orden DESC`;
+        if (limit !== undefined && offset !== undefined) {
+            params.push(limit, offset);
+            sql += ' LIMIT $2 OFFSET $3';
+        }
+        const { rows } = await this.query(sql, params);
+        return rows;
+    }
+
     // Create a maintenance order with optional fields.
     async create({ id_ticket, id_usuario_tecnico, diagnostico, acciones_realizadas, fecha_inicio, fecha_fin, checklist_seguridad }) {
         return this.dbCreate('ordenes_mantenimiento', {

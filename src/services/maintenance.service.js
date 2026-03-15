@@ -35,6 +35,13 @@ class MaintenanceService {
         return Array.isArray(rows) ? rows.map(this.#withDuration) : rows;
     }
 
+    // List maintenance orders by asset id.
+    async findByActivo(id_activo, { limit, offset } = {}) {
+        const pagination = normalizePagination({ limit, offset, defaultLimit: 100, maxLimit: 500 });
+        const rows = await this.model.findByActivo(id_activo, pagination);
+        return Array.isArray(rows) ? rows.map(this.#withDuration) : rows;
+    }
+
     // Create a maintenance order and emit audit log entry.
     create(payload, actor, auditContext) {
         if (!payload.id_ticket) throw { status: 400, message: 'id_ticket es requerido' };

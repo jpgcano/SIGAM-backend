@@ -72,6 +72,22 @@ class RepuestoModel extends BaseModel {
         );
         return rows || [];
     }
+
+    // List spare parts consumption for a specific asset.
+    async findConsumosByActivo(id_activo) {
+        const { rows } = await this.query(
+            `SELECT cr.*, r.nombre AS repuesto_nombre,
+                    om.id_ticket, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado
+             FROM consumo_repuestos cr
+             LEFT JOIN repuestos r ON r.id_repuesto = cr.id_repuesto
+             LEFT JOIN ordenes_mantenimiento om ON om.id_orden = cr.id_orden
+             LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
+             WHERE t.id_activo = $1
+             ORDER BY cr.id_orden DESC, cr.id_repuesto ASC`,
+            [id_activo]
+        );
+        return rows || [];
+    }
 }
 
 export default RepuestoModel;
