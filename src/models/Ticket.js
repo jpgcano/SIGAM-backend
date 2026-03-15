@@ -162,7 +162,8 @@ class TicketModel extends BaseModel {
                 t.prioridad_ia,
                 t.clasificacion_nlp,
                 t.descripcion,
-                om.diagnostico
+                om.diagnostico,
+                om.acciones_realizadas
              FROM tickets t
              LEFT JOIN ordenes_mantenimiento om ON om.id_ticket = t.id_ticket
              WHERE t.id_activo = $1

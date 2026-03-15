@@ -50,6 +50,9 @@ export default class TicketSuggestionEngine {
                 const text = `${c?.descripcion || ''} ${c?.clasificacion_nlp || ''} ${c?.prioridad_ia || ''}`;
                 const keywords = buildKeywordSet(text);
                 const score = jaccard(baseKeywords, keywords);
+                const diagnostico = c?.diagnostico || null;
+                const acciones = c?.acciones_realizadas || null;
+                const solucion = acciones || diagnostico;
                 return {
                     id_ticket: c?.id_ticket,
                     descripcion: c?.descripcion || null,
@@ -57,7 +60,9 @@ export default class TicketSuggestionEngine {
                     prioridad_ia: c?.prioridad_ia || null,
                     estado: c?.estado || null,
                     fecha_creacion: c?.fecha_creacion || null,
-                    diagnostico: c?.diagnostico || null,
+                    diagnostico,
+                    acciones_realizadas: acciones,
+                    solucion,
                     score,
                     matched_keywords: [...baseKeywords].filter((k) => keywords.has(k)).slice(0, 12)
                 };
