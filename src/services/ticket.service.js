@@ -211,6 +211,7 @@ class TicketService {
         const historical = this.suggestionEngine.suggest({ ticket, candidates });
         const iaMax = Number.isInteger(this.iaConfig?.suggestionsMax) ? this.iaConfig.suggestionsMax : 3;
         let iaSuggestions = [];
+        let iaWarning = null;
 
         if (this.iaConfig?.suggestionsEnabled) {
             const activo = await this.assetModel.findById(ticket.id_activo).catch(() => null);
@@ -220,22 +221,59 @@ class TicketService {
                 candidates,
                 maxSuggestions: iaMax
             });
-            iaSuggestions = (iaResult?.suggestions || []).map((s) => ({
-                id_ticket: s?.ticket_id_origen ?? null,
-                descripcion: s?.titulo ?? null,
-                clasificacion_nlp: ticket?.clasificacion_nlp ?? null,
-                prioridad_ia: ticket?.prioridad_ia ?? null,
-                estado: 'Sugerido',
-                fecha_creacion: null,
-                diagnostico: null,
-                acciones_realizadas: null,
-                solucion: s?.solucion ?? null,
-                pasos: Array.isArray(s?.pasos) ? s.pasos : [],
-                advertencias: Array.isArray(s?.advertencias) ? s.advertencias : [],
-                fuente: 'ia',
-                score: Number.isFinite(s?.confianza) ? s.confianza : null,
-                matched_keywords: []
-            }));
+            if (!iaResult) {
+                iaWarning = 'IA no disponible o sin respuesta.';
+            }
+            iaSuggestions = (iaResult?.suggestions || []).map((s) => {
+                const rawSolution = typeof s?.solucion === 'string' ? s.solucion.trim() : '';
+                const fallbackSolution = `Solución sugerida basada en la descripción: ${ticket?.descripcion || 'sin descripción'}.`;
+                const pasos = Array.isArray(s?.pasos) ? s.pasos.filter(Boolean) : [];
+                const fallbackPasos = [
+                    'Revisar síntomas y validar el estado del activo.',
+                    'Aplicar procedimiento estándar según la categoría del ticket.'
+                ];
+                const advertencias = Array.isArray(s?.advertencias) ? s.advertencias.filter(Boolean) : [];
+                if (!rawSolution) {
+                    advertencias.unshift('IA no devolvió solución; se aplicó fallback.');
+                }
+                return {
+                    id_ticket: s?.ticket_id_origen ?? null,
+                    descripcion: s?.titulo ?? null,
+                    clasificacion_nlp: ticket?.clasificacion_nlp ?? null,
+                    prioridad_ia: ticket?.prioridad_ia ?? null,
+                    estado: 'Sugerido',
+                    fecha_creacion: null,
+                    diagnostico: null,
+                    acciones_realizadas: null,
+                    solucion: rawSolution || fallbackSolution,
+                    pasos: pasos.length ? pasos : fallbackPasos,
+                    advertencias,
+                    fuente: 'ia',
+                    score: Number.isFinite(s?.confianza) ? s.confianza : null,
+                    matched_keywords: []
+                };
+            });
+            if (!iaSuggestions.length && iaWarning) {
+                iaSuggestions.push({
+                    id_ticket: null,
+                    descripcion: 'Sugerencia generada por fallback',
+                    clasificacion_nlp: ticket?.clasificacion_nlp ?? null,
+                    prioridad_ia: ticket?.prioridad_ia ?? null,
+                    estado: 'Sugerido',
+                    fecha_creacion: null,
+                    diagnostico: null,
+                    acciones_realizadas: null,
+                    solucion: `Solución sugerida basada en la descripción: ${ticket?.descripcion || 'sin descripción'}.`,
+                    pasos: [
+                        'Revisar síntomas y validar el estado del activo.',
+                        'Aplicar procedimiento estándar según la categoría del ticket.'
+                    ],
+                    advertencias: [iaWarning, 'Se usó fallback por falta de respuesta de IA.'],
+                    fuente: 'ia',
+                    score: null,
+                    matched_keywords: []
+                });
+            }
         }
 
         const maxTotal = Math.max(this.suggestionEngine.maxSuggestions, iaMax);

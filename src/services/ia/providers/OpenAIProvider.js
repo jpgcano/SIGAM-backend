@@ -197,9 +197,10 @@ export default class OpenAIProvider {
                 '{ "suggestions": [',
                 '  { "titulo": string, "solucion": string, "pasos": string[], "ticket_id_origen": number|null, "confianza": number 0..1, "advertencias": string[] }',
                 '] }',
-                'Reglas:',
+                'Reglas estrictas:',
+                '- SIEMPRE incluye "solucion" y al menos 2 "pasos" por sugerencia.',
                 '- Usa ticket_id_origen solo si proviene de candidates; si no hay historial, usa null.',
-                '- No inventes datos; si falta información, propone pasos genéricos y marca advertencias.',
+                '- Si falta información, propone pasos genéricos y añade advertencias claras.',
                 '- Máximo max_suggestions elementos.'
             ].join('\n');
 
