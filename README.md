@@ -28,6 +28,13 @@ DB_PASSWORD=your_password
 DB_NAME=sigam
 ```
 
+If you are using Supabase instead of a local PostgreSQL server, replace those variables with:
+
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
 Important rules:
 - Do not commit `.env` (already ignored in `.gitignore`).
 - Never paste secrets in commits, issues, or pull requests.
@@ -70,6 +77,16 @@ Existing database (migrations first):
 ```bash
 pnpm dev
 ```
+
+## Verificar sugerencias de IA
+
+Cuando la UI solo muestra la sugerencia de fallback la IA externa no devolvió soluciones específicas; para reintentar en bloque puedes usar el script incluido:
+
+```bash
+pnpm ia:reprocess-fallbacks [cantidad]
+```
+
+El script recorre la tabla `ticket_sugerencias`, detecta tickets cuya caché contiene mensajes de fallback y vuelve a generar las sugerencias (hasta el número opcional `cantidad`). Así puedes revisar si el proveedor ya responde correctamente para más de un ticket.
 
 ## Vercel deploy
 Vercel uses `src/app.js` as the serverless handler. `src/server.js` is for local runs.

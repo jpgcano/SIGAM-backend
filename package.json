@@ -10,7 +10,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "ia:reprocess-fallbacks": "node -r dotenv/config scripts/ia/reprocess-fallbacks.js",
+    "tickets:generate-sample": "node -r dotenv/config scripts/tickets/generate-sample-tickets.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
