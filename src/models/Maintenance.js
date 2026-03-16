@@ -142,10 +142,25 @@ class MaintenanceModel extends BaseModel {
     // List maintenance orders for a specific asset.
     async findByActivo(id_activo, { limit, offset } = {}) {
         const params = [id_activo];
-        let sql = `SELECT om.*, t.descripcion AS ticket_descripcion, t.estado AS ticket_estado,
-                        t.prioridad_ia, t.id_activo, u.nombre AS tecnico_nombre
+        let sql = `SELECT
+                        om.*,
+                        t.id_activo AS ticket_id_activo,
+                        t.id_usuario_reporta AS ticket_id_usuario_reporta,
+                        t.descripcion AS ticket_descripcion,
+                        t.estado AS ticket_estado,
+                        t.clasificacion_nlp AS ticket_clasificacion_nlp,
+                        t.prioridad_ia AS ticket_prioridad_ia,
+                        t.tipo_ticket AS ticket_tipo,
+                        t.fecha_creacion AS ticket_fecha_creacion,
+                        t.fecha_cierre AS ticket_fecha_cierre,
+                        a.serial AS asset_serial,
+                        a.modelo AS asset_modelo,
+                        a.estado_activo AS asset_estado_activo,
+                        a.nivel_criticidad AS asset_nivel_criticidad,
+                        u.nombre AS tecnico_nombre
                    FROM ordenes_mantenimiento om
                    LEFT JOIN tickets t ON t.id_ticket = om.id_ticket
+                   LEFT JOIN activos a ON a.id_activo = t.id_activo
                    LEFT JOIN usuarios u ON u.id_usuario = om.id_usuario_tecnico
                    WHERE t.id_activo = $1
                    ORDER BY om.id_orden DESC`;
@@ -156,7 +171,6 @@ class MaintenanceModel extends BaseModel {
         const { rows } = await this.query(sql, params);
         return rows;
     }
-
     // Create a maintenance order with optional fields.
     async create({ id_ticket, id_usuario_tecnico, diagnostico, acciones_realizadas, fecha_inicio, fecha_fin, checklist_seguridad }) {
         return this.dbCreate('ordenes_mantenimiento', {
