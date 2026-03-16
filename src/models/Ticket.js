@@ -63,6 +63,30 @@ class TicketModel extends BaseModel {
         return rows?.[0] || null;
     }
 
+    // List suggestion cache entries (useful for bulk reprocessing).
+    async listSuggestionCaches({ limit = 50, offset = 0 } = {}) {
+        if (this.useSupabase) {
+            let query = this.supabase
+                .from('ticket_sugerencias')
+                .select('id_ticket, sugerencias, updated_at')
+                .order('updated_at', { ascending: false });
+            query = query.range(offset, offset + limit - 1);
+            const { data, error } = await query;
+            if (error) throw error;
+            return data || [];
+        }
+
+        const params = [limit, offset];
+        const { rows } = await this.query(
+            `SELECT id_ticket, sugerencias, updated_at
+             FROM ticket_sugerencias
+             ORDER BY updated_at DESC
+             LIMIT $1 OFFSET $2`,
+            params
+        );
+        return rows || [];
+    }
+
     // List tickets using the operational view for consistent joins.
     async findAll({ limit, offset } = {}) {
         if (this.useSupabase) {

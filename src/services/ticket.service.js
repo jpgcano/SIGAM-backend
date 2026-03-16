@@ -216,7 +216,8 @@ class TicketService {
             solucion: h?.solucion || h?.diagnostico || 'Solución basada en historial.',
             pasos: [],
             advertencias: ['Derivado de ticket similar.'],
-            confianza: Number.isFinite(h?.score) ? h.score : null
+            confianza: Number.isFinite(h?.score) ? h.score : null,
+            origen: 'historico'
         }));
         iaSuggestions = iaSuggestions.concat(derivedFromHistory);
         let iaWarning = null;
@@ -252,7 +253,8 @@ class TicketService {
                     solucion: rawSolution || fallbackSolution,
                     pasos: pasos.length ? pasos : fallbackPasos,
                     advertencias,
-                    confianza: Number.isFinite(s?.confianza) ? s.confianza : null
+                    confianza: Number.isFinite(s?.confianza) ? s.confianza : null,
+                    origen: rawSolution ? 'ia' : 'fallback'
                 };
             });
             iaSuggestions = modelSuggestions;
@@ -266,7 +268,8 @@ class TicketService {
                         'Aplicar procedimiento estándar según la categoría del ticket.'
                     ],
                     advertencias: [iaWarning, 'Se usó fallback por falta de respuesta de IA.'],
-                    confianza: null
+                    confianza: null,
+                    origen: 'fallback'
                 });
             }
         }

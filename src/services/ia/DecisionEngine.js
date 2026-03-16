@@ -70,4 +70,23 @@ export default class DecisionEngine {
 
         return null;
     }
+
+    // Health check for the external IA provider.
+    async healthCheck() {
+        if (!this.config.enabled) {
+            return { ok: false, provider: this.config.provider, error: 'IA deshabilitada' };
+        }
+        if (this.config.provider !== 'external') {
+            return { ok: false, provider: this.config.provider, error: 'Proveedor no es external' };
+        }
+        if (!this.external.isAvailable()) {
+            return { ok: false, provider: this.config.provider, error: 'Proveedor no disponible' };
+        }
+        try {
+            const res = await this.external.healthCheck();
+            return { ok: true, provider: this.external.name, model: this.external.model, data: res?.result || null };
+        } catch (err) {
+            return { ok: false, provider: this.external.name, model: this.external.model, error: err?.message || String(err) };
+        }
+    }
 }

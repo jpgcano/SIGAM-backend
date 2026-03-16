@@ -30,6 +30,7 @@ LEFT JOIN PROVEEDORES p ON p.id_proveedor = a.id_proveedor;
 CREATE OR REPLACE VIEW vw_tickets_operacion AS
 SELECT
     t.id_ticket,
+    t.id_activo,
     t.fecha_creacion,
     t.fecha_cierre,
     t.estado,

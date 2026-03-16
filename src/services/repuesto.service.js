@@ -24,6 +24,10 @@ class RepuestoService {
         }
         return rows;
     }
+    // List spare parts consumption by asset.
+    findConsumosByActivo(id_activo) {
+        return this.model.findConsumosByActivo(id_activo);
+    }
     // Fetch a spare part by id and validate existence.
     async findById(id) {
         const r = await this.model.findById(id);

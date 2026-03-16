@@ -17,7 +17,8 @@ export default class OpenAIProvider {
     constructor({ apiKey, model, timeoutMs, circuitBreaker }) {
         this.name = 'openai_responses_v1';
         this.apiKey = apiKey;
-        this.model = model;
+        this.model = String(model || 'gpt-4o-mini').trim();
+        this.fallbackModel = 'gpt-4o-mini';
         this.timeoutMs = timeoutMs;
         this.cb = {
             failureThreshold: circuitBreaker?.failureThreshold ?? 3,
@@ -109,6 +110,15 @@ export default class OpenAIProvider {
         };
     }
 
+    // Lightweight health check to verify OpenAI connectivity.
+    async healthCheck() {
+        const result = await this.#call({
+            task: 'classify',
+            descripcion: 'diagnostico de salud'
+        });
+        return { ok: Boolean(result), result };
+    }
+
     // Execute a raw call to OpenAI and parse JSON output.
     async #call(payload) {
         if (!this.isAvailable()) {
@@ -131,30 +141,11 @@ export default class OpenAIProvider {
 
             const prompt = JSON.stringify(payload);
 
-            const res = await fetch('https://api.openai.com/v1/responses', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${this.apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: this.model,
-                    input: [
-                        { role: 'system', content: system },
-                        { role: 'user', content: prompt }
-                    ],
-                    text: { format: { type: 'json_object' } }
-                }),
-                signal: controller.signal
+            const data = await this.#responsesJsonCall({
+                controller,
+                system,
+                user: prompt
             });
-
-            if (!res.ok) {
-                const msg = await res.text().catch(() => '');
-                this.recordFailure();
-                throw new Error(`OpenAI error HTTP ${res.status}: ${msg.slice(0, 200)}`);
-            }
-
-            const data = await res.json();
 
             const text =
                 data?.output_text ??
@@ -205,30 +196,11 @@ export default class OpenAIProvider {
                 '- Máximo max_suggestions elementos.'
             ].join('\n');
 
-            const res = await fetch('https://api.openai.com/v1/responses', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${this.apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: this.model,
-                    input: [
-                        { role: 'system', content: system },
-                        { role: 'user', content: JSON.stringify(payload) }
-                    ],
-                    text: { format: { type: 'json_object' } }
-                }),
-                signal: controller.signal
+            const data = await this.#responsesJsonCall({
+                controller,
+                system,
+                user: JSON.stringify(payload)
             });
-
-            if (!res.ok) {
-                const msg = await res.text().catch(() => '');
-                this.recordFailure();
-                throw new Error(`OpenAI error HTTP ${res.status}: ${msg.slice(0, 200)}`);
-            }
-
-            const data = await res.json();
             const text =
                 data?.output_text ??
                 data?.output?.[0]?.content?.find((c) => c?.type === 'output_text')?.text ??
@@ -250,6 +222,59 @@ export default class OpenAIProvider {
             throw err;
         } finally {
             clearTimeout(t);
+        }
+    }
+
+    // Execute a Responses API request with a one-time model fallback.
+    async #responsesJsonCall({ controller, system, user }) {
+        const attempt = async (model) => {
+            const res = await fetch('https://api.openai.com/v1/responses', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model,
+                    input: [
+                        { role: 'system', content: system },
+                        { role: 'user', content: user }
+                    ],
+                    text: { format: { type: 'json_object' } }
+                }),
+                signal: controller.signal
+            });
+
+            if (!res.ok) {
+                const msg = await res.text().catch(() => '');
+                const errorPayload = safeJsonParse(msg);
+                const err = new Error(`OpenAI error HTTP ${res.status}: ${msg.slice(0, 200)}`);
+                err.openAiCode = errorPayload?.error?.code || null;
+                err.status = res.status;
+                throw err;
+            }
+            return res.json();
+        };
+
+        try {
+            return await attempt(this.model);
+        } catch (error) {
+            const shouldFallbackModel =
+                error?.status === 400 &&
+                error?.openAiCode === 'model_not_found' &&
+                this.model !== this.fallbackModel;
+            if (!shouldFallbackModel) {
+                this.recordFailure();
+                throw error;
+            }
+            console.warn(`IA model "${this.model}" no existe. Reintentando con "${this.fallbackModel}".`);
+            this.model = this.fallbackModel;
+            try {
+                return await attempt(this.model);
+            } catch (retryError) {
+                this.recordFailure();
+                throw retryError;
+            }
         }
     }
 }
