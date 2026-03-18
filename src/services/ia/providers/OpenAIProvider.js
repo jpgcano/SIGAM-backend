@@ -131,7 +131,7 @@ export default class OpenAIProvider {
 
             const prompt = JSON.stringify(payload);
 
-            const res = await fetch('https://api.openai.com/v1/responses', {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${this.apiKey}`,
@@ -139,11 +139,11 @@ export default class OpenAIProvider {
                 },
                 body: JSON.stringify({
                     model: this.model,
-                    input: [
+                    messages: [
                         { role: 'system', content: system },
                         { role: 'user', content: prompt }
                     ],
-                    text: { format: { type: 'json_object' } }
+                    response_format: { type: 'json_object' }
                 }),
                 signal: controller.signal
             });
@@ -156,10 +156,7 @@ export default class OpenAIProvider {
 
             const data = await res.json();
 
-            const text =
-                data?.output_text ??
-                data?.output?.[0]?.content?.find((c) => c?.type === 'output_text')?.text ??
-                null;
+            const text = data?.choices?.[0]?.message?.content ?? null;
 
             const parsed = text ? safeJsonParse(text) : null;
             if (!parsed || typeof parsed !== 'object') {
@@ -205,7 +202,7 @@ export default class OpenAIProvider {
                 '- Máximo max_suggestions elementos.'
             ].join('\n');
 
-            const res = await fetch('https://api.openai.com/v1/responses', {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${this.apiKey}`,
@@ -213,11 +210,11 @@ export default class OpenAIProvider {
                 },
                 body: JSON.stringify({
                     model: this.model,
-                    input: [
+                    messages: [
                         { role: 'system', content: system },
                         { role: 'user', content: JSON.stringify(payload) }
                     ],
-                    text: { format: { type: 'json_object' } }
+                    response_format: { type: 'json_object' }
                 }),
                 signal: controller.signal
             });
@@ -229,10 +226,7 @@ export default class OpenAIProvider {
             }
 
             const data = await res.json();
-            const text =
-                data?.output_text ??
-                data?.output?.[0]?.content?.find((c) => c?.type === 'output_text')?.text ??
-                null;
+            const text = data?.choices?.[0]?.message?.content ?? null;
 
             const parsed = text ? safeJsonParse(text) : null;
             if (!parsed || typeof parsed !== 'object') {

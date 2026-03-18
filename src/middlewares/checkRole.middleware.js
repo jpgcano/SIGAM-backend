@@ -2,7 +2,7 @@
 const checkRole = (allowedRoles) => {
     return (req, res, next) => {
         // Block if the user is missing or role is not allowed.
-        if (!req.user || !allowedRoles.includes(req.user.role)) {
+        if (!req.user || !allowedRoles.includes(req.user.role || req.user.rol)) {
             return res.status(403).json({ message: 'Acceso denegado: No tienes el rol necesario' });
         }
 
