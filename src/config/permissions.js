@@ -124,11 +124,11 @@ export const PERMISSIONS = {
         delete: roles('Gerente')
     },
     ia_jobs: {
-        purchase_suggestions: roles('Analista', 'Gerente'),
-        disposal_suggestions: roles('Analista', 'Gerente'),
-        obsolescence_alerts: roles('Gerente'),
-        ticket_reprocess: roles('Gerente'),
-        preventive_maintenance: roles('Analista', 'Gerente')
+        purchase_suggestions: roles('Técnico','Analista', 'Gerente'),
+        disposal_suggestions: roles('Técnico','Analista', 'Gerente'),
+        obsolescence_alerts: roles('Técnico','Gerente'),
+        ticket_reprocess: roles('Técnico','Gerente'),
+        preventive_maintenance: roles('Técnico','Analista', 'Gerente')
     }
 };
 

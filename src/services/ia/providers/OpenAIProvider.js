@@ -141,16 +141,32 @@ export default class OpenAIProvider {
 
             const prompt = JSON.stringify(payload);
 
-            const data = await this.#responsesJsonCall({
-                controller,
-                system,
-                user: prompt
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    messages: [
+                        { role: 'system', content: system },
+                        { role: 'user', content: prompt }
+                    ],
+                    response_format: { type: 'json_object' }
+                }),
+                signal: controller.signal
             });
 
-            const text =
-                data?.output_text ??
-                data?.output?.[0]?.content?.find((c) => c?.type === 'output_text')?.text ??
-                null;
+            if (!res.ok) {
+                const msg = await res.text().catch(() => '');
+                this.recordFailure();
+                throw new Error(`OpenAI error HTTP ${res.status}: ${msg.slice(0, 200)}`);
+            }
+
+            const data = await res.json();
+
+            const text = data?.choices?.[0]?.message?.content ?? null;
 
             const parsed = text ? safeJsonParse(text) : null;
             if (!parsed || typeof parsed !== 'object') {
@@ -196,15 +212,31 @@ export default class OpenAIProvider {
                 '- Máximo max_suggestions elementos.'
             ].join('\n');
 
-            const data = await this.#responsesJsonCall({
-                controller,
-                system,
-                user: JSON.stringify(payload)
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    messages: [
+                        { role: 'system', content: system },
+                        { role: 'user', content: JSON.stringify(payload) }
+                    ],
+                    response_format: { type: 'json_object' }
+                }),
+                signal: controller.signal
             });
-            const text =
-                data?.output_text ??
-                data?.output?.[0]?.content?.find((c) => c?.type === 'output_text')?.text ??
-                null;
+
+            if (!res.ok) {
+                const msg = await res.text().catch(() => '');
+                this.recordFailure();
+                throw new Error(`OpenAI error HTTP ${res.status}: ${msg.slice(0, 200)}`);
+            }
+
+            const data = await res.json();
+            const text = data?.choices?.[0]?.message?.content ?? null;
 
             const parsed = text ? safeJsonParse(text) : null;
             if (!parsed || typeof parsed !== 'object') {

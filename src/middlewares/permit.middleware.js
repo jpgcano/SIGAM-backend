@@ -13,7 +13,7 @@ const permit = (resource, action, auditLogService = new AuditLogService()) => {
             }
 
             // Enforce role-based access and log denials.
-            const role = req.user?.role;
+            const role = req.user?.role || req.user?.rol;
             if (!role || !isRoleAllowed(role, allowed)) {
                 auditLogService.safeLog(
                     auditLogService.buildDomainEntry({
